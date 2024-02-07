@@ -1,0 +1,220 @@
+#' Optimal Subsampling Method for Softmax Regression Models
+#'
+#' @details details TBD
+#' @param X An object of class "formula" which describes the model to be fitted.
+#' @param Y A data frame containing the variables in the model. Usually it contains a response vector and a design matrix.
+#'     The binary response vector that takes the value of 0 or 1, where 1 means the event occurred.
+#'     The design matrix contains predictor variables, where the first column is all 1's, representing the intercept term.
+#' @param n.plt The pilot subsample size (the first-step subsample size).
+#' @param n.ssp The expected optimal subsample size (the second-step subsample size).
+#' @param criterion The criterion of optimal subsampling probabilities, currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
+#' @param sampling.method The sampling method for drawing the optimal subsample, currently there are two choices \code{WithReplacement} and \code{Poisson}.
+#' @param estimate.method The type of the maximum likelihood function used to calculate the optimal subsampling estimator, currently there are two choices \code{Weighted} and \code{LogOddsCorrection}.
+#' @param constraint 1
+#' @param alpha Mixture proportions of optimal subsampling probability and uniform subsampling probability .
+#' @param b This parameter controls the upper threshold for optimal subsampling probabilities.
+#'
+#' @return
+#' \describe{
+#'   \item{beta.plt}{pilot estimator}
+#'   \item{beta.ssp}{optimal subsample estimator}
+#'   \item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
+#'   \item{var.plt}{covariance matrix of \code{beta.ssp}}
+#'   \item{var.ssp}{covariance matrix of \code{beta.cmb}}
+#'   \item{var.cmb}{covariance matrix of \code{beta.cmb}}
+#'   \item{P.cmb}{predicted probability matrix of full observations}
+#'   \item{index.plt}{index of pilot subsample}
+#'   \item{index.ssp}{index of optimal subsample}
+#' }
+
+#' @export
+#'
+#' @examples
+#' # softmax regression
+#' d <- 3 # dim of covariates
+#' K <- 5 # K + 1 classes
+#' G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
+#' N <- 5e4
+#' beta.true <- 0.2 * matrix(-1, d, K)
+#' beta.true.sum <- cbind(rep(1, d), beta.true)
+#' set.seed(1)
+#' mu <- rep(0, d)
+#' sigma <- matrix(0.5, nrow = d, ncol = d)
+#' diag(sigma) <- rep(1, d)
+#' X <- MASS::mvrnorm(N, mu, sigma)
+#' prob <- exp( X %*% beta.true.sum)
+#' prob <- prob / rowSums(prob)
+#' Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
+#' n.plt <- 500
+#' n.ssp <- 1000
+#' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'WithReplacement',estimate.method = 'Weighted',constraint = 'baseline')
+#' Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'Poisson',estimate.method = 'Weighted',constraint = 'baseline')
+
+Softmax.subsampling <-
+  function(X, Y, n.plt, n.ssp,
+           criterion = c('OptL', 'OptA', 'MSPE'),
+           sampling.method = c('Poisson', 'WithReplacement'),
+           estimate.method = c('Weighted', 'Uniform'),
+           constraint = c('baseline', 'summation'),
+           alpha = 0,
+           b = 2) {
+  model.call <- match.call()
+  # family <- match.arg(family)
+
+  # mf <- model.frame(formula, data)
+  # Extract the response and predictor variables from the model frame
+  # Y <- model.response(mf, "any")
+  # if (is.character(Y) && length(unique(Y)) == 2) {
+  #   levels <- unique(Y)
+  #   Y <- as.integer(Y == levels[2])  # Assuming levels[2] is the 'success' category
+  # }
+  # X <- model.matrix(formula, mf)
+  # colnames(X)[1] <- "intercept"
+  # print(X)
+  N <- nrow(X)
+  d <- ncol(X)
+  K <- length(unique(Y)) - 1
+  G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
+  Y.matrix <- matrix(0, nrow = N, ncol = K)
+  Y.matrix[cbind(seq_along(Y), Y)] <- 1
+
+  if (estimate.method == "Weighted") {
+    # pilot step
+    plt.estimate.results <- softmax.plt.estimate(X = X, Y = Y, Y.matrix,
+                                                 n.plt = n.plt, N, K, d,
+                                                 criterion)
+    p.plt <- plt.estimate.results$p.plt
+    beta.plt.b <- plt.estimate.results$beta.plt
+    P.plt <- plt.estimate.results$P.plt
+    ddL.plt <- plt.estimate.results$ddL.plt
+    dL.sq.plt <- plt.estimate.results$dL.sq.plt
+    index.plt <- plt.estimate.results$index.plt
+    cov.plt.b <- plt.estimate.results$cov.plt
+    Omega.plt <- plt.estimate.results$Omega.plt
+
+    # subsampling step
+    ssp.results <- softmax.subsampling(X = X,
+                                       Y = Y,
+                                       Y.matrix = Y.matrix,
+                                       G = G,
+                                       n.ssp = n.ssp,
+                                       N = N, K = K, d = d,
+                                       alpha = alpha,
+                                       b = b,
+                                       criterion = criterion,
+                                       estimate.method = estimate.method,
+                                       sampling.method = sampling.method,
+                                       constraint = constraint,
+                                       p.plt = p.plt,
+                                       ddL.plt = ddL.plt,
+                                       P.plt = P.plt,
+                                       Omega.plt = Omega.plt,
+                                       index.plt = index.plt)
+    index.ssp <- ssp.results$index.ssp
+    p.ssp <- ssp.results$p.ssp
+
+    # subsample estimating step
+    ssp.estimate.results <-
+      softmax.subsample.estimate(X[index.ssp, ],
+                                 Y[index.ssp],
+                                 Y.matrix[index.ssp, ],
+                                 n.ssp = n.ssp,
+                                 index.ssp = index.ssp,
+                                 p.ssp = p.ssp[index.ssp],
+                                 beta.plt = beta.plt,
+                                 sampling.method = sampling.method,
+                                 estimate.method = estimate.method,
+                                 N, K, d)
+    beta.ssp.b <- ssp.estimate.results$beta.ssp
+    ddL.ssp <- ssp.estimate.results$ddL.ssp
+    dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
+    Lambda.ssp <- ssp.estimate.results$Lambda.ssp
+    cov.ssp.b <- ssp.estimate.results$cov.ssp
+
+    # combining step
+    combining.results <- softmax.combining(ddL.plt = ddL.plt,
+                                           ddL.ssp = ddL.ssp,
+                                           dL.sq.plt = dL.sq.plt,
+                                           dL.sq.ssp = dL.sq.ssp,
+                                           Lambda.ssp = Lambda.ssp,
+                                           n.plt = n.plt,
+                                           n.ssp = n.ssp,
+                                           beta.plt = beta.plt.b,
+                                           beta.ssp = beta.ssp.b,
+                                           X = X, N = N, K = K, d = d)
+    beta.cmb.b <- combining.results$beta.cmb
+    cov.cmb.b <- combining.results$cov.cmb
+    P.cmb <- combining.results$P.cmb
+
+    # transfer results
+    beta.plt.s <- G %*% as.vector(beta.plt.b) # K*d to (K+1)*d
+    beta.ssp.s <- G %*% as.vector(beta.ssp.b)
+    beta.cmb.s <- G %*% as.vector(beta.cmb.b)
+    cov.plt.s <- G %*% cov.plt.b %*% t(G) # Kd * Kd to (K+1)d * (K+1)d
+    cov.ssp.s <- G %*% cov.ssp.b %*% t(G)
+    cov.cmb.s <- G %*% cov.cmb.b %*% t(G)
+    if (constraint == 'baseline'){
+      return(list(
+        model.call = model.call,
+        beta.plt = matrix(beta.plt.b, nrow = d),
+        beta.ssp = matrix(beta.ssp.b, nrow = d),
+        beta.cmb = matrix(beta.cmb.b, nrow = d),
+        cov.plt = cov.plt.b,
+        cov.ssp = cov.ssp.b,
+        cov.cmb = cov.cmb.b,
+        P.cmb = P.cmb,
+        index.plt = index.plt,
+        index.ssp = index.ssp,
+        N = N,
+        subsample.size.expect = n.ssp))
+    } else if (constraint == 'summation') {
+      return(list(
+        model.call = model.call,
+        beta.plt = matrix(beta.plt.s, nrow = d),
+        beta.ssp = matrix(beta.ssp.s, nrow = d),
+        beta.cmb = matrix(beta.cmb.s, nrow = d),
+        cov.plt = cov.plt.s,
+        cov.ssp = cov.ssp.s,
+        cov.cmb = cov.cmb.s,
+        P.cmb = P.cmb,
+        index.plt = index.plt,
+        index.ssp = index.ssp,
+        N = N,
+        subsample.size.expect = n.ssp))
+    }
+  } else if (estimate.method == "Uniform"){
+    n.uni <- n.plt + n.ssp
+    index.uni <- random.index(N, n.uni)
+    x.uni <- X[index.uni, ]
+    y.uni <- Y[index.uni]
+    results <- softmax.coef.estimate(x.uni, y.uni)
+    beta.uni.b <- results$beta
+    P.uni <-(results$P1)[, -1]
+    ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni, p = rep(1, n.uni),
+                               K, d, scale = n.uni)
+    dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, Y_matrix = Y.matrix[index.uni, ],
+                                   P = P.uni, p = rep(1, n.uni), K = K, d = d,
+                                   scale = n.uni^2)
+
+    # transfer results
+    cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
+    cov.uni.s <- G %*% cov.uni.b %*% t(G)
+    beta.uni.s <- G %*% as.vector(beta.uni.b)
+
+    P.uni <- matrix(NA, nrow = N, ncol = K+1)
+    P.uni[, -1] <- pbeta.multi(X, beta.uni.b)
+    P.uni[, 1] <- 1 - rowSums(P.uni[, -1])
+
+    if (constraint == 'baseline'){
+      return(list(index = index.uni,
+                  beta = matrix(beta.uni.b, nrow = d),
+                  cov = cov.uni.b,
+                  P = P.uni))
+    } else if (constraint == 'summation') {
+      return(list(index = index.uni,
+                  beta = matrix(beta.uni.s, nrow = d),
+                  cov = cov.uni.s,
+                  P = P.uni))
+    }
+  }
+}

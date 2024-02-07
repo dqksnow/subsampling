@@ -1,11 +1,29 @@
 Package: subsampling
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: subsampling
+Version: 0.1
 Date: 2024-02-06
-Author: Who wrote it
+Author: c(
+    person("Qingkai", "Dong", email = "qingkai.dong@uconn.edu", 
+    role = c("aut", "cre")),
+    person("Haiying", "Wang", role = "aut"),
+    person("Yaqiong", "Yao", role = "aut")
+    )
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
-License: What license is it under?
-Imports: Rcpp (>= 1.0.12)
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    Rcpp(>= 1.0.12),
+    stats,
+    survey,
+    nnet,
+    matrixStats,
+    expm
 LinkingTo: Rcpp, RcppArmadillo
+Suggests: 
+    testthat (>= 3.0.0),
+    MASS
+Config/testthat/edition: 3

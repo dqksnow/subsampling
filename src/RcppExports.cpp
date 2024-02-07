@@ -11,55 +11,60 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rcpparma_hello_world
-arma::mat rcpparma_hello_world();
-RcppExport SEXP _subsampling_rcpparma_hello_world() {
+// softmax_dL_sq_cpp
+arma::mat softmax_dL_sq_cpp(const arma::mat& X, const arma::mat& Y_matrix, const arma::mat& P, const arma::vec& p, int K, int d, double scale);
+RcppExport SEXP _subsampling_softmax_dL_sq_cpp(SEXP XSEXP, SEXP Y_matrixSEXP, SEXP PSEXP, SEXP pSEXP, SEXP KSEXP, SEXP dSEXP, SEXP scaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Y_matrix(Y_matrixSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type P(PSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(softmax_dL_sq_cpp(X, Y_matrix, P, p, K, d, scale));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_outerproduct
-arma::mat rcpparma_outerproduct(const arma::colvec& x);
-RcppExport SEXP _subsampling_rcpparma_outerproduct(SEXP xSEXP) {
+// softmax_ddL_cpp
+arma::mat softmax_ddL_cpp(const arma::mat& X, const arma::mat& P, const arma::vec& p, int K, int d, double scale);
+RcppExport SEXP _subsampling_softmax_ddL_cpp(SEXP XSEXP, SEXP PSEXP, SEXP pSEXP, SEXP KSEXP, SEXP dSEXP, SEXP scaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type P(PSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(softmax_ddL_cpp(X, P, p, K, d, scale));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_innerproduct
-double rcpparma_innerproduct(const arma::colvec& x);
-RcppExport SEXP _subsampling_rcpparma_innerproduct(SEXP xSEXP) {
+// softmax_Omega_cpp
+arma::mat softmax_Omega_cpp(const arma::mat& X, const arma::mat& P1, const arma::vec& p, int K, int d, double scale);
+RcppExport SEXP _subsampling_softmax_Omega_cpp(SEXP XSEXP, SEXP P1SEXP, SEXP pSEXP, SEXP KSEXP, SEXP dSEXP, SEXP scaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_bothproducts
-Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
-RcppExport SEXP _subsampling_rcpparma_bothproducts(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type P1(P1SEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(softmax_Omega_cpp(X, P1, p, K, d, scale));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_subsampling_rcpparma_hello_world", (DL_FUNC) &_subsampling_rcpparma_hello_world, 0},
-    {"_subsampling_rcpparma_outerproduct", (DL_FUNC) &_subsampling_rcpparma_outerproduct, 1},
-    {"_subsampling_rcpparma_innerproduct", (DL_FUNC) &_subsampling_rcpparma_innerproduct, 1},
-    {"_subsampling_rcpparma_bothproducts", (DL_FUNC) &_subsampling_rcpparma_bothproducts, 1},
+    {"_subsampling_softmax_dL_sq_cpp", (DL_FUNC) &_subsampling_softmax_dL_sq_cpp, 7},
+    {"_subsampling_softmax_ddL_cpp", (DL_FUNC) &_subsampling_softmax_ddL_cpp, 6},
+    {"_subsampling_softmax_Omega_cpp", (DL_FUNC) &_subsampling_softmax_Omega_cpp, 6},
     {NULL, NULL, 0}
 };
 
