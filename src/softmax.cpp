@@ -68,14 +68,11 @@ arma::mat softmax_Omega_cpp(const arma::mat& X, const arma::mat& P1,
     for (int j = i; j < K; ++j) {
       arma::mat XP;
       if (j == i) {
-        XP = X.each_col() % ((P0.col(i) % P0.col(j) % P_sq -
-          arma::square(P0.col(i)) % P0.col(j) -
-          P0.col(i) % arma::square(P0.col(j)) +
-          arma::square(P0.col(i))) / p);
+        XP = X.each_col() % ((P_sq + 1 - 2 * P0.col(i)) %
+          arma::square(P0.col(i)) / p);
       } else {
-        XP = X.each_col() % ((P0.col(i) % P0.col(j) % P_sq -
-          arma::square(P0.col(i)) % P0.col(j) -
-          P0.col(i) % arma::square(P0.col(j))) / p);
+        XP = X.each_col() % (((P_sq - P0.col(i) - P0.col(j)) %
+          (P0.col(i) % P0.col(j))) / p);
       }
       arma::mat block = X_t * XP;
       Omega.submat(i * d, j * d, (i + 1) * d - 1, (j + 1) * d - 1) = block;
