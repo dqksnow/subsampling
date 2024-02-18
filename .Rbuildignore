@@ -1,3 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
+^\.Rhistory$
+^\.git$
+^Makefile$
+^\.Rproj\.user$

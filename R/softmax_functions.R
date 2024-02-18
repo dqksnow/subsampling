@@ -52,11 +52,9 @@ softmax.Omega <- function(X, P1, p, K, d, scale){
   for (i in 1:K){
     for (j in i:K){
       if (j == i){
-        XP <- X * ((P0[, i] * P0[, j] * P.sq - P0[, i]^2 * P0[, j] -
-                      P0[, i] * P0[, j]^2 + P0[, i]^2) / p)
+        XP <- X * (((P.sq + 1 - 2 * P0[, i]) * P0[, i]^2) / p)
       } else {
-        XP <- X * ((P0[, i] * P0[, j] * P.sq - P0[, i]^2 * P0[, j] -
-                      P0[, i] * P0[, j]^2 ) / p)
+        XP <- X * ((P.sq - P0[, i] - P0[, j]) * (P0[, i] * P0[, j])  / p)
       }
       Omega[(1+(i-1)*d):(i*d), (1+(j-1)*d):(j*d)] <-
         Omega[(1+(j-1)*d):(j*d), (1+(i-1)*d):(i*d)] <- X.t %*% XP
@@ -101,26 +99,8 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
   )
 }
 ###############################################################################
-softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G, criterion,
-                                 constraint){
-  if (criterion == "OptA") {
-    if (constraint == "baseline"){
-      nm <- sqrt(colSums((solve(ddL.plt, t(sixi))^2)))
-    } else if (constraint == "summation"){
-      nm <- sqrt(colSums(((G %*% solve(ddL.plt, t(sixi)))^2)))
-    }
-  } else if (criterion == "OptL"){
-    if (constraint == "baseline"){
-      nm <- sqrt(rowSums((sixi)^2))
-    } else if (constraint == "summation"){
-      nm <- sqrt(colSums(((G %*% solve(t(G) %*% G) %*% t(sixi))^2)))
-    }
-  } else if (criterion == "MSPE") {
-    nm <- sqrt(colSums(((expm::sqrtm(Omega.plt) %*%
-                           solve(ddL.plt, t(sixi)))^2)))
-  }
-  return(nm)
-}
+softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G,
+ criterion, constraint){  if (criterion == "OptA") {    if (constraint == "baseline"){      nm <- sqrt(rowSums((sixi %*% solve(ddL.plt))^2))    } else if (constraint == "summation"){      temp <- sixi %*% solve(ddL.plt) %*% t(G)      nm <- sqrt(rowSums(temp^2))    }  } else if (criterion == "OptL"){    if (constraint == "baseline"){      nm <- sqrt(rowSums((sixi)^2))    } else if (constraint == "summation"){      tempG <- t(G %*% solve(t(G) %*% G))      temp <- sixi %*% tempG      nm <- sqrt(rowSums(temp^2))    }  } else if (criterion == "MSPE") {    temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)    nm <- sqrt(rowSums(temp^2))  }  return(nm)}
 ###############################################################################
 softmax.subsampling <- function(X, Y, Y.matrix, G, n.ssp, N, K, d, alpha,
                                 b, criterion, estimate.method, sampling.method,

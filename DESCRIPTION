@@ -1,15 +1,19 @@
 Package: subsampling
 Type: Package
-Title: subsampling
+Title: TBD
 Version: 0.1
 Date: 2024-02-06
-Author: c(
-    person("Qingkai", "Dong", email = "qingkai.dong@uconn.edu", 
-    role = c("aut", "cre")),
-    person("Haiying", "Wang", role = "aut"),
-    person("Yaqiong", "Yao", role = "aut")
+Authors@R: c(
+    person(given = "Qingkai", family = "Dong",
+           email = "qingkai.dong@uconn.edu",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0000-0000-0000")),
+    person(given = "Haiying", family = "Wang", role = "aut",
+           comment = c(ORCID = "0000-0000-0000-0000")),
+    person(given = "Yaqiong", family = "Yao", role = "aut",
+           comment = c(ORCID = "0000-0000-0000-0000")),       
     )
-Maintainer: Who to complain to <yourfault@somewhere.net>
+Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
 Description: More about what it does (maybe more than one line)
 License: GPL (>= 3)
 Encoding: UTF-8
@@ -22,8 +26,12 @@ Imports:
     nnet,
     matrixStats,
     expm
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo:
+    Rcpp, 
+    RcppArmadillo
 Suggests: 
     testthat (>= 3.0.0),
     MASS
 Config/testthat/edition: 3
+URL: https://github.com/dqksnow/Subsampling
+BugReports: https://github.com/dqksnow/Subsampling/issues
