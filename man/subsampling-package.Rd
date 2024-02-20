@@ -13,3 +13,21 @@ More about what it does (maybe more than one line)
 \references{
 Add later
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/dqksnow/Subsampling}
+  \item Report bugs at \url{https://github.com/dqksnow/Subsampling/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Qingkai Dong \email{qingkai.dong@uconn.edu} (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+
+Authors:
+\itemize{
+  \item Haiying Wang (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+  \item Yaqiong Yao (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+}
+
+}

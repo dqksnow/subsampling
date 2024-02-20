@@ -11,7 +11,7 @@ Authors@R: c(
     person(given = "Haiying", family = "Wang", role = "aut",
            comment = c(ORCID = "0000-0000-0000-0000")),
     person(given = "Yaqiong", family = "Yao", role = "aut",
-           comment = c(ORCID = "0000-0000-0000-0000")),       
+           comment = c(ORCID = "0000-0000-0000-0000"))       
     )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
 Description: More about what it does (maybe more than one line)
