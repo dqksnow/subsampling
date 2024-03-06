@@ -77,7 +77,13 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
   dL.sq.plt <- softmax_dL_sq_cpp(X = x.plt, Y_matrix = Y.matrix[index.plt, ],
                                  P = P1.plt[, -1], p = rep(1, n.plt), K = K,
                                  d = d, scale = n.plt^2)
-  cov.plt <- solve(ddL.plt) %*% dL.sq.plt %*% solve(ddL.plt)
+  c <- n.plt / N
+  Lambda.plt <- c * softmax_dL_sq_cpp(X = x.plt, 
+                                      Y.matrix = Y.matrix[index.plt, ],
+                                      P = P1.plt[, -1], p = rep(1, n.plt),
+                                      K = K, d = d, scale = n.plt^2)
+  cov.plt <- solve(ddL.plt) %*% (dL.sq.plt + Lambda.plt) %*% solve(ddL.plt)
+  # cov.plt <- solve(ddL.plt) %*% dL.sq.plt %*% solve(ddL.plt)
   if (criterion == "MSPE") {
     Omega.plt <- softmax_Omega_cpp(x.plt, P1 = P1.plt, p = p.plt, K, d,
                                    scale = N*n.plt)
@@ -94,13 +100,35 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
       dL.sq.plt = dL.sq.plt,
       index.plt = index.plt,
       cov.plt = cov.plt,
-      Omega.plt = Omega.plt
+      Omega.plt = Omega.plt,
+      Lambda.plt = Lambda.plt
     )
   )
 }
 ###############################################################################
 softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G,
- criterion, constraint){  if (criterion == "OptA") {    if (constraint == "baseline"){      nm <- sqrt(rowSums((sixi %*% solve(ddL.plt))^2))    } else if (constraint == "summation"){      temp <- sixi %*% solve(ddL.plt) %*% t(G)      nm <- sqrt(rowSums(temp^2))    }  } else if (criterion == "OptL"){    if (constraint == "baseline"){      nm <- sqrt(rowSums((sixi)^2))    } else if (constraint == "summation"){      tempG <- t(G %*% solve(t(G) %*% G))      temp <- sixi %*% tempG      nm <- sqrt(rowSums(temp^2))    }  } else if (criterion == "MSPE") {    temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)    nm <- sqrt(rowSums(temp^2))  }  return(nm)}
+ criterion, constraint){
+  if (criterion == "OptA") {
+    if (constraint == "baseline"){
+      nm <- sqrt(rowSums((sixi %*% solve(ddL.plt))^2))
+    } else if (constraint == "summation"){
+      temp <- sixi %*% solve(ddL.plt) %*% t(G)
+      nm <- sqrt(rowSums(temp^2))
+    }
+  } else if (criterion == "OptL"){
+    if (constraint == "baseline"){
+      nm <- sqrt(rowSums((sixi)^2))
+    } else if (constraint == "summation"){
+      tempG <- t(G %*% solve(t(G) %*% G))
+      temp <- sixi %*% tempG
+      nm <- sqrt(rowSums(temp^2))
+    }
+  } else if (criterion == "MSPE") {
+    temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)
+    nm <- sqrt(rowSums(temp^2))
+  }
+  return(nm)
+}
 ###############################################################################
 softmax.subsampling <- function(X, Y, Y.matrix, G, n.ssp, N, K, d, alpha,
                                 b, criterion, estimate.method, sampling.method,
@@ -159,18 +187,20 @@ softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
 }
 ###############################################################################
 softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
-                              Lambda.ssp, n.plt, n.ssp, beta.plt, beta.ssp, X,
-                              N, K, d) {
+                              Lambda.plt, Lambda.ssp, n.plt, n.ssp, beta.plt, 
+                              beta.ssp, X, N, K, d) {
   ddL.plt <- n.plt * ddL.plt
   ddL.ssp <- n.ssp * ddL.ssp
   dL.sq.plt <- n.plt^2 * dL.sq.plt
   dL.sq.ssp <- n.ssp^2 * dL.sq.ssp
+  Lambda.plt <- n.plt^2 * Lambda.plt
   Lambda.ssp <- n.ssp^2 * Lambda.ssp
 
   ddL.inv <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- ddL.inv %*% (ddL.plt %*% c(beta.plt) + ddL.ssp %*% c(beta.ssp))
   beta.cmb <- matrix(beta.cmb, nrow = d)
-  cov.cmb <- ddL.inv %*% (dL.sq.plt + dL.sq.ssp + Lambda.ssp) %*% ddL.inv
+  cov.cmb <- ddL.inv %*% (dL.sq.plt + Lambda.plt + dL.sq.ssp + Lambda.ssp) %*% 
+              ddL.inv
 
   P.cmb <- matrix(NA, nrow = N, ncol = K+1)
   P.cmb[, -1] <- pbeta.multi(X, beta.cmb)

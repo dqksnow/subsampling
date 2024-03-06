@@ -2,17 +2,15 @@
 #'
 #' @details details TBD
 #' @param X An object of class "formula" which describes the model to be fitted.
-#' @param Y A data frame containing the variables in the model. Usually it contains a response vector and a design matrix.
-#'     The binary response vector that takes the value of 0 or 1, where 1 means the event occurred.
-#'     The design matrix contains predictor variables, where the first column is all 1's, representing the intercept term.
+#' @param Y A data frame containing the variables in the model. Usually it 
 #' @param n.plt The pilot subsample size (the first-step subsample size).
-#' @param n.ssp The expected optimal subsample size (the second-step subsample size).
-#' @param criterion The criterion of optimal subsampling probabilities, currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
-#' @param sampling.method The sampling method for drawing the optimal subsample, currently there are two choices \code{WithReplacement} and \code{Poisson}.
-#' @param estimate.method The type of the maximum likelihood function used to calculate the optimal subsampling estimator, currently there are two choices \code{Weighted} and \code{LogOddsCorrection}.
+#' @param n.ssp The expected optimal subsample size (the second-step subsample.
+#' @param criterion The criterion of optimal subsampling probabilities
+#' @param sampling.method The sampling method for drawing the optimal subsample
+#' @param estimate.method The type of the maximum likelihood function used to 
 #' @param constraint 1
-#' @param alpha Mixture proportions of optimal subsampling probability and uniform subsampling probability .
-#' @param b This parameter controls the upper threshold for optimal subsampling probabilities.
+#' @param alpha Mixture proportions of optimal subsampling probability and 
+#' @param b This parameter controls the upper threshold for optimal subsampling
 #'
 #' @return
 #' \describe{
@@ -47,7 +45,7 @@
 #' Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 #' n.plt <- 500
 #' n.ssp <- 1000
-#' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'WithReplacement',estimate.method = 'Weighted',constraint = 'baseline')
+#' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE', sampling.method = 'WithReplacement',estimate.method = 'Weighted',constraint = 'baseline')
 #' Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'Poisson',estimate.method = 'Weighted',constraint = 'baseline')
 
 Softmax.subsampling <-
@@ -91,6 +89,7 @@ Softmax.subsampling <-
     index.plt <- plt.estimate.results$index.plt
     cov.plt.b <- plt.estimate.results$cov.plt
     Omega.plt <- plt.estimate.results$Omega.plt
+    Lambda.plt <- plt.estimate.results$Lambda.plt
 
     # subsampling step
     ssp.results <- softmax.subsampling(X = X,
@@ -136,6 +135,7 @@ Softmax.subsampling <-
                                            ddL.ssp = ddL.ssp,
                                            dL.sq.plt = dL.sq.plt,
                                            dL.sq.ssp = dL.sq.ssp,
+                                           Lambda.plt = Lambda.plt,
                                            Lambda.ssp = Lambda.ssp,
                                            n.plt = n.plt,
                                            n.ssp = n.ssp,
@@ -147,12 +147,6 @@ Softmax.subsampling <-
     P.cmb <- combining.results$P.cmb
 
     # transfer results
-    beta.plt.s <- G %*% as.vector(beta.plt.b) # K*d to (K+1)*d
-    beta.ssp.s <- G %*% as.vector(beta.ssp.b)
-    beta.cmb.s <- G %*% as.vector(beta.cmb.b)
-    cov.plt.s <- G %*% cov.plt.b %*% t(G) # Kd * Kd to (K+1)d * (K+1)d
-    cov.ssp.s <- G %*% cov.ssp.b %*% t(G)
-    cov.cmb.s <- G %*% cov.cmb.b %*% t(G)
     if (constraint == 'baseline'){
       return(list(
         model.call = model.call,
@@ -168,6 +162,12 @@ Softmax.subsampling <-
         N = N,
         subsample.size.expect = n.ssp))
     } else if (constraint == 'summation') {
+      beta.plt.s <- G %*% as.vector(beta.plt.b) # K*d to (K+1)*d
+      beta.ssp.s <- G %*% as.vector(beta.ssp.b)
+      beta.cmb.s <- G %*% as.vector(beta.cmb.b)
+      cov.plt.s <- G %*% cov.plt.b %*% t(G) # Kd * Kd to (K+1)d * (K+1)d
+      cov.ssp.s <- G %*% cov.ssp.b %*% t(G)
+      cov.cmb.s <- G %*% cov.cmb.b %*% t(G)
       return(list(
         model.call = model.call,
         beta.plt = matrix(beta.plt.s, nrow = d),
@@ -184,33 +184,53 @@ Softmax.subsampling <-
     }
   } else if (estimate.method == "Uniform"){
     n.uni <- n.plt + n.ssp
-    index.uni <- random.index(N, n.uni)
-    x.uni <- X[index.uni, ]
-    y.uni <- Y[index.uni]
-    results <- softmax.coef.estimate(x.uni, y.uni)
-    beta.uni.b <- results$beta
-    P.uni <-(results$P1)[, -1]
-    ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni, p = rep(1, n.uni),
-                               K, d, scale = n.uni)
-    dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, Y_matrix = Y.matrix[index.uni, ],
-                                   P = P.uni, p = rep(1, n.uni), K = K, d = d,
-                                   scale = n.uni^2)
+    if (sampling.method == 'WithReplacement') {
+      index.uni <- random.index(N, n.uni)
+      x.uni <- X[index.uni, ]
+      y.uni <- Y[index.uni]
+      results <- softmax.coef.estimate(x.uni, y.uni)
+      beta.uni.b <- results$beta
+      P.uni <-(results$P1)[, -1]
+      ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni, p = rep(1, n.uni),
+                                 K, d, scale = n.uni)
+      dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, 
+                                     Y_matrix = Y.matrix[index.uni, ],
+                                     P = P.uni, p = rep(1, n.uni), K = K, 
+                                     d = d, scale = n.uni^2)
+      c <- n.uni / N
+      cov.uni.b <- solve(ddL.uni) %*% (dL.sq.uni * (1+c))%*% solve(ddL.uni)
+    } else if (sampling.method == 'Poisson') {
+      index.uni <- poisson.index(N, n.uni/N)
+      p.uni <- rep(n.uni / N, length(index.uni))
+      x.uni <- X[index.uni, ]
+      y.uni <- Y[index.uni]
+      results <- softmax.coef.estimate(x.uni, y.uni)
+      beta.uni.b <- results$beta
+      P.uni <- results$P1
+      ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni[, -1], p = p.uni, K, d,
+                             scale = N)
+      dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, 
+                                     Y.matrix = Y.matrix[index.uni, ],
+                                     P = P.uni[, -1], p = p.uni, K = K, d = d,
+                                     scale=(N^2))
+      cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
+    }
 
-    # transfer results
-    cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
-    cov.uni.s <- G %*% cov.uni.b %*% t(G)
-    beta.uni.s <- G %*% as.vector(beta.uni.b)
-
+    
     P.uni <- matrix(NA, nrow = N, ncol = K+1)
     P.uni[, -1] <- pbeta.multi(X, beta.uni.b)
     P.uni[, 1] <- 1 - rowSums(P.uni[, -1])
-
+    
+    # transfer results
+    
     if (constraint == 'baseline'){
       return(list(index = index.uni,
                   beta = matrix(beta.uni.b, nrow = d),
                   cov = cov.uni.b,
                   P = P.uni))
     } else if (constraint == 'summation') {
+      cov.uni.s <- G %*% cov.uni.b %*% t(G)
+      beta.uni.s <- G %*% as.vector(beta.uni.b)
       return(list(index = index.uni,
                   beta = matrix(beta.uni.s, nrow = d),
                   cov = cov.uni.s,
