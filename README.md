@@ -9,6 +9,10 @@ The goal of subsampling is to ...
 
 ## Meeting summary
 
+### Mar 6
+
+- **[1]** Since Var(\hat{\beta}_{plt} - \beta_{true})$ and Var(\hat{\beta}_{ssp} - \beta_{true})$ work well, we should double check the calculation of $Var(\hat{\beta}_{cmb} - \beta_{true})$. Simulation strategy: fix (n.plt+n.ssp) and then enlarge n.plt so that $Var(\hat{\beta}_{cmb} - \beta_{true})$ should be close to $Var(\hat{\beta}_{plt} - \beta_{true})$.
+
 ### Feb 21
 
 - **[1]** When calculating $Var(\hat{\beta}_{plt} - \beta_{true})$, I forget to add a term to correct its difference with $Var(\hat{\beta}_{plt} - \beta_{full})$. As a result, this term is missed in the calculation of $Var(\hat{\beta}_{cmb} - \beta_{true})$. Check this problem in softmax code and previous code.
