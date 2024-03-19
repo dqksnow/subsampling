@@ -138,6 +138,7 @@ glm.subsampling <- function(formula,
     ddL.plt <- plt.estimate.results$ddL.plt
     dL.sq.plt <- plt.estimate.results$dL.sq.plt
     ddL.plt.correction <- plt.estimate.results$ddL.plt.correction
+    Lambda.plt <- plt.estimate.results$Lambda.plt
     d.psi <- plt.estimate.results$d.psi
     index.plt <- plt.estimate.results$index.plt
 
@@ -181,6 +182,7 @@ glm.subsampling <- function(formula,
                                    ddL.ssp = ddL.ssp,
                                    dL.sq.plt = dL.sq.plt,
                                    dL.sq.ssp = dL.sq.ssp,
+                                   Lambda.plt = Lambda.plt,
                                    Lambda.ssp = Lambda.ssp,
                                    n.plt = n.plt,
                                    n.ssp = n.ssp,
@@ -206,7 +208,7 @@ glm.subsampling <- function(formula,
     index.uni <- random.index(N, n.uni)
     x.uni <- X[index.uni, ]
     y.uni = Y[index.uni]
-    results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni,  family = family)
+    results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni, family = family)
     beta.uni <- results.uni$beta
     linear.predictor.uni <- as.vector(x.uni %*% beta.uni)
     # pbeta.uni <- results.uni$pbeta
@@ -220,14 +222,15 @@ glm.subsampling <- function(formula,
                        y.uni,
                        weights = 1 / n.uni ^ 2,
                        family = family)
-    var.uni <- solve(ddL.uni) %*% dL.sq.plt %*% solve(ddL.uni)
+    var.uni.true <- solve(ddL.uni) %*% 
+      (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
 
     return(list(model.call = model.call,
                 index = index.uni,
                 beta = beta.uni,
-                var = var.uni,
+                var = var.uni.true,
                 N = N,
-                subsample.size.expect = n.ssp
+                subsample.size.expect = n.uni
                 )
            )
   }

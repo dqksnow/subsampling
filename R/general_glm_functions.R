@@ -125,8 +125,7 @@ calculate.offset <- function (X,
 ###############################################################################
 calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   if (criterion == "OptA"){
-    inv.test <- X %*% t(solve(ddL.plt.correction))
-    nm <- sqrt(rowSums(inv.test^2))
+    nm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
     nm <- abs(Y - d.psi) * nm # numerator
   } else if (criterion == "OptL"){
     nm <- sqrt(rowSums(X^2))
@@ -139,55 +138,54 @@ calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
 ###############################################################################
 pilot.estimate <- function(X, Y, n.plt, family){
   N <- nrow(X)
-  d <- ncol(X)
-  N1 <- sum(Y)
-  N0 <- N - N1
   if (family$family.name == 'binomial'){
-    ## half half sampling
-    halfhalf.index.results <- halfhalf.index(N, Y, n.plt)
-    index.plt <- halfhalf.index.results$index.plt
-    n.plt.0 <- halfhalf.index.results$n.plt.0
-    n.plt.1 <- halfhalf.index.results$n.plt.1
-    x.plt <- X[index.plt, ]
-    y.plt <- Y[index.plt]
-    p.plt <- c(rep(1 / (2 * N0), n.plt.0), rep(1 / (2 * N1), n.plt.1))
-    # unweighted likelihood estimation
-    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family)$beta
-    linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
-    ddL.plt <- ddL(linear.predictor.plt,
-                   x.plt,
-                   weights = 1 / n.plt,
-                   family = family)
-    dL.sq.plt <- dL.sq(linear.predictor.plt,
-                       x.plt,
-                       y.plt,
-                       weights = 1 / n.plt^2,
-                       family = family)
-    # correction
-    beta.plt[1] <- beta.plt[1] - log(N0 / N1)
-    d.psi <- family$d.psi(X %*% beta.plt)
-    ddL.plt.correction <- ddL(linear.predictor.plt,
-                              x.plt,
-                              weights = 1 / n.plt,
-                              family = family)
-  } else {
-    ## uniform sampling
-    index.plt <- random.index(N, n.plt)
+    N1 <- sum(Y)
+    N0 <- N - N1
+    ## This is case control sampling with rep.
+    ## We can also use uniform sampling with rep, half half sampling with rep
+    ## or poisson sampling.
+    N1 <- sum(Y)
+    N0 <- N - N1
+    p.plt <- ifelse(Y == 1, 1/(2*N1), 1/(2*N0))
+    index.plt <- random.index(N, n.plt, p = p.plt)
     x.plt <- X[index.plt,]
     y.plt <- Y[index.plt]
-    p.plt <- rep(1 / N, n.plt)
-    # unweighted log likelihood estimation
-    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family)$beta
+    p.plt <- p.plt[index.plt]
+    # weighted log likelihood estimation
+    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, weights = 1 / p.plt,
+                                  family = family)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
     ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt,
                                          x.plt,
-                                         weights = 1 / n.plt,
+                                         weights = (1 / (p.plt*N*n.plt)),
                                          family = family)
     dL.sq.plt <- dL.sq(linear.predictor.plt,
                        x.plt,
                        y.plt,
-                       weights = 1 / n.plt^2,
+                       weights = (1 / (p.plt*N*n.plt)^2),
                        family = family)
+    c <- n.plt / N
+    Lambda.plt <- c * dL.sq(linear.predictor.plt,
+                            x.plt,
+                            y.plt,
+                            weights = (1 / (p.plt*N*n.plt^2)),
+                            family = family)
+    d.psi <- family$d.psi(X %*% beta.plt)
+  } else {
+    ## This is uniform sampling with rep.
+    index.plt <- random.index(N, n.plt)
+    x.plt <- X[index.plt,]
+    y.plt <- Y[index.plt]
+    p.plt <- rep(1 / N, n.plt)
+    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family)$beta
+    linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
+    ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt, 
+                                         x.plt, weights = 1 / n.plt,
+                                         family = family)
+    dL.sq.plt <- dL.sq(linear.predictor.plt,
+                       x.plt, y.plt, weights = 1 / n.plt^2, family = family)
+    c <- n.plt / N
+    Lambda.plt <- c * dL.sq.plt
     d.psi <- family$d.psi(X %*% beta.plt)
   }
   return(list(p.plt = p.plt,
@@ -195,6 +193,7 @@ pilot.estimate <- function(X, Y, n.plt, family){
               ddL.plt = ddL.plt,
               dL.sq.plt = dL.sq.plt,
               ddL.plt.correction = ddL.plt.correction,
+              Lambda.plt = Lambda.plt,
               d.psi = d.psi,
               index.plt = index.plt
               )
@@ -283,7 +282,7 @@ subsample.estimate <- function(x.ssp,
       dL.sq.ssp <- dL.sq(linear.predictor.ssp,
                          x.ssp,
                          y.ssp,
-                         weights = w.ssp^2 / N^2,
+                         weights = w.ssp ^ 2 / N ^ 2,
                          family = family)
       Lambda.ssp <- 0 # holding
     } else if (sampling.method == "WithReplacement") {
@@ -343,6 +342,7 @@ combining <- function(ddL.plt,
                       ddL.ssp,
                       dL.sq.plt,
                       dL.sq.ssp,
+                      Lambda.plt,
                       Lambda.ssp,
                       n.plt,
                       n.ssp,
@@ -352,10 +352,12 @@ combining <- function(ddL.plt,
   ddL.ssp <- n.ssp * ddL.ssp
   dL.sq.plt <- n.plt ^ 2 * dL.sq.plt
   dL.sq.ssp <- n.ssp ^ 2 * dL.sq.ssp
+  Lambda.plt <- n.plt ^ 2 * Lambda.plt
   Lambda.ssp <- n.ssp ^ 2 * Lambda.ssp
   MNsolve <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- c(MNsolve %*% (ddL.plt %*% beta.plt + ddL.ssp %*% beta.ssp))
-  var.cmb.true <- MNsolve %*% (dL.sq.plt + dL.sq.ssp + Lambda.ssp) %*% MNsolve
+  var.cmb.true <- MNsolve %*% 
+    (dL.sq.plt + Lambda.plt + dL.sq.ssp + Lambda.ssp) %*% MNsolve
   return(list(beta.cmb = beta.cmb,
               var.cmb.true = var.cmb.true
               )

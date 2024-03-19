@@ -20,25 +20,23 @@ Softmax.subsampling(
 \arguments{
 \item{X}{An object of class "formula" which describes the model to be fitted.}
 
-\item{Y}{A data frame containing the variables in the model. Usually it contains a response vector and a design matrix.
-The binary response vector that takes the value of 0 or 1, where 1 means the event occurred.
-The design matrix contains predictor variables, where the first column is all 1's, representing the intercept term.}
+\item{Y}{A data frame containing the variables in the model. Usually it}
 
 \item{n.plt}{The pilot subsample size (the first-step subsample size).}
 
-\item{n.ssp}{The expected optimal subsample size (the second-step subsample size).}
+\item{n.ssp}{The expected optimal subsample size (the second-step subsample.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities, currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.}
+\item{criterion}{The criterion of optimal subsampling probabilities}
 
-\item{sampling.method}{The sampling method for drawing the optimal subsample, currently there are two choices \code{WithReplacement} and \code{Poisson}.}
+\item{sampling.method}{The sampling method for drawing the optimal subsample}
 
-\item{estimate.method}{The type of the maximum likelihood function used to calculate the optimal subsampling estimator, currently there are two choices \code{Weighted} and \code{LogOddsCorrection}.}
+\item{estimate.method}{The type of the maximum likelihood function used to}
 
 \item{constraint}{1}
 
-\item{alpha}{Mixture proportions of optimal subsampling probability and uniform subsampling probability .}
+\item{alpha}{Mixture proportions of optimal subsampling probability and}
 
-\item{b}{This parameter controls the upper threshold for optimal subsampling probabilities.}
+\item{b}{This parameter controls the upper threshold for optimal subsampling}
 }
 \value{
 \describe{
@@ -77,6 +75,12 @@ prob <- prob / rowSums(prob)
 Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 n.plt <- 500
 n.ssp <- 1000
-WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'WithReplacement',estimate.method = 'Weighted',constraint = 'baseline')
-Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'Poisson',estimate.method = 'Weighted',constraint = 'baseline')
+WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE', 
+sampling.method = 'WithReplacement',estimate.method = 'Weighted',
+constraint = 'baseline')
+Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',
+sampling.method = 'Poisson',estimate.method = 'Weighted', 
+constraint = 'baseline')
+softmax.summary(WithRep.MSPE)
+softmax.summary(Poi.MSPE)
 }

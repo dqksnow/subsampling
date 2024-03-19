@@ -8,7 +8,7 @@
 \alias{later}
 \title{Title: Add later}
 \description{
-More about what it does (maybe more than one line)
+This package implements various subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in large data sets.
 }
 \references{
 Add later

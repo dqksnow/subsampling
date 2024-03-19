@@ -79,7 +79,7 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
                                  d = d, scale = n.plt^2)
   c <- n.plt / N
   Lambda.plt <- c * softmax_dL_sq_cpp(X = x.plt, 
-                                      Y.matrix = Y.matrix[index.plt, ],
+                                      Y_matrix = Y.matrix[index.plt, ],
                                       P = P1.plt[, -1], p = rep(1, n.plt),
                                       K = K, d = d, scale = n.plt^2)
   cov.plt <- solve(ddL.plt) %*% (dL.sq.plt + Lambda.plt) %*% solve(ddL.plt)

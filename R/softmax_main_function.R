@@ -45,8 +45,14 @@
 #' Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 #' n.plt <- 500
 #' n.ssp <- 1000
-#' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE', sampling.method = 'WithReplacement',estimate.method = 'Weighted',constraint = 'baseline')
-#' Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',sampling.method = 'Poisson',estimate.method = 'Weighted',constraint = 'baseline')
+#' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE', 
+#' sampling.method = 'WithReplacement',estimate.method = 'Weighted',
+#' constraint = 'baseline')
+#' Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp,criterion = 'MSPE',
+#' sampling.method = 'Poisson',estimate.method = 'Weighted', 
+#' constraint = 'baseline')
+#' softmax.summary(WithRep.MSPE)
+#' softmax.summary(Poi.MSPE)
 
 Softmax.subsampling <-
   function(X, Y, n.plt, n.ssp,
@@ -60,11 +66,11 @@ Softmax.subsampling <-
   # family <- match.arg(family)
 
   # mf <- model.frame(formula, data)
-  # Extract the response and predictor variables from the model frame
   # Y <- model.response(mf, "any")
   # if (is.character(Y) && length(unique(Y)) == 2) {
   #   levels <- unique(Y)
-  #   Y <- as.integer(Y == levels[2])  # Assuming levels[2] is the 'success' category
+  #   Y <- as.integer(Y == levels[2])  
+  # Assuming levels[2] is the 'success' category
   # }
   # X <- model.matrix(formula, mf)
   # colnames(X)[1] <- "intercept"
