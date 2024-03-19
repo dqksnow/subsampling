@@ -8,3 +8,4 @@ src/*.dll
 .DS_Store
 *.Rcheck/
 *.tar.gz
+*.Rproj
