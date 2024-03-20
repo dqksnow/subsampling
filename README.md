@@ -7,11 +7,17 @@
 
 The goal of subsampling is to ...
 
+### Mar 20
+
+- **[1]** Fix (n.plt+n.ssp) and then enlarge n.plt so that $Var(\hat{\beta}_{cmb} - \beta_{true})$ should be close to $Var(\hat{\beta}_{plt} - \beta_{true})$. The simulation results show that it meets expectation except when n.plt and n.ssp are both large. Try to use degree of freedom to correct.
+
+- **[2]** Implement MSCLE. First implement OptL.
+
 ## Meeting summary
 
 ### Mar 6
 
-- **[1]** Since Var(\hat{\beta}_{plt} - \beta_{true})$ and Var(\hat{\beta}_{ssp} - \beta_{true})$ work well, we should double check the calculation of $Var(\hat{\beta}_{cmb} - \beta_{true})$. Simulation strategy: fix (n.plt+n.ssp) and then enlarge n.plt so that $Var(\hat{\beta}_{cmb} - \beta_{true})$ should be close to $Var(\hat{\beta}_{plt} - \beta_{true})$.
+- **[1]** Since $Var(\hat{\beta}_{plt} - \beta_{true})$ and $Var(\hat{\beta}_{ssp} - \beta_{true})$ work well, we should double check the calculation of $Var(\hat{\beta}_{cmb} - \beta_{true})$. Simulation strategy: fix (n.plt+n.ssp) and then enlarge n.plt so that $Var(\hat{\beta}_{cmb} - \beta_{true})$ should be close to $Var(\hat{\beta}_{plt} - \beta_{true})$.
 
 ### Feb 21
 
