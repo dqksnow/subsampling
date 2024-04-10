@@ -1,10 +1,18 @@
 * Meeting summary
 
+** Apr 10
+*** Discussion Points
+- Check whether the results from 'nnet:multinom' match our 'getMSLE'.
+- When calculate the offset term log(pi), we should use exact sampling
+  probability pmin(pi, 1) rather than pi. In this case, we can't use
+  the specific form of Lopt anymore. We should write a new function to
+  calculate this offset term.
+   
 ** Mar 27
 *** Discussion Points
-- When implement MSCLE, I find that 'nnet:multinom' may not use the offset term
-   as we want. I will try to figure it out and write getMSLE by hand as a
-   comparison.
+- When implement MSCLE, I find that 'nnet:multinom' may not use the offset
+  term as we want. I will try to figure it out and write getMSLE by hand as
+   a comparison.
 
 
 ** Mar 20
