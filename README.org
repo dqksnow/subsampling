@@ -1,5 +1,12 @@
 * Meeting summary
 
+** Apr 24
+*** Discussion Points
+- Since equation (65) in MSCLE paper is the same as equation (5) in
+  OSMAC paper, we can just use K column matrix and premultiply L
+  instead of using (K+1) column matrix in the code.  OptA and OptP
+  should also be implemented in this way.
+
 ** Apr 10
 *** Discussion Points
 - Check whether the results from 'nnet:multinom' match our 'getMSLE'.
