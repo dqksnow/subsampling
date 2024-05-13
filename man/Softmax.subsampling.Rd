@@ -11,7 +11,7 @@ Softmax.subsampling(
   n.ssp,
   criterion = c("OptL", "OptA", "MSPE"),
   sampling.method = c("Poisson", "WithReplacement"),
-  estimate.method = c("Weighted", "Uniform"),
+  estimate.method = c("Weighted", "MSCLE", "Uniform"),
   constraint = c("baseline", "summation"),
   alpha = 0,
   b = 2

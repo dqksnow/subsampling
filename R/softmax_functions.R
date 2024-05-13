@@ -1,14 +1,24 @@
 ###############################################################################
-softmax.coef.estimate <- function(X, y, weights = NULL){
-  ifelse(is.null(weights),
-         fit <- nnet::multinom(y ~ X - 1),
-         fit <- nnet::multinom(y ~ X - 1, weights = weights))
+softmax.coef.estimate <- function(X, y, weights = NULL, offset = NULL){
+  if (is.null(offset)) {
+    ifelse(is.null(weights),
+           fit <- nnet::multinom(y ~ X - 1, trace = FALSE),
+           fit <- nnet::multinom(y ~ X - 1, weights = weights, trace = FALSE))
+  } else {
+    fit <- nnet::multinom(y ~ X + offset(offset) - 1, trace = FALSE)
+  }
   return(list(beta = t(coef(fit)), # return a d*K matrix
               P1 = fit$fitted.values)) # return a N*(K+1) matrix
 }
 ###############################################################################
-pbeta.multi <- function(X, beta){ # beta is K*d vector
-  exp(X %*% beta - matrixStats::rowLogSumExps(cbind(0, X %*% beta)))
+pbeta.multi <- function(X, beta, offset = NULL){ # beta is K*d vector
+  if (is.null(offset)) {
+    P1 <- exp(cbind(0, X %*% beta)) # K+1 class
+    P1 <- P1 / rowSums(P1)
+  } else {
+    P1 <- exp(cbind(0, X %*% beta) + offset)
+    P1 <- P1 / rowSums(P1)
+  }
 }
 ###############################################################################
 softmax.ddL <- function(X, P, p, K, d, scale){
@@ -90,12 +100,12 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
   } else {
     Omega.plt <- NA
   }
-  P.plt <- pbeta.multi(X, beta.plt) # N*K
+  P1.plt.N <- pbeta.multi(X, beta.plt) # N*K
   return(
     list(
       p.plt = p.plt,
       beta.plt = beta.plt,
-      P.plt = P.plt,
+      P1.plt = P1.plt.N,
       ddL.plt = ddL.plt,
       dL.sq.plt = dL.sq.plt,
       index.plt = index.plt,
@@ -106,8 +116,8 @@ softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
   )
 }
 ###############################################################################
-softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G,
- criterion, constraint){
+softmax.calculate.nm <- function(ddL.plt, Omega.plt, sixi, G,
+                                 criterion, constraint){
   if (criterion == "OptA") {
     if (constraint == "baseline"){
       nm <- sqrt(rowSums((sixi %*% solve(ddL.plt))^2))
@@ -119,8 +129,7 @@ softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G,
     if (constraint == "baseline"){
       nm <- sqrt(rowSums((sixi)^2))
     } else if (constraint == "summation"){
-      tempG <- t(G %*% solve(t(G) %*% G))
-      temp <- sixi %*% tempG
+      temp <- sixi %*% t(G %*% solve(t(G) %*% G))
       nm <- sqrt(rowSums(temp^2))
     }
   } else if (criterion == "MSPE") {
@@ -130,12 +139,49 @@ softmax.calculate.nm <- function(X, Y, ddL.plt, Omega.plt, sixi, G,
   return(nm)
 }
 ###############################################################################
-softmax.subsampling <- function(X, Y, Y.matrix, G, n.ssp, N, K, d, alpha,
+###############################################################################
+softmax.calculate.offset <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
+                                          criterion, alpha, N){
+  dim <- dim(P.ssp)
+  n.ssp <- dim[1]
+  K <- dim[2]
+  d <- ncol(X.ssp)
+  offset <- matrix(NA, nrow = n.ssp, ncol = (K+1))
+  
+  for (k in 1:(K+1)) {
+    if (k == 1) {
+      P.temp <- cbind(rowSums(P.ssp), P.ssp)
+      sixi <- P.temp[, rep(seq(K), each = d)] * X.ssp[, rep(seq(d), K)]
+    } else {
+      P.temp <- - P.ssp
+      P.temp[, (k-1)] <- 1 + P.temp[, (k-1)]
+      sixi <- P.temp[, rep(seq(K), each = d)] * X.ssp[, rep(seq(d), K)]
+    }
+    
+    if (criterion == "OptA") {
+      temp <- sixi %*% solve(ddL.plt) %*% t(G)
+      nm <- sqrt(rowSums(temp^2))
+    } else if (criterion == "OptL"){
+      temp <- sixi %*% t(G %*% solve(t(G) %*% G))
+      nm <- sqrt(rowSums(temp^2))
+    } else if (criterion == "MSPE") {
+      temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)
+      nm <- sqrt(rowSums(temp^2))
+    }
+    H <- quantile(nm, 1-n.ssp/(2*N)) # threshold
+    nm[nm > H] <- H
+    dm <- sum(nm)
+    offset[, k] <- log(pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1))
+  }
+  return(offset)
+}
+###############################################################################
+softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
                                 b, criterion, estimate.method, sampling.method,
-                                constraint, p.plt, ddL.plt, P.plt, Omega.plt,
+                                constraint, p.plt, ddL.plt, P1.plt, Omega.plt,
                                 index.plt) {
-  sixi <- (Y.matrix-P.plt)[, rep(seq(K), each = d)] * X[,rep(seq(d), K)]
-  nm <- softmax.calculate.nm(X, Y, ddL.plt, Omega.plt, sixi,
+  sixi <- (Y.matrix-P1.plt[, -1])[, rep(seq(K), each = d)] * X[,rep(seq(d), K)]
+  nm <- softmax.calculate.nm(ddL.plt, Omega.plt, sixi,
                              G, criterion, constraint)
   if (sampling.method == "WithReplacement"){
     dm <- sum(nm) # denominator
@@ -145,40 +191,75 @@ softmax.subsampling <- function(X, Y, Y.matrix, G, n.ssp, N, K, d, alpha,
     H <- quantile(nm[index.plt], 1-n.ssp/(b*N)) # threshold
     nm[nm > H] <- H
     dm <- (sum(nm[index.plt] /p.plt) / n.plt) * (n.plt/(n.plt - K*d))
-    p.ssp <- n.ssp * ((1 - alpha) * nm / dm + alpha / N)
+    p.ssp <- pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1)
     index.ssp <- poisson.index(N, p.ssp)
+    # calculate offset
+    if (estimate.method == 'MSCLE') {
+      offset <- softmax.calculate.offset(P1.plt[index.ssp, -1],
+                                              X[index.ssp, ],
+                                              G = G,
+                                              ddL.plt = ddL.plt,
+                                              Omega.plt = Omega.plt,
+                                              criterion = criterion,
+                                              alpha = alpha,
+                                              N = N)
+    } else if (estimate.method == 'Weighted') {
+      offset <- NA
+    }
   }
   return(list(index.ssp = index.ssp,
-              p.ssp = p.ssp))
+              p.ssp = p.ssp,
+              offset = offset))
 }
 ###############################################################################
 softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
-                                       index.ssp, p.ssp, beta.plt,
+                                       index.ssp, p.ssp, offset, beta.plt,
                                        sampling.method, estimate.method,
                                        N, K, d) {
-  results <- softmax.coef.estimate(x.ssp, y.ssp, weights = 1 / p.ssp)
-  beta.ssp <- results$beta
-  P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
-  if (sampling.method == "WithReplacement") {
-    ddL.ssp <- softmax_ddL_cpp(X = x.ssp, P = P.ssp, p = p.ssp,
-                               K = K, d = d, scale = N*n.ssp)
-    dL.sq.ssp <- softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
-                                   P = P.ssp, p = p.ssp,
-                                   K = K, d = d, scale = (N^2)*(n.ssp^2))
-    c <- n.ssp / N
-    Lambda.ssp <- c * softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
-                                        P = P.ssp, p = sqrt(p.ssp),
-                                        K = K, d = d, scale = N*(n.ssp^2))
-  } else if (sampling.method == 'Poisson') {
-    ddL.ssp <- softmax_ddL_cpp(X = x.ssp, P = P.ssp, p = p.ssp,
-                               K = K, d = d, scale = N)
-    dL.sq.ssp <- softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
-                                   P = P.ssp, p = p.ssp,
-                                   K = K, d = d, scale = N^2)
-    Lambda.ssp <- 0
+  if (estimate.method == "Weighted"){
+    results <- softmax.coef.estimate(x.ssp, y.ssp, weights = 1 / p.ssp)
+    beta.ssp <- results$beta
+    P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
+    if (sampling.method == "WithReplacement") {
+      ddL.ssp <- softmax_ddL_cpp(X = x.ssp, P = P.ssp, p = p.ssp,
+                                 K = K, d = d, scale = N*n.ssp)
+      dL.sq.ssp <- softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
+                                     P = P.ssp, p = p.ssp,
+                                     K = K, d = d, scale = (N^2)*n.ssp)
+      c <- n.ssp / N
+      Lambda.ssp <- c * softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
+                                          P = P.ssp, p = sqrt(p.ssp),
+                                          K = K, d = d, scale = N*n.ssp)
+    } else if (sampling.method == 'Poisson') {
+      ddL.ssp <- softmax_ddL_cpp(X = x.ssp, P = P.ssp, p = p.ssp,
+                                 K = K, d = d, scale = N)
+      dL.sq.ssp <- softmax_dL_sq_cpp(X = x.ssp, Y_matrix = y.matrix.ssp,
+                                     P = P.ssp, p = p.ssp,
+                                     K = K, d = d, scale = N^2 / n.ssp)
+      Lambda.ssp <- 0
+    }
+  } else if (estimate.method == 'MSCLE'){
+      results <- softmax.coef.estimate(x.ssp, y.ssp, offset = offset)
+      beta.ssp <- results$beta
+      P.ssp <- pbeta.multi(x.ssp, beta.ssp, offset)[, -1]
+      # P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
+      if (sampling.method == "WithReplacement") {
+        stop("The 'MSCLE' estimate method + 'WithReplacement' sampling method
+           has not been implemented yet.")
+      } else if (sampling.method == 'Poisson') {
+        ddL.ssp <- softmax.ddL(X = x.ssp, P = P.ssp, p = 1,
+                               K = K, d = d, scale = n.ssp)
+        dL.sq.ssp <- softmax.dL.sq(X = x.ssp, Y.matrix = y.matrix.ssp,
+                                   P = P.ssp, p = 1,
+                                   K = K, d = d, scale = n.ssp)
+        Lambda.ssp <- 0
+      }
+
   }
-  cov.ssp <- solve(ddL.ssp) %*% (dL.sq.ssp + Lambda.ssp) %*% solve(ddL.ssp)
+  cov.ssp <- solve(ddL.ssp) %*% (dL.sq.ssp + Lambda.ssp) %*% solve(ddL.ssp) * 
+    (1 / n.ssp)
   return(list(beta.ssp = beta.ssp,
+              P.ssp = P.ssp,
               ddL.ssp = ddL.ssp,
               dL.sq.ssp = dL.sq.ssp,
               Lambda.ssp = Lambda.ssp,
@@ -191,10 +272,10 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
                               beta.ssp, X, N, K, d) {
   ddL.plt <- n.plt * ddL.plt
   ddL.ssp <- n.ssp * ddL.ssp
-  dL.sq.plt <- n.plt^2 * dL.sq.plt
-  dL.sq.ssp <- n.ssp^2 * dL.sq.ssp
-  Lambda.plt <- n.plt^2 * Lambda.plt
-  Lambda.ssp <- n.ssp^2 * Lambda.ssp
+  dL.sq.plt <- n.plt * dL.sq.plt
+  dL.sq.ssp <- n.ssp * dL.sq.ssp
+  Lambda.plt <- n.plt * Lambda.plt
+  Lambda.ssp <- n.ssp * Lambda.ssp
 
   ddL.inv <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- ddL.inv %*% (ddL.plt %*% c(beta.plt) + ddL.ssp %*% c(beta.ssp))
@@ -203,8 +284,7 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
               ddL.inv
 
   P.cmb <- matrix(NA, nrow = N, ncol = K+1)
-  P.cmb[, -1] <- pbeta.multi(X, beta.cmb)
-  P.cmb[, 1] <- 1 - rowSums(P.cmb[, -1])
+  P.cmb <- pbeta.multi(X, beta.cmb)
 
   return(list(beta.cmb = beta.cmb,
               cov.cmb = cov.cmb,
