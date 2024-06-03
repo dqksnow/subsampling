@@ -1,5 +1,11 @@
 * Meeting summary
 
+** May 29
+*** Discussion Points
+- For quantile regression, since the total subsample size is n.ssp*B, we should
+  give a warning if the user assigned subsample size is too large.
+- Try poisson sampling.
+
 ** Apr 24
 *** Discussion Points
 - Since equation (65) in MSCLE paper is the same as equation (5) in
