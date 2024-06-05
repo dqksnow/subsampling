@@ -57,7 +57,8 @@ quantile.ssp.estimation <- function(X,
   if (estimate.method == "Uniform"){
     p.ssp <- rep(1, N)
   } else if (estimate.method %in% c("Weighted")) {
-    p.ssp <- sqrt((tau - Ie.full)^2 * rowSums(X^2)) # Lopt
+    # p.ssp <- sqrt((tau - Ie.full)^2 * rowSums(X^2)) # slower
+    p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(X^2))
     p.ssp <- p.ssp / sum(p.ssp)
   }
   

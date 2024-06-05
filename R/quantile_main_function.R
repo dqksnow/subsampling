@@ -75,6 +75,12 @@ quantile.subsampling <- function(formula,
   colnames(X)[1] <- "intercept"
   N <- nrow(X)
   d <- ncol(X)
+  
+  if (n.ssp * B > 0.1 * N) {
+    warning("The total subsample size n.ssp*B exceeds the recommended
+    value (10% of full sample size nrow(X)).")
+  }
+  
   if (estimate.method %in% c("Weighted")) {
     ### pilot step ###
     plt.results <- quantile.plt.estimation(X, Y, tau, N, n.plt)
@@ -124,18 +130,6 @@ quantile.subsampling <- function(formula,
                 index.plt = NA,
                 index.uni = index.uni,
                 uniduqe.index.uni <- unique(as.vector(index.uni))
-                )
-           )
-    
-    n.uni <- n.plt + n.ssp
-    index.uni <- sample(N, n.uni)
-    x.uni <- X[index.uni, ]
-    y.uni = Y[index.uni]
-    results <- quantreg::rq(y.uni ~ x.uni - 1, tau=tau)
-    beta.uni <- results$coefficients
-    return(list(model.call = model.call,
-                index.uni = index.uni,
-                beta.uni = beta.uni
                 )
            )
   }
