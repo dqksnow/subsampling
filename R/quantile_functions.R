@@ -1,17 +1,11 @@
 ###############################################################################
 quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
-  index.plt <- sample(N, n.plt)
-  p.plt <- rep(1 / N, n.plt) # plt sampling probability
-  x.plt <- X[index.plt,]
-  y.plt <- Y[index.plt]
-  results <- quantreg::rq(y.plt ~ x.plt - 1, tau=tau)
-  # results <- quantreg::rq(y.plt ~ x.plt - 1, tau=tau, weights = 1/p.plt)
+  index.plt <- sample(N, n.plt, replace = TRUE)
+  results <- quantreg::rq(Y[index.plt] ~ X[index.plt,] - 1, tau=tau)
   beta.plt <- results$coefficients
-  Ie.full <- (results$residuals < 0)
-  msg <- results$message
+  Ie.full <- (c(Y - X %*% beta.plt) < 0)
   return(
     list(
-      # p.plt = p.plt,
       beta.plt = beta.plt,
       Ie.full = Ie.full,
       index.plt = index.plt
@@ -19,28 +13,21 @@ quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
   )
 }
 ###############################################################################
-quantile.iter.sampling.par <- function(j) { #this is used for parLapply
-  index.ssp <- sample(1:N, n.ssp, replace = TRUE, prob = p.ssp)
-  x.ssp <- X[index.ssp, ]
-  y.ssp <- Y[index.ssp]
-  ## currently we only consider Lopt and weighted likelihood
-  fit <- quantreg::rq(y.ssp ~ x.ssp - 1, tau=tau, weights=1 / p.ssp[index.ssp],
-                      method="pfn")
-  return(list(beta.ssp = fit$coefficients,
-              index.ssp <- index.ssp
-  ))
-}
-###############################################################################
-quantile.iter.sampling <- function(X, Y, N, n.ssp, p.ssp, tau) {
-  index.ssp <- sample(1:N, n.ssp, replace = TRUE, prob = p.ssp)
-  x.ssp <- X[index.ssp, ]
-  y.ssp <- Y[index.ssp]
-  ## currently we only consider Lopt and weighted likelihood
-  fit <- quantreg::rq(y.ssp ~ x.ssp - 1, tau=tau, weights=1 / p.ssp[index.ssp],
-                      method="pfn")
-  return(list(beta.ssp = fit$coefficients,
-              index.ssp <- index.ssp
-  ))
+quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
+  if (sampling.method == "Poisson"){
+    if (criterion == "Uniform") {
+      index.ssp <- which(runif(N) <= n.ssp/N)
+    } else {
+      index.ssp <- which(runif(N) <= p.ssp)
+    }
+  } else if (sampling.method == "WithReplacement") {
+    if (criterion == "Uniform") {
+      index.ssp <- sample(1:N, n.ssp, replace = TRUE)
+    } else {
+      index.ssp <- sample(1:N, n.ssp, replace = TRUE, prob = p.ssp)
+    }
+  }
+  return(index.ssp)
 }
 ###############################################################################
 quantile.ssp.estimation <- function(X,
@@ -48,55 +35,116 @@ quantile.ssp.estimation <- function(X,
                                     tau,
                                     n.ssp,
                                     B,
+                                    boot,
                                     Ie.full = NA,
-                                    estimate.method,
-                                    parallel) {
+                                    index.plt,
+                                    criterion,
+                                    sampling.method
+                                    ) {
   N <- nrow(X)
   p <- ncol(X)
   
-  if (estimate.method == "Uniform"){
-    p.ssp <- rep(1, N)
-  } else if (estimate.method %in% c("Weighted")) {
-    # p.ssp <- sqrt((tau - Ie.full)^2 * rowSums(X^2)) # slower
+  if (boot == FALSE | B == 1){
+    n.ssp <- n.ssp * B
+    B <- 1
+    boot <- FALSE
+  }
+  
+  if (criterion == "Uniform"){
+    p.ssp <- NA
+  } else if (criterion %in% c("OptL")) {
     p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(X^2))
-    p.ssp <- p.ssp / sum(p.ssp)
-  }
-  
-  Betas.ssp <- matrix(NA, nrow = p, ncol = B)
-  Index.ssp <- matrix(NA, nrow = n.ssp, ncol = B)
-  
-  if (parallel == TRUE) {
-    cl <- parallel::makeCluster(detectCores()) # how many CPU cores are called
-    parallel::clusterExport(cl=cl,
-                  varlist=c('N', 'n.ssp', 'p.ssp', 'X', 'Y', 'tau'),
-                  envir=environment())
-    results <- parallel::parLapply(cl, 1:B, quantile.iter.sampling.par)
-    parallel::stopCluster(cl)
-    for(i in 1:B){
-      Betas.ssp[, i] <- results[[i]][[1]]
-      Index.ssp[, i] <- results[[i]][[2]]
-    }
-  } else if (parallel == FALSE) {
-    for(i in 1:B){
-      index.ssp <- sample(1:N, n.ssp, replace = TRUE, prob = p.ssp)
-      fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1,
-                          tau=tau, weights=1 / p.ssp[index.ssp])
-      Betas.ssp[, i] <- fit$coefficients
-      Index.ssp[, i] <- index.ssp
+    if (sampling.method == "Poisson"){
+      dm <- N * sum(p.ssp[index.plt]) / n.plt
+      p.ssp <- n.ssp * p.ssp / dm
+    } else if (sampling.method == "WithReplacement") {
+      p.ssp <- p.ssp / sum(p.ssp)
     }
   }
   
-  beta.ssp.mean <- rowMeans(Betas.ssp)
-  beta.ssp.centered <- Betas.ssp - beta.ssp.mean
-  mean.outer.prod <- beta.ssp.centered %*% t(beta.ssp.centered)
-  r.ef <- ifelse(estimate.method == "Uniform",
-                 1 - (n.ssp*B-1)/N/2,
-                 1 - sum(p.ssp^2) * (n.ssp*B - 1) / 2) # could be negative
-  est.cov.ssp <- mean.outer.prod / (r.ef * B*(B-1))
-  return(list(Betas.ssp = Betas.ssp,
-              beta.ssp = beta.ssp.mean,
-              est.cov.ssp = est.cov.ssp,
-              index.ssp = Index.ssp
-  ))
+  if (boot == TRUE) {
+    Betas.ssp <- matrix(NA, nrow = p, ncol = B)
+    Index.ssp <- list()
+    if (sampling.method == "Poisson"){
+      if (criterion == "Uniform") {
+        index.ssp <- which(runif(N) <= B*n.ssp/N)
+      } else {
+        index.ssp <- which(runif(N) <= B*p.ssp)
+      }
+      if (length(index.ssp) %% B != 0) { # handle remainders
+        index.ssp <- index.ssp[-(1:(length(index.ssp) %% B))]
+      }
+      each.ssp.length <- length(index.ssp) / B
+      each.ssp <- split(index.ssp, rep(1:B, each = each.ssp.length)) # list
+      for(i in 1:B){
+        if (criterion == "Uniform") {
+          fit <- quantreg::rq(Y[each.ssp[[i]]] ~ X[each.ssp[[i]], ] - 1,
+                              tau=tau)
+        } else {
+          fit <- quantreg::rq(Y[each.ssp[[i]]] ~ X[each.ssp[[i]], ] - 1,
+                              tau=tau,
+                              weights=1 / pmin(p.ssp[each.ssp[[i]]], 1))
+        }
+        Betas.ssp[, i] <- fit$coefficients
+        Index.ssp[[i]] <- each.ssp[[i]]
+      }
+    } else if (sampling.method == "WithReplacement") {
+      for(i in 1:B){
+        index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
+                                       sampling.method, criterion)
+        if (criterion == "Uniform") {
+          fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau)
+        } else {
+          fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau,
+                              weights=1 / pmin(p.ssp[index.ssp], 1))
+        }
+        Betas.ssp[, i] <- fit$coefficients
+        Index.ssp[[i]] <- index.ssp
+      }
+    }
+    beta.ssp.mean <- rowMeans(Betas.ssp)
+  } else if (boot == FALSE) {
+    index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
+                                   sampling.method, criterion)
+    if (criterion == "Uniform") {
+      fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau)
+    } else {
+      fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau,
+                          weights=1 / pmin(p.ssp[index.ssp], 1))
+    }
+    beta.ssp <- fit$coefficients
+  }
+  
+  ############ return results
+  if (boot == TRUE) {
+    beta.ssp.centered <- Betas.ssp - beta.ssp.mean
+    mean.outer.prod <- beta.ssp.centered %*% t(beta.ssp.centered)
+    r.ef <- ifelse(criterion == "Uniform",
+                   1 - (n.ssp*B-1)/N/2,
+                   1 - (sum(p.ssp^2) / n.ssp^2) * (n.ssp*B - 1) / 2)
+    if(sampling.method == "Poisson"){
+      est.cov.ssp <- mean.outer.prod / (B*(B-1))
+    } else {
+      r.ef <- ifelse(criterion == "Uniform",
+                     1 - (n.ssp*B-1)/N/2,
+                     1 - (sum(p.ssp^2) / n.ssp^2) * (n.ssp*B - 1) / 2)
+      est.cov.ssp <- mean.outer.prod / (r.ef * B*(B-1))
+    }
+    return(list(Betas.ssp = Betas.ssp,
+                beta.ssp = beta.ssp.mean,
+                est.cov.ssp = est.cov.ssp,
+                index.ssp = Index.ssp
+    )
+    )
+  } else if (boot == FALSE) {
+    return(list(Betas.ssp = NA,
+                beta.ssp = beta.ssp,
+                est.cov.ssp = NA,
+                index.ssp = index.ssp
+    )
+    )
+  }
+  
+
 }
 ###############################################################################

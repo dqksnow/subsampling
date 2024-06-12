@@ -10,11 +10,11 @@
   tau,
   n.plt,
   n.ssp,
-  B,
-  criterion = c("OptL"),
-  sampling.method = c("WithReplacement"),
-  estimate.method = c("Weighted", "Uniform"),
-  parallel = parallel
+  B = 10,
+  boot = TRUE,
+  criterion = c("OptL", "Uniform"),
+  sampling.method = c("WithReplacement", "Poisson"),
+  likelihood = c("Weighted")
 )
 }
 \arguments{
@@ -66,7 +66,7 @@ Additional details... briefly introduce the idea.
 set.seed(1)
 N <- 1e6
 B <- 10
-tau <- 0.5
+tau <- 0.75
 beta.true <- rep(1, 7)
 d <- length(beta.true) - 1
 corr  <- 0.5
@@ -81,9 +81,9 @@ formula <- Y ~ X
 n.plt <- 1000
 n.ssp <- 1000
 optL.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
-n.ssp = n.ssp,B,criterion = 'OptL',sampling.method = 'WithReplacement',
-estimate.method = 'Weighted',parallel = F)
+n.ssp = n.ssp,B,boot = TRUE,criterion = 'OptL',
+sampling.method = 'WithReplacement',likelihood = 'Weighted')
 uni.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
-n.ssp = n.ssp,B,sampling.method = 'WithReplacement',
-estimate.method = 'Uniform',parallel = F)
+n.ssp = n.ssp,B,boot = TRUE,criterion = 'Uniform',
+sampling.method = 'WithReplacement', likelihood = 'Weighted')
 }

@@ -36,7 +36,7 @@
 #' set.seed(1)
 #' N <- 1e6
 #' B <- 10
-#' tau <- 0.5
+#' tau <- 0.75
 #' beta.true <- rep(1, 7)
 #' d <- length(beta.true) - 1
 #' corr  <- 0.5
@@ -51,22 +51,24 @@
 #' n.plt <- 1000
 #' n.ssp <- 1000
 #' optL.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,criterion = 'OptL',sampling.method = 'WithReplacement',
-#' estimate.method = 'Weighted',parallel = F)
+#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'OptL',
+#' sampling.method = 'WithReplacement',likelihood = 'Weighted')
 #' uni.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,sampling.method = 'WithReplacement',
-#' estimate.method = 'Uniform',parallel = F)
+#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'Uniform',
+#' sampling.method = 'WithReplacement', likelihood = 'Weighted')
 
 quantile.subsampling <- function(formula,
                                  data,
                                  tau,
                                  n.plt,
                                  n.ssp,
-                                 B,
-                                 criterion = c('OptL'),
-                                 sampling.method = c('WithReplacement'),
-                                 estimate.method = c('Weighted', 'Uniform'),
-                                 parallel = parallel) {
+                                 B = 10,
+                                 boot = TRUE,
+                                 criterion = c('OptL', 'Uniform'),
+                                 sampling.method = c('WithReplacement',
+                                                     'Poisson'),
+                                 likelihood = c('Weighted')
+                                 ) {
   
   model.call <- match.call()
   mf <- model.frame(formula, data)
@@ -81,7 +83,7 @@ quantile.subsampling <- function(formula,
     value (10% of full sample size nrow(X)).")
   }
   
-  if (estimate.method %in% c("Weighted")) {
+  if (criterion %in% c("OptL")) {
     ### pilot step ###
     plt.results <- quantile.plt.estimation(X, Y, tau, N, n.plt)
     beta.plt <- plt.results$beta.plt
@@ -92,10 +94,13 @@ quantile.subsampling <- function(formula,
                                            Y = Y,
                                            n.ssp = n.ssp,
                                            B = B,
+                                           boot = boot,
                                            tau = tau,
                                            Ie.full = Ie.full,
-                                           estimate.method = estimate.method,
-                                           parallel = parallel)
+                                           index.plt = index.plt,
+                                           criterion = criterion,
+                                           sampling.method = sampling.method
+                                           )
     Betas.ssp <- ssp.results$Betas.ssp
     beta.ssp <- ssp.results$beta.ssp
     est.cov.ssp <- ssp.results$est.cov.ssp
@@ -105,20 +110,21 @@ quantile.subsampling <- function(formula,
                 beta.ssp = beta.ssp,
                 est.cov.ssp = est.cov.ssp,
                 index.plt = index.plt,
-                index.ssp = index.ssp,
-                uniduqe.index.ssp <- unique(as.vector(index.ssp))
-    )
-    )
-  } else if (estimate.method == "Uniform"){
+                index.ssp = index.ssp
+                )
+           )
+  } else if (criterion == "Uniform"){
     ### subsampling and boot step ###
     uni.results <- quantile.ssp.estimation(X = X,
                                            Y = Y,
                                            n.ssp = n.ssp,
                                            B = B,
+                                           boot = boot,
                                            tau = tau,
                                            Ie.full = NA,
-                                           estimate.method = estimate.method,
-                                           parallel = parallel)
+                                           criterion = criterion,
+                                           sampling.method = sampling.method
+                                           )
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$est.cov.ssp
@@ -127,9 +133,7 @@ quantile.subsampling <- function(formula,
                 beta.plt = NA,
                 beta.uni = beta.uni,
                 est.cov.uni = est.cov.uni,
-                index.plt = NA,
-                index.uni = index.uni,
-                uniduqe.index.uni <- unique(as.vector(index.uni))
+                index.uni = index.uni
                 )
            )
   }
