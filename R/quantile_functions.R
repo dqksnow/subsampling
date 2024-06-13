@@ -71,11 +71,14 @@ quantile.ssp.estimation <- function(X,
       } else {
         index.ssp <- which(runif(N) <= B*p.ssp)
       }
-      if (length(index.ssp) %% B != 0) { # handle remainders
-        index.ssp <- index.ssp[-(1:(length(index.ssp) %% B))]
+      each.ssp.length <- length(index.ssp) %/% B
+      remainder <- length(index.ssp) %% B
+      if (remainder > 0) { # handle remainders
+        each.ssp <- split(index.ssp, c(rep(1:B, each = each.ssp.length),
+                                       rep(1:remainder, each = 1)))
+      } else {
+        each.ssp <- split(index.ssp, rep(1:B, each = each.ssp.length))
       }
-      each.ssp.length <- length(index.ssp) / B
-      each.ssp <- split(index.ssp, rep(1:B, each = each.ssp.length)) # list
       for(i in 1:B){
         if (criterion == "Uniform") {
           fit <- quantreg::rq(Y[each.ssp[[i]]] ~ X[each.ssp[[i]], ] - 1,
