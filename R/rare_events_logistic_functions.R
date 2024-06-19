@@ -7,7 +7,7 @@ rare.coef.estimate <- function(X,
   data <- as.data.frame(cbind(Y, X))
   formula <- as.formula(paste(colnames(data)[1], "~",
                               paste(colnames(data)[-1], collapse = "+"), "-1"))
-  # use '-1' to avoid adding intercept column again.
+  # #use '-1' to avoid adding intercept column again.
   design <- survey::svydesign(ids =  ~ 1,
                               weights =  ~ weights,
                               data = data)
@@ -23,10 +23,10 @@ rare.coef.estimate <- function(X,
                                           family = quasibinomial(link="logit")))
   beta <- results$coefficients
   cov <- results$cov.unscaled
-  pbeta <- as.vector(results$fitted.values)
+  # pbeta <- as.vector(results$fitted.values)
   return (list(beta = beta,
-              cov = cov,
-              pbeta <- pbeta
+              cov = cov
+              # pbeta <- pbeta
               )
          )
 }
@@ -47,8 +47,7 @@ pbeta <- function(X, beta, offset = NA){
 }
 rare.calculate.nm <- function(X, Y, ddL.plt.correction, P.plt, criterion){
   if (criterion == "OptA"){
-    temp <- X %*% t(solve(ddL.plt.correction))
-    nm <- sqrt(rowSums(temp^2)) # norm
+    nm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2)) # norm
     nm <- P.plt * sqrt(1 - P.plt) * nm # numerator
   } else if (criterion == "OptL"){
     nm <- sqrt(rowSums(X^2))
@@ -64,7 +63,7 @@ rare.pilot.estimate <- function(X, Y, n.plt){
   d <- ncol(X)
   N1 <- sum(Y)
   N0 <- N - N1
-  # half half sampling
+  ## half half sampling
   halfhalf.index.results <- halfhalf.index(N, Y, n.plt)
   index.plt <- halfhalf.index.results$index.plt
   n.plt.0 <- halfhalf.index.results$n.plt.0
@@ -72,17 +71,17 @@ rare.pilot.estimate <- function(X, Y, n.plt){
   x.plt <- X[index.plt, ]
   y.plt <- Y[index.plt]
   p.plt <- c(rep(1 / (2 * N0), n.plt.0), rep(1 / (2 * N1), n.plt.1))
-  # lower p: sampling probability
-  # unweighted likelihood estimation:
+  ## p: sampling probability
+  ## P: Prob(Y=1 | X)
+  ## unweighted likelihood estimation:
   results.plt <- rare.coef.estimate(X = x.plt, Y = y.plt)
   beta.plt <- results.plt$beta
   pbeta.plt <- pbeta(x.plt, beta.plt)
   ddL.plt <- rare.ddL(x.plt, pbeta.plt, 1 / n.plt)
   dL.sq.plt <- rare.dL.sq(x.plt, y.plt, pbeta.plt, 1 / n.plt ^ 2)
-  # correction:
+  ## correct intercept:
   beta.plt[1] <- beta.plt[1] - log(N0 / N1)
   P.plt <- pbeta(X, beta.plt)
-  # capital P: Prob(Y=1)
   ddL.plt.correction <- rare.ddL(x.plt, P.plt[index.plt], 1 / n.plt)
 
   return(list(p.plt = p.plt,
@@ -102,7 +101,7 @@ rare.subsampling <- function(X,
                              alpha,
                              b,
                              criterion,
-                             estimate.method,
+                             likelihood,
                              p.plt,
                              ddL.plt.correction,
                              P.plt,
@@ -111,21 +110,21 @@ rare.subsampling <- function(X,
   N1 <- sum(Y)
   N0 <- N - N1
   n.plt <- length(index.plt)
-  # length(index.plt) might be smaller than n.plt, so here we reset n.plt.
+  ## length(index.plt) might be smaller than n.plt, so here we reset n.plt.
   w.ssp <- offset <- NA
   nm <- rare.calculate.nm(X, Y, ddL.plt.correction, P.plt, criterion)
-  # Currently only Poisson sampling method has been implemented.
+  ## Currently only Poisson sampling method has been implemented.
   if(criterion %in% c('OptL', 'OptA')){
-    # H <- quantile(nm, 1 - n.ssp / (b * N)) # if consider threshold
-    # nm[nm > H] <- H
+    H <- quantile(nm, 1 - n.ssp / (b * N)) # if consider threshold
+    nm[nm > H] <- H
     NPhi <- (N0 / N) * sum(nm[index.plt] / p.plt) / n.plt
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, Y + (1 - Y) * p.ssp)
     p.ssp <- pmin(p.ssp[index.ssp], 1)
-    # calculate offset or weights:
-    if (estimate.method == 'LogOddsCorrection') {
+    ## calculate offset or weights:
+    if (likelihood == 'LogOddsCorrection') {
       offset <- -log(p.ssp)
-    } else if (estimate.method == 'Weighted') {
+    } else if (likelihood == 'Weighted') {
       w.ssp <- 1 / (Y[index.ssp] + (1 - Y[index.ssp]) * p.ssp)
     }
   } else if (criterion == 'LCC'){
@@ -133,14 +132,14 @@ rare.subsampling <- function(X,
     p.ssp <- (n.ssp + N1) * nm / dm
     index.ssp <- poisson.index(N, p.ssp)
     p.ssp <- pmin(p.ssp[index.ssp], 1)
-    # calculate offset or weights:
-    if (estimate.method == 'LogOddsCorrection') {
+    ## calculate offset or weights:
+    if (likelihood == 'LogOddsCorrection') {
       nm.1 <- abs(1 - P.plt[index.ssp])
       nm.0 <- abs(P.plt[index.ssp])
       pi.1 <- pmin((n.ssp + N1) * nm.1 / dm, 1)
       pi.0 <- pmin((n.ssp + N1) * nm.0 / dm, 1)
       offset <- log(pi.1 / pi.0)
-    } else if (estimate.method == 'Weighted') {
+    } else if (likelihood == 'Weighted') {
       w.ssp <- 1 / p.ssp
     }
   }
@@ -158,16 +157,16 @@ rare.subsample.estimate <- function(x.ssp,
                                     w.ssp,
                                     offset,
                                     beta.plt,
-                                    estimate.method) {
-  if (estimate.method == "Weighted"){
+                                    likelihood) {
+  if (likelihood == "Weighted"){
     results.ssp <- rare.coef.estimate(x.ssp, y.ssp, weights = w.ssp)
     beta.ssp <- results.ssp$beta
     P.ssp <- pbeta(x.ssp, beta.ssp)
     # P.ssp <- results.ssp$pbeta
     var.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = w.ssp * n.ssp / N)
-    dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = w.ssp ^ 2 * n.ssp ^ 2 / N ^2)
-  } else if (estimate.method == 'LogOddsCorrection'){
+    dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = w.ssp^2 * n.ssp^2 / N^2)
+  } else if (likelihood == 'LogOddsCorrection'){
     results.ssp <- rare.coef.estimate(X = x.ssp,
                                       Y = y.ssp,
                                       start = beta.plt,

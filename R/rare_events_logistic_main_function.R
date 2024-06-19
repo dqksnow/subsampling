@@ -14,7 +14,7 @@
 #' size) drawn from those samples with \code{Y=0}.
 #' @param criterion The criterion of optimal subsampling probabilities,
 #' currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
-#' @param estimate.method The type of the maximum likelihood function used to
+#' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator, currently there are two choices
 #'  \code{Weighted} and \code{LogOddsCorrection}.
 #' @param alpha Mixture proportions of optimal subsampling probability and
@@ -56,7 +56,7 @@
 #'                                      n.plt,
 #'                                      n.ssp,
 #'                                      criterion = 'OptA',
-#'                                      estimate.method = 'LogOddsCorrection')
+#'                                      likelihood = 'LogOddsCorrection')
 #' subsampling.summary(subsampling.results)
 
 
@@ -64,9 +64,10 @@ rare.logistic.subsampling <-  function(formula,
                                        data,
                                        n.plt,
                                        n.ssp,
-                                       criterion = c('OptL', 'OptA', 'LCC'),
-                                       estimate.method = c('LogOddsCorrection',
-                                                           'Weighted', 'Uni'),
+                                       criterion = c('OptL', 'OptA', 'LCC', 
+                                                     'Uniform'),
+                                       likelihood = c('LogOddsCorrection',
+                                                      'Weighted'),
                                        alpha = 0.1,
                                        b = 2) {
   model.call <- match.call()
@@ -79,9 +80,9 @@ rare.logistic.subsampling <-  function(formula,
   N1 <- sum(Y)
   N0 <- N - N1
 
-  if (estimate.method %in% c("Weighted", "LogOddsCorrection")){
+  if (criterion %in% c('OptL', 'OptA', 'LCC')){
 
-    # pilot step
+    ## pilot step
     plt.estimate.results <- rare.pilot.estimate(X = X, Y = Y, n.plt = n.plt)
     p.plt <- plt.estimate.results$p.plt
     beta.plt <- plt.estimate.results$beta.plt
@@ -90,16 +91,15 @@ rare.logistic.subsampling <-  function(formula,
     ddL.plt.correction <- plt.estimate.results$ddL.plt.correction
     P.plt <- plt.estimate.results$P.plt
     index.plt <- plt.estimate.results$index.plt
-    # var.plt <- solve(ddL.plt) %*% Psi.plt %*% solve(ddL.plt)
 
-    # subsampling step
+    ## subsampling step
     ssp.results <- rare.subsampling(X = X,
                                     Y = Y,
                                     n.ssp = n.ssp,
                                     alpha = alpha,
                                     b = b,
                                     criterion = criterion,
-                                    estimate.method = estimate.method,
+                                    likelihood = likelihood,
                                     p.plt = p.plt,
                                     ddL.plt.correction = ddL.plt.correction,
                                     P.plt = P.plt,
@@ -108,7 +108,7 @@ rare.logistic.subsampling <-  function(formula,
     w.ssp <- ssp.results$w.ssp
     offset <- ssp.results$offset
 
-    # subsample estimation step
+    ## subsample estimation step
     ssp.estimate.results <- rare.subsample.estimate(X[index.ssp, ],
                                              Y[index.ssp],
                                              n.ssp = n.ssp,
@@ -116,13 +116,13 @@ rare.logistic.subsampling <-  function(formula,
                                              w.ssp = w.ssp,
                                              offset = offset,
                                              beta.plt = beta.plt,
-                                             estimate.method = estimate.method)
+                                             likelihood = likelihood)
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
     var.ssp <- ssp.estimate.results$var.ssp
 
-    # combine step
+    ## combine step
     combining.results <- rare.combining(ddL.plt = ddL.plt,
                                         ddL.ssp = ddL.ssp,
                                         dL.sq.plt = dL.sq.plt,
@@ -145,17 +145,16 @@ rare.logistic.subsampling <-  function(formula,
                 subsample.size.expect = N1 + n.ssp
                 )
            )
-  } else if (estimate.method == "Uni"){
+  } else if (criterion == "Uniform"){
+    ## Poisson sampling
     n.uni <- N1 + n.ssp
     pi.uni <- rep(1, N)
     pi.uni[Y == 0] <- n.ssp / N0
     index.uni <- poisson.index(N, pi.uni)
-    X.uni <- X[index.uni, ]
-    Y.uni <- Y[index.uni]
-    results.uni <- logistic.coef.estimate(X = X.uni, Y = Y.uni)
+    results.uni <- rare.coef.estimate(X = X[index.uni, ], Y = Y[index.uni])
     beta.uni <- results.uni$beta
     var.uni <- results.uni$cov
-    beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # corrected
+    beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept
 
     return(list(model.call = model.call,
                 index = index.uni,

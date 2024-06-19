@@ -9,8 +9,8 @@ rare.logistic.subsampling(
   data,
   n.plt,
   n.ssp,
-  criterion = c("OptL", "OptA", "LCC"),
-  estimate.method = c("LogOddsCorrection", "Weighted", "Uni"),
+  criterion = c("OptL", "OptA", "LCC", "Uniform"),
+  likelihood = c("LogOddsCorrection", "Weighted"),
   alpha = 0.1,
   b = 2
 )
@@ -33,7 +33,7 @@ size) drawn from those samples with \code{Y=0}.}
 \item{criterion}{The criterion of optimal subsampling probabilities,
 currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.}
 
-\item{estimate.method}{The type of the maximum likelihood function used to
+\item{likelihood}{The type of the maximum likelihood function used to
 calculate the optimal subsampling estimator, currently there are two choices
 \code{Weighted} and \code{LogOddsCorrection}.}
 
@@ -81,6 +81,6 @@ subsampling.results <- rare.logistic.subsampling(formula,
                                      n.plt,
                                      n.ssp,
                                      criterion = 'OptA',
-                                     estimate.method = 'LogOddsCorrection')
+                                     likelihood = 'LogOddsCorrection')
 subsampling.summary(subsampling.results)
 }
