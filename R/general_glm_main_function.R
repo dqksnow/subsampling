@@ -20,7 +20,7 @@
 #' currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
 #' @param sampling.method The sampling method for drawing the optimal subsample,
 #'  currently there are two choices \code{WithReplacement} and \code{Poisson}.
-#' @param estimate.method The type of the maximum likelihood function used to
+#' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator, currently there are two choices
 #'  \code{Weighted} and \code{LogOddsCorrection}.
 #' @param alpha Mixture proportions of optimal subsampling probability and
@@ -40,34 +40,34 @@
 #' }
 #'
 #' @examples
-#' #logistic regression
+#' # logistic regression
 #' set.seed(1)
-#' N <- 1e4
+#' N <- 2e4
 #' beta0 <- rep(-0.5, 7)
 #' d <- length(beta0) - 1
 #' X <- matrix(0, N, d)
 #' generate_rexp <- function(x) x <- rexp(N, rate = 2)
 #' X <- apply(X, 2, generate_rexp)
-#' Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
+#' Y <- as.integer(rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))))
 #' print(paste('N: ', N))
 #' print(paste('sum(Y): ', sum(Y)))
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
-#' n.plt <- 200
-#' n.ssp <- 600
+#' n.plt <- 500
+#' n.ssp <- 1000
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
-#' estimate.method = "LogOddsCorrection")
+#' likelihood = "LogOddsCorrection")
 #' subsampling.summary(subsampling.results)
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "OptL",
-#' sampling.method = 'WithReplacement', estimate.method = "Weighted")
+#' sampling.method = 'WithReplacement', likelihood = "Weighted")
 #' subsampling.summary(subsampling.results)
 #' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'binomial', estimate.method = 'Uni')
+#' family = 'binomial', criterion = 'Uniform')
 #' subsampling.summary(Uni.subsampling.results)
 #' ############################################################################
-#' #poisson regression
+#' # poisson regression
 #' set.seed(1)
 #' N <-  1e4
 #' beta0 <- rep(0.5, 7)
@@ -83,14 +83,14 @@
 #' n.ssp <- 600
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "OptL", sampling.method = 'Poisson',
-#' estimate.method = "Weighted")
+#' likelihood = "Weighted")
 #' subsampling.summary(subsampling.results)
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "OptL", sampling.method = 'WithReplacement',
-#' estimate.method = "Weighted")
+#' likelihood = "Weighted")
 #' subsampling.summary(subsampling.results)
 #' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'poisson', estimate.method = 'Uni')
+#' family = 'poisson', criterion = 'Uniform')
 #' subsampling.summary(Uni.subsampling.results)
 #' @export
 
@@ -99,9 +99,9 @@ glm.subsampling <- function(formula,
                             n.plt,
                             n.ssp,
                             family = c('binomial', 'poisson', 'gamma'),
-                            criterion = c('OptL', 'OptA', 'LCC'),
+                            criterion = c('OptL', 'OptA', 'LCC', 'Uniform'),
                             sampling.method = c('Poisson', 'WithReplacement'),
-                            estimate.method = c('LogOddsCorrection',
+                            likelihood = c('LogOddsCorrection',
                                                 'Weighted'),
                             alpha = 0.1,
                             b = 2) {
@@ -109,10 +109,9 @@ glm.subsampling <- function(formula,
   model.call <- match.call()
   if(is.function(family)) family <- family$family
   if(missing(family)) {
-    stop("Specify a valid 'family' from c('binomial','poisson',
-         'negative.binomial','gamma')")
+    stop("Specify a valid 'family' from c('binomial','poisson',gamma')")
   }
-  family = switch(family,
+  family <- switch(family,
                   "binomial" = binomial.expand(),
                   "poisson" = poisson.expand(),
                   "gamma" = gamma.expand())
@@ -125,7 +124,7 @@ glm.subsampling <- function(formula,
   N1 <- sum(Y)
   N0 <- N - N1
 
-  if (estimate.method %in% c("Weighted", "LogOddsCorrection")) {
+  if (criterion %in% c('OptL', 'OptA', 'LCC')) {
 
     ### pilot step ###
     plt.estimate.results <- pilot.estimate(X = X,
@@ -149,7 +148,7 @@ glm.subsampling <- function(formula,
                                alpha = alpha,
                                b = b,
                                criterion = criterion,
-                               estimate.method = estimate.method,
+                               likelihood = likelihood,
                                sampling.method = sampling.method,
                                p.plt = p.plt,
                                ddL.plt.correction = ddL.plt.correction,
@@ -169,13 +168,13 @@ glm.subsampling <- function(formula,
                                                offset = offset,
                                                beta.plt = beta.plt,
                                              sampling.method = sampling.method,
-                                             estimate.method = estimate.method,
+                                             likelihood = likelihood,
                                                family = family)
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
     Lambda.ssp <- ssp.estimate.results$Lambda.ssp
-    var.ssp.true <- ssp.estimate.results$var.ssp.true
+    var.ssp <- ssp.estimate.results$var.ssp
 
     ### combining step ###
     combining.results <- combining(ddL.plt = ddL.plt,
@@ -189,21 +188,21 @@ glm.subsampling <- function(formula,
                                    beta.plt = beta.plt,
                                    beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
-    var.cmb.true <- combining.results$var.cmb.true
+    var.cmb <- combining.results$var.cmb
 
     return(list(model.call = model.call,
                 beta.plt = beta.plt,
                 beta.ssp = beta.ssp,
                 beta = beta.cmb,
-                var.ssp.true = var.ssp.true,
-                var = var.cmb.true,
+                var.ssp = var.ssp,
+                var = var.cmb,
                 index.plt = index.plt,
                 index = index.ssp,
                 N = N,
                 subsample.size.expect = n.ssp
                 )
            )
-  } else if (estimate.method == "Uni"){
+  } else if (criterion == "Uniform"){
     n.uni <- n.plt + n.ssp
     index.uni <- random.index(N, n.uni)
     x.uni <- X[index.uni, ]
@@ -211,8 +210,6 @@ glm.subsampling <- function(formula,
     results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni, family = family)
     beta.uni <- results.uni$beta
     linear.predictor.uni <- as.vector(x.uni %*% beta.uni)
-    # pbeta.uni <- results.uni$pbeta
-    # var.uni <- results.uni$cov
     ddL.uni <- ddL(linear.predictor.uni,
                    x.uni,
                    weights = 1 / n.uni,
@@ -222,13 +219,13 @@ glm.subsampling <- function(formula,
                        y.uni,
                        weights = 1 / n.uni ^ 2,
                        family = family)
-    var.uni.true <- solve(ddL.uni) %*% 
-      (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
+    var.uni <- solve(ddL.uni) %*% 
+                    (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
 
     return(list(model.call = model.call,
                 index = index.uni,
                 beta = beta.uni,
-                var = var.uni.true,
+                var = var.uni,
                 N = N,
                 subsample.size.expect = n.uni
                 )

@@ -10,9 +10,9 @@ glm.subsampling(
   n.plt,
   n.ssp,
   family = c("binomial", "poisson", "gamma"),
-  criterion = c("OptL", "OptA", "LCC"),
+  criterion = c("OptL", "OptA", "LCC", "Uniform"),
   sampling.method = c("Poisson", "WithReplacement"),
-  estimate.method = c("LogOddsCorrection", "Weighted"),
+  likelihood = c("LogOddsCorrection", "Weighted"),
   alpha = 0.1,
   b = 2
 )
@@ -43,7 +43,7 @@ currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.}
 \item{sampling.method}{The sampling method for drawing the optimal subsample,
 currently there are two choices \code{WithReplacement} and \code{Poisson}.}
 
-\item{estimate.method}{The type of the maximum likelihood function used to
+\item{likelihood}{The type of the maximum likelihood function used to
 calculate the optimal subsampling estimator, currently there are two choices
 \code{Weighted} and \code{LogOddsCorrection}.}
 
@@ -71,34 +71,34 @@ Optimal Subsampling Methods for Generalized Linear Models
 Additional details... briefly introduce the idea.
 }
 \examples{
-#logistic regression
+# logistic regression
 set.seed(1)
-N <- 1e4
+N <- 2e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
 X <- matrix(0, N, d)
 generate_rexp <- function(x) x <- rexp(N, rate = 2)
 X <- apply(X, 2, generate_rexp)
-Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X \%*\% beta0[-1])))
+Y <- as.integer(rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X \%*\% beta0[-1]))))
 print(paste('N: ', N))
 print(paste('sum(Y): ', sum(Y)))
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ .
-n.plt <- 200
-n.ssp <- 600
+n.plt <- 500
+n.ssp <- 1000
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
-estimate.method = "LogOddsCorrection")
+likelihood = "LogOddsCorrection")
 subsampling.summary(subsampling.results)
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = "OptL",
-sampling.method = 'WithReplacement', estimate.method = "Weighted")
+sampling.method = 'WithReplacement', likelihood = "Weighted")
 subsampling.summary(subsampling.results)
 Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-family = 'binomial', estimate.method = 'Uni')
+family = 'binomial', criterion = 'Uniform')
 subsampling.summary(Uni.subsampling.results)
 ############################################################################
-#poisson regression
+# poisson regression
 set.seed(1)
 N <-  1e4
 beta0 <- rep(0.5, 7)
@@ -114,13 +114,13 @@ n.plt <- 200
 n.ssp <- 600
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'poisson', criterion = "OptL", sampling.method = 'Poisson',
-estimate.method = "Weighted")
+likelihood = "Weighted")
 subsampling.summary(subsampling.results)
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'poisson', criterion = "OptL", sampling.method = 'WithReplacement',
-estimate.method = "Weighted")
+likelihood = "Weighted")
 subsampling.summary(subsampling.results)
 Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-family = 'poisson', estimate.method = 'Uni')
+family = 'poisson', criterion = 'Uniform')
 subsampling.summary(Uni.subsampling.results)
 }

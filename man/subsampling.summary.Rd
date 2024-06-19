@@ -35,6 +35,6 @@ n.plt <- 200
 n.ssp <- 600
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
-estimate.method = "LogOddsCorrection")
+likelihood = "LogOddsCorrection")
 subsampling.summary(subsampling.results)
 }
