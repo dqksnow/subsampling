@@ -7,7 +7,7 @@
 #' @param n.ssp The expected optimal subsample size (the second-step subsample.
 #' @param criterion The criterion of optimal subsampling probabilities
 #' @param sampling.method The sampling method for drawing the optimal subsample
-#' @param estimate.method The type of the maximum likelihood function used to 
+#' @param likelihood The type of the maximum likelihood function used to 
 #' @param constraint 1
 #' @param alpha Mixture proportions of optimal subsampling probability and 
 #' @param b This parameter controls the upper threshold for optimal subsampling
@@ -46,33 +46,34 @@
 #' n.plt <- 500
 #' n.ssp <- 1000
 #' WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE', 
-#' sampling.method = 'WithReplacement', estimate.method = 'Weighted',
+#' sampling.method = 'WithReplacement', likelihood = 'Weighted',
 #' constraint = 'baseline')
 #' Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE',
-#' sampling.method = 'Poisson', estimate.method = 'Weighted', 
+#' sampling.method = 'Poisson', likelihood = 'Weighted', 
 #' constraint = 'baseline')
 #' Poi.LUC <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'LUC',
-#' sampling.method = 'Poisson', estimate.method = 'MSCLE', 
+#' sampling.method = 'Poisson', likelihood = 'MSCLE', 
 #' constraint = 'baseline')
 #' Poi.MSCLE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE',
-#' sampling.method = 'Poisson', estimate.method = 'MSCLE', 
+#' sampling.method = 'Poisson', likelihood = 'MSCLE', 
 #' constraint = 'baseline')
+#' Poi.Uni <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'Uniform',
+#' sampling.method = 'Poisson', constraint = 'baseline')
 #' softmax.summary(WithRep.MSPE)
 #' softmax.summary(Poi.MSPE)
 #' softmax.summary(Poi.LUC)
 #' softmax.summary(Poi.MSCLE)
+#' softmax.summary(Poi.Uni)
 
 Softmax.subsampling <-
   function(X, Y, n.plt, n.ssp,
-           criterion = c('OptL', 'OptA', 'MSPE', 'LUC'),
+           criterion = c('OptL', 'OptA', 'MSPE', 'LUC', 'Uniform'),
            sampling.method = c('Poisson', 'WithReplacement'),
-           estimate.method = c('Weighted', 'MSCLE', 'Uniform'),
+           likelihood = c('Weighted', 'MSCLE'),
            constraint = c('baseline', 'summation'),
            alpha = 0,
            b = 2) {
   model.call <- match.call()
-  # family <- match.arg(family)
-
   # mf <- model.frame(formula, data)
   # Y <- model.response(mf, "any")
   # if (is.character(Y) && length(unique(Y)) == 2) {
@@ -86,12 +87,13 @@ Softmax.subsampling <-
   N <- nrow(X)
   d <- ncol(X)
   K <- length(unique(Y)) - 1
-  G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
+  G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d) 
+  ## G: transform matrix
   Y.matrix <- matrix(0, nrow = N, ncol = K)
   Y.matrix[cbind(seq_along(Y), Y)] <- 1
 
-  if (estimate.method %in% c("Weighted", "MSCLE")) {
-    # pilot step
+  if (criterion %in% c('OptL', 'OptA', 'MSPE', 'LUC')) {
+    ## pilot step
     plt.estimate.results <- softmax.plt.estimate(X = X, Y = Y, Y.matrix,
                                                  n.plt = n.plt, N, K, d,
                                                  criterion)
@@ -105,7 +107,7 @@ Softmax.subsampling <-
     Omega.plt <- plt.estimate.results$Omega.plt
     Lambda.plt <- plt.estimate.results$Lambda.plt
 
-    # subsampling step
+    ## subsampling step
     ssp.results <- softmax.subsampling(X = X,
                                        Y.matrix = Y.matrix,
                                        G = G,
@@ -114,7 +116,7 @@ Softmax.subsampling <-
                                        alpha = alpha,
                                        b = b,
                                        criterion = criterion,
-                                       estimate.method = estimate.method,
+                                       likelihood = likelihood,
                                        sampling.method = sampling.method,
                                        constraint = constraint,
                                        p.plt = p.plt,
@@ -126,7 +128,7 @@ Softmax.subsampling <-
     p.ssp <- ssp.results$p.ssp
     offset <- ssp.results$offset
 
-    # subsample estimating step
+    ## subsample estimating step
     ssp.estimate.results <-
       softmax.subsample.estimate(X[index.ssp, ],
                                  Y[index.ssp],
@@ -137,7 +139,7 @@ Softmax.subsampling <-
                                  offset = offset,
                                  beta.plt = beta.plt,
                                  sampling.method = sampling.method,
-                                 estimate.method = estimate.method,
+                                 likelihood = likelihood,
                                  N=N, K=K, d=d)
     beta.ssp.b <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
@@ -145,7 +147,7 @@ Softmax.subsampling <-
     Lambda.ssp <- ssp.estimate.results$Lambda.ssp
     cov.ssp.b <- ssp.estimate.results$cov.ssp
 
-    # combining step
+    ## combining step
     combining.results <- softmax.combining(ddL.plt = ddL.plt,
                                            ddL.ssp = ddL.ssp,
                                            dL.sq.plt = dL.sq.plt,
@@ -165,16 +167,16 @@ Softmax.subsampling <-
       model.call = model.call,
       beta.plt = matrix(beta.plt.b, nrow = d),
       beta.ssp = matrix(beta.ssp.b, nrow = d),
-      beta.cmb = matrix(beta.cmb.b, nrow = d),
+      beta = matrix(beta.cmb.b, nrow = d),
       cov.plt = cov.plt.b,
       cov.ssp = cov.ssp.b,
-      cov.cmb = cov.cmb.b,
+      cov = cov.cmb.b,
       P.cmb = P.cmb,
       index.plt = index.plt,
       index.ssp = index.ssp,
       N = N,
       subsample.size.expect = n.ssp))
-  } else if (estimate.method == "Uniform"){
+  } else if (criterion == "Uniform"){
     n.uni <- n.plt + n.ssp
     if (sampling.method == 'WithReplacement') {
       index.uni <- random.index(N, n.uni)
@@ -202,14 +204,18 @@ Softmax.subsampling <-
       ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni[, -1], p = p.uni, K, d,
                              scale = N)
       dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, 
-                                     Y.matrix = Y.matrix[index.uni, ],
+                                     Y_matrix = Y.matrix[index.uni, ],
                                      P = P.uni[, -1], p = p.uni, K = K, d = d,
                                      scale=(N^2))
       cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
     }
-    return(list(index = index.uni,
+    return(list(index.ssp = index.uni,
                 beta = matrix(beta.uni.b, nrow = d),
                 cov = cov.uni.b,
-                P = P.uni))
+                P = P.uni,
+                N = N,
+                subsample.size.expect = n.uni
+                )
+           )
   }
 }

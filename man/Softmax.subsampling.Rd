@@ -9,9 +9,9 @@ Softmax.subsampling(
   Y,
   n.plt,
   n.ssp,
-  criterion = c("OptL", "OptA", "MSPE", "LUC"),
+  criterion = c("OptL", "OptA", "MSPE", "LUC", "Uniform"),
   sampling.method = c("Poisson", "WithReplacement"),
-  estimate.method = c("Weighted", "MSCLE", "Uniform"),
+  likelihood = c("Weighted", "MSCLE"),
   constraint = c("baseline", "summation"),
   alpha = 0,
   b = 2
@@ -30,7 +30,7 @@ Softmax.subsampling(
 
 \item{sampling.method}{The sampling method for drawing the optimal subsample}
 
-\item{estimate.method}{The type of the maximum likelihood function used to}
+\item{likelihood}{The type of the maximum likelihood function used to}
 
 \item{constraint}{1}
 
@@ -76,19 +76,22 @@ Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 n.plt <- 500
 n.ssp <- 1000
 WithRep.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE', 
-sampling.method = 'WithReplacement', estimate.method = 'Weighted',
+sampling.method = 'WithReplacement', likelihood = 'Weighted',
 constraint = 'baseline')
 Poi.MSPE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE',
-sampling.method = 'Poisson', estimate.method = 'Weighted', 
+sampling.method = 'Poisson', likelihood = 'Weighted', 
 constraint = 'baseline')
 Poi.LUC <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'LUC',
-sampling.method = 'Poisson', estimate.method = 'MSCLE', 
+sampling.method = 'Poisson', likelihood = 'MSCLE', 
 constraint = 'baseline')
 Poi.MSCLE <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'MSPE',
-sampling.method = 'Poisson', estimate.method = 'MSCLE', 
+sampling.method = 'Poisson', likelihood = 'MSCLE', 
 constraint = 'baseline')
+Poi.Uni <- Softmax.subsampling(X, Y, n.plt, n.ssp, criterion = 'Uniform',
+sampling.method = 'Poisson', constraint = 'baseline')
 softmax.summary(WithRep.MSPE)
 softmax.summary(Poi.MSPE)
 softmax.summary(Poi.LUC)
 softmax.summary(Poi.MSCLE)
+softmax.summary(Poi.Uni)
 }

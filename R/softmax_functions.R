@@ -11,7 +11,7 @@ softmax.coef.estimate <- function(X, y, weights = NULL, offset = NULL){
               P1 = fit$fitted.values)) # return a N*(K+1) matrix
 }
 ###############################################################################
-pbeta.multi <- function(X, beta, offset = NULL){ # beta is K*d vector
+pbeta.multi <- function(X, beta, offset = NULL){ # beta is a Kd*1 vector
   if (is.null(offset)) {
     P1 <- exp(cbind(0, X %*% beta)) # K+1 class
     P1 <- P1 / rowSums(P1)
@@ -21,7 +21,7 @@ pbeta.multi <- function(X, beta, offset = NULL){ # beta is K*d vector
   }
 }
 ###############################################################################
-softmax.ddL <- function(X, P, p, K, d, scale){
+softmax.ddL <- function(X, P, p, K, d, scale){ ## cpp version is used.
   ddL <- matrix(0, nrow = K * d, ncol = K * d)
   X.t <- t(X)
   for (i in 1:K){
@@ -38,7 +38,8 @@ softmax.ddL <- function(X, P, p, K, d, scale){
   return(ddL)
 }
 ###############################################################################
-softmax.dL.sq <- function(X, Y.matrix, P, p, K, d, scale){
+softmax.dL.sq <- function(X, Y.matrix, P, p, K, d, scale){ 
+  ## cpp version is used.
   S <- Y.matrix - P
   dL <- matrix(0, nrow = K * d, ncol = K * d)
   X.t <- t(X)
@@ -188,7 +189,7 @@ softmax.calculate.offset <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
 }
 ###############################################################################
 softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
-                                b, criterion, estimate.method, sampling.method,
+                                b, criterion, likelihood, sampling.method,
                                 constraint, p.plt, ddL.plt, P1.plt, Omega.plt,
                                 index.plt) {
   if (criterion == 'LUC') {
@@ -201,7 +202,7 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
       (1 + (1 - gamma) / (gamma - q) * etaK)
     p.ssp <- n.ssp * piK1 / sum(piK1) # Poisson sampling probability
     index.ssp <- poisson.index(N, p.ssp)
-    if (estimate.method == 'MSCLE') {
+    if (likelihood == 'MSCLE') {
       offset <- softmax.calculate.offset(P1.plt[index.ssp, ],
                                          X[index.ssp, ],
                                          G = G,
@@ -210,7 +211,7 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
                                          criterion = criterion,
                                          alpha = alpha,
                                          N = N)
-    } else if (estimate.method == 'Weighted') {
+    } else if (likelihood == 'Weighted') {
       offset <- NA
     }
   } else { # for OptA, OptL, MSPE
@@ -229,7 +230,7 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
       p.ssp <- pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1) # threshold
       index.ssp <- poisson.index(N, p.ssp)
       # calculate offset
-      if (estimate.method == 'MSCLE') {
+      if (likelihood == 'MSCLE') {
         offset <- softmax.calculate.offset(P1.plt[index.ssp, ],
                                            X[index.ssp, ],
                                            G = G,
@@ -238,7 +239,7 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
                                            criterion = criterion,
                                            alpha = alpha,
                                            N = N)
-      } else if (estimate.method == 'Weighted') {
+      } else if (likelihood == 'Weighted') {
         offset <- NA
       }
     }
@@ -250,9 +251,9 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
 ###############################################################################
 softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
                                        index.ssp, p.ssp, offset, beta.plt,
-                                       sampling.method, estimate.method,
+                                       sampling.method, likelihood,
                                        N, K, d) {
-  if (estimate.method == "Weighted"){
+  if (likelihood == "Weighted"){
     results <- softmax.coef.estimate(x.ssp, y.ssp, weights = 1 / p.ssp)
     beta.ssp <- results$beta
     P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
@@ -274,7 +275,7 @@ softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
                                      K = K, d = d, scale = N^2 / n.ssp)
       Lambda.ssp <- 0
     }
-  } else if (estimate.method == 'MSCLE'){
+  } else if (likelihood == 'MSCLE'){
       results <- softmax.coef.estimate(x.ssp, y.ssp, offset = offset)
       beta.ssp <- results$beta
       # P.ssp <- pbeta.multi(x.ssp, beta.ssp, offset)[, -1] # same
@@ -340,11 +341,11 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
 #' #TBD
 
 softmax.summary <- function(object) {
-  dimension <- dim(object$beta.cmb)
+  dimension <- dim(object$beta)
   d <- dimension[1]
   K <- dimension[2]
-  coef <- object$beta.cmb
-  se <- matrix(sqrt(diag(object$cov.cmb)), nrow = d, ncol=K)
+  coef <- object$beta
+  se <- matrix(sqrt(diag(object$cov)), nrow = d, ncol=K)
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
   n.ssp.actual <- length(object$index.ssp)
