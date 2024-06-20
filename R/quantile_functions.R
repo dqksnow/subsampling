@@ -1,9 +1,14 @@
 ###############################################################################
-quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
+quantile.plt.estimation <- function(inputs){
+  N <- inputs$N
+  n.plt <- inputs$n.plt
+  tau <- inputs$tau
+  
   index.plt <- sample(N, n.plt, replace = TRUE)
-  results <- quantreg::rq(Y[index.plt] ~ X[index.plt,] - 1, tau=tau)
+  results <- quantreg::rq(inputs$Y[index.plt] ~ inputs$X[index.plt, ] - 1,
+                          tau = tau)
   beta.plt <- results$coefficients
-  Ie.full <- (c(Y - X %*% beta.plt) < 0)
+  Ie.full <- (c(inputs$Y - inputs$X %*% beta.plt) < 0)
   return(
     list(
       beta.plt = beta.plt,
@@ -12,6 +17,20 @@ quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
     )
   )
 }
+###############################################################################
+# quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
+#   index.plt <- sample(N, n.plt, replace = TRUE)
+#   results <- quantreg::rq(Y[index.plt] ~ X[index.plt,] - 1, tau=tau)
+#   beta.plt <- results$coefficients
+#   Ie.full <- (c(Y - X %*% beta.plt) < 0)
+#   return(
+#     list(
+#       beta.plt = beta.plt,
+#       Ie.full = Ie.full,
+#       index.plt = index.plt
+#     )
+#   )
+# }
 ###############################################################################
 quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
   if (sampling.method == "Poisson"){
@@ -30,24 +49,25 @@ quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
   return(index.ssp)
 }
 ###############################################################################
-quantile.ssp.estimation <- function(X,
-                                    Y,
-                                    tau,
-                                    n.ssp,
-                                    B,
-                                    boot,
+quantile.ssp.estimation <- function(inputs,
                                     Ie.full = NA,
-                                    index.plt,
-                                    criterion,
-                                    sampling.method
+                                    index.plt = NA
                                     ) {
-  N <- nrow(X)
-  p <- ncol(X)
+  N <- inputs$N
+  n.plt <- inputs$n.plt
+  n.ssp <- inputs$n.ssp
+  tau <- inputs$tau
+  d <- inputs$d
+  B <- inputs$B
+  criterion <- inputs$criterion
+  sampling.method <- inputs$sampling.method
+  boot <- inputs$boot
+  
   
   if (criterion == "Uniform"){
     p.ssp <- NA
   } else if (criterion %in% c("OptL")) {
-    p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(X^2))
+    p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(inputs$X^2))
     if (sampling.method == "Poisson"){
       dm <- N * sum(p.ssp[index.plt]) / n.plt
       p.ssp <- n.ssp * p.ssp / dm
@@ -57,7 +77,7 @@ quantile.ssp.estimation <- function(X,
   }
   
   if (boot == TRUE) {
-    Betas.ssp <- matrix(NA, nrow = p, ncol = B)
+    Betas.ssp <- matrix(NA, nrow = d, ncol = B)
     Index.ssp <- list()
     if (sampling.method == "Poisson"){
       if (criterion == "Uniform") {
@@ -75,12 +95,14 @@ quantile.ssp.estimation <- function(X,
       }
       for(i in 1:B){
         if (criterion == "Uniform") {
-          fit <- quantreg::rq(Y[each.ssp[[i]]] ~ X[each.ssp[[i]], ] - 1,
-                              tau=tau)
+          fit <- quantreg::rq(inputs$Y[each.ssp[[i]]] ~ 
+                                inputs$X[each.ssp[[i]], ] - 1,
+                              tau = tau)
         } else {
-          fit <- quantreg::rq(Y[each.ssp[[i]]] ~ X[each.ssp[[i]], ] - 1,
-                              tau=tau,
-                              weights=1 / pmin(p.ssp[each.ssp[[i]]], 1))
+          fit <- quantreg::rq(inputs$Y[each.ssp[[i]]] ~ 
+                                inputs$X[each.ssp[[i]], ] - 1,
+                              tau = tau,
+                              weights = 1 / pmin(p.ssp[each.ssp[[i]]], 1))
         }
         Betas.ssp[, i] <- fit$coefficients
         Index.ssp[[i]] <- each.ssp[[i]]
@@ -90,10 +112,12 @@ quantile.ssp.estimation <- function(X,
         index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
                                        sampling.method, criterion)
         if (criterion == "Uniform") {
-          fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau)
+          fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
+                              tau = tau)
         } else {
-          fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau,
-                              weights=1 / pmin(p.ssp[index.ssp], 1))
+          fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
+                              tau = tau,
+                              weights = 1 / pmin(p.ssp[index.ssp], 1))
         }
         Betas.ssp[, i] <- fit$coefficients
         Index.ssp[[i]] <- index.ssp
@@ -104,21 +128,20 @@ quantile.ssp.estimation <- function(X,
     index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
                                    sampling.method, criterion)
     if (criterion == "Uniform") {
-      fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau)
+      fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
+                          tau = tau)
     } else {
-      fit <- quantreg::rq(Y[index.ssp] ~ X[index.ssp, ] - 1, tau=tau,
+      fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
+                          tau = tau,
                           weights=1 / pmin(p.ssp[index.ssp], 1))
     }
     beta.ssp <- fit$coefficients
   }
   
-  ############ return results
+  ## return results
   if (boot == TRUE) {
-    beta.ssp.centered <- Betas.ssp - beta.ssp.mean
-    mean.outer.prod <- beta.ssp.centered %*% t(beta.ssp.centered)
-    r.ef <- ifelse(criterion == "Uniform",
-                   1 - (n.ssp*B-1)/N/2,
-                   1 - (sum(p.ssp^2) / n.ssp^2) * (n.ssp*B - 1) / 2)
+    Beta.ssp.centered <- Betas.ssp - beta.ssp.mean
+    mean.outer.prod <- Beta.ssp.centered %*% t(Beta.ssp.centered)
     if(sampling.method == "Poisson"){
       est.cov.ssp <- mean.outer.prod / (B*(B-1))
     } else {
@@ -131,17 +154,16 @@ quantile.ssp.estimation <- function(X,
                 beta.ssp = beta.ssp.mean,
                 est.cov.ssp = est.cov.ssp,
                 index.ssp = Index.ssp
-    )
-    )
+                )
+           )
   } else if (boot == FALSE) {
     return(list(Betas.ssp = NA,
                 beta.ssp = beta.ssp,
                 est.cov.ssp = NA,
                 index.ssp = index.ssp
-    )
-    )
+                )
+           )
   }
-  
 }
 
 ###############################################################################

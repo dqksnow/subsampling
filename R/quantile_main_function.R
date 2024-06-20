@@ -53,9 +53,11 @@
 #' optL.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
 #' n.ssp = n.ssp,B,boot = TRUE,criterion = 'OptL',
 #' sampling.method = 'WithReplacement',likelihood = 'Weighted')
+#' summary(optL.results)
 #' uni.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
 #' n.ssp = n.ssp,B,boot = TRUE,criterion = 'Uniform',
 #' sampling.method = 'WithReplacement', likelihood = 'Weighted')
+#' summary(uni.results)
 
 quantile.subsampling <- function(formula,
                                  data,
@@ -78,6 +80,7 @@ quantile.subsampling <- function(formula,
   N <- nrow(X)
   d <- ncol(X)
   
+  ## check inputs
   if (n.ssp * B > 0.1 * N) {
     warning("The total subsample size n.ssp*B exceeds the recommended
     value (10% of full sample size nrow(X)).")
@@ -89,28 +92,31 @@ quantile.subsampling <- function(formula,
     boot <- FALSE
   }
   
+  ## create a list to store variables
+  inputs <- list(X = X, Y = Y, tau = tau, N = N, d = d,
+                 n.plt = n.plt, n.ssp = n.ssp, B = B, boot = boot, 
+                 criterion = criterion, sampling.method = sampling.method,
+                 likelihood = likelihood
+                 )
+  
   if (criterion %in% c("OptL")) {
-    ### pilot step ###
-    plt.results <- quantile.plt.estimation(X, Y, tau, N, n.plt)
+    
+    ## pilot step
+    plt.results <- quantile.plt.estimation(inputs)
     beta.plt <- plt.results$beta.plt
     Ie.full <- plt.results$Ie.full
     index.plt <- plt.results$index.plt
-    ### subsampling and boot step ###
-    ssp.results <- quantile.ssp.estimation(X = X,
-                                           Y = Y,
-                                           n.ssp = n.ssp,
-                                           B = B,
-                                           boot = boot,
-                                           tau = tau,
+    
+    ## subsampling and boot step
+    ssp.results <- quantile.ssp.estimation(inputs,
                                            Ie.full = Ie.full,
-                                           index.plt = index.plt,
-                                           criterion = criterion,
-                                           sampling.method = sampling.method
+                                           index.plt = index.plt
                                            )
     Betas.ssp <- ssp.results$Betas.ssp
     beta.ssp <- ssp.results$beta.ssp
     est.cov.ssp <- ssp.results$est.cov.ssp
     index.ssp <- ssp.results$index.ssp
+    
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta = beta.ssp,
@@ -124,16 +130,7 @@ quantile.subsampling <- function(formula,
     return(results)
   } else if (criterion == "Uniform"){
     ### subsampling and boot step ###
-    uni.results <- quantile.ssp.estimation(X = X,
-                                           Y = Y,
-                                           n.ssp = n.ssp,
-                                           B = B,
-                                           boot = boot,
-                                           tau = tau,
-                                           Ie.full = NA,
-                                           criterion = criterion,
-                                           sampling.method = sampling.method
-                                           )
+    uni.results <- quantile.ssp.estimation(inputs)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$est.cov.ssp
