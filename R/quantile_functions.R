@@ -44,12 +44,6 @@ quantile.ssp.estimation <- function(X,
   N <- nrow(X)
   p <- ncol(X)
   
-  if (boot == FALSE | B == 1){
-    n.ssp <- n.ssp * B
-    B <- 1
-    boot <- FALSE
-  }
-  
   if (criterion == "Uniform"){
     p.ssp <- NA
   } else if (criterion %in% c("OptL")) {
@@ -148,6 +142,43 @@ quantile.ssp.estimation <- function(X,
     )
   }
   
-
 }
+
 ###############################################################################
+#' Main results summary
+#'
+#' @param object A list object output by the main function, which contains the
+#'  results of the estimation of the parameters, the estimation of the
+#'  covariance matrix, subsample size, etc.
+#'
+#' @return A data frame will be printed.
+#' @export
+#'
+#' @examples
+#' #logistic regression
+#' set.seed(1)
+summary.quantile.subsampling <- function(object) {
+  coef <- object$beta
+  se <- sqrt(diag(object$est.cov))
+  N <- object$N
+  cat("Model Summary\n\n")
+  cat("\nCall:\n")
+  cat("\n")
+  print(object$model.call)
+  cat("\n")
+  cat("Subsample Size:\n")
+  cat("\n")
+  cat("Coefficients:\n")
+  cat("\n")
+  coef_table <- data.frame(
+    Estimate = round(coef, digits = 4),
+    `Std. Error` = round(se, digits = 4),
+    `z value` = round(coef / se, digits = 4),
+    `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
+                                 threshold = 0.0001),
+    check.names = FALSE
+  )
+  rownames(coef_table) <- names(coef)
+  print(coef_table)
+  # Add more summary information as needed
+}

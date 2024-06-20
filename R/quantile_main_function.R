@@ -83,6 +83,12 @@ quantile.subsampling <- function(formula,
     value (10% of full sample size nrow(X)).")
   }
   
+  if (boot == FALSE | B == 1){
+    n.ssp <- n.ssp * B
+    B <- 1
+    boot <- FALSE
+  }
+  
   if (criterion %in% c("OptL")) {
     ### pilot step ###
     plt.results <- quantile.plt.estimation(X, Y, tau, N, n.plt)
@@ -105,14 +111,17 @@ quantile.subsampling <- function(formula,
     beta.ssp <- ssp.results$beta.ssp
     est.cov.ssp <- ssp.results$est.cov.ssp
     index.ssp <- ssp.results$index.ssp
-    return(list(model.call = model.call,
-                beta.plt = beta.plt,
-                beta.ssp = beta.ssp,
-                est.cov.ssp = est.cov.ssp,
-                index.plt = index.plt,
-                index.ssp = index.ssp
-                )
-           )
+    results <- list(model.call = model.call,
+                    beta.plt = beta.plt,
+                    beta = beta.ssp,
+                    est.cov = est.cov.ssp,
+                    index.plt = index.plt,
+                    index = index.ssp,
+                    N = N,
+                    subsample.size.expect = c(n.ssp, B)
+                    )
+    class(results) <- "quantile.subsampling"
+    return(results)
   } else if (criterion == "Uniform"){
     ### subsampling and boot step ###
     uni.results <- quantile.ssp.estimation(X = X,
@@ -129,12 +138,16 @@ quantile.subsampling <- function(formula,
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$est.cov.ssp
     index.uni <- uni.results$index.ssp
-    return(list(model.call = model.call,
-                beta.plt = NA,
-                beta.uni = beta.uni,
-                est.cov.uni = est.cov.uni,
-                index.uni = index.uni
-                )
-           )
+    results <- list(model.call = model.call,
+                    beta.plt = NA,
+                    beta = beta.uni,
+                    est.cov = est.cov.uni,
+                    index = index.uni,
+                    N = N,
+                    subsample.size.expect = c(n.ssp, B)
+                    )
+    class(results) <- "quantile.subsampling"
+    return(results)
   }
 }
+###############################################################################

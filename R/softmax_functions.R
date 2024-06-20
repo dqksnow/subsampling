@@ -387,7 +387,7 @@ softmax.summary <- function(object) {
   cat("\n")
   print(coef)
   cat("\n")
-  cat("Std. Errors::\n")
+  cat("Std. Errors:\n")
   cat("\n")
   print(se)
   # Add more summary information as needed
