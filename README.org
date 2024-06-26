@@ -35,7 +35,9 @@
   - [ ] input data should be in the form of (formula, data) rather than (Y, X).
 - For quantile:
   - [ ] Don't compute stand error in summary when boot=F.
-
+- Write vignettes
+  (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
+  
 ** May 29
 *** Discussion Points
 - For quantile regression, since the total subsample size is n.ssp*B, we should
