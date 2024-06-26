@@ -1,4 +1,5 @@
 #' Optimal Subsampling Methods for Quantile Models
+#' @export
 #' @details
 #' Additional details... briefly introduce the idea.
 #'
@@ -16,9 +17,10 @@
 #' @param n.ssp The expected optimal subsample size (the second-step subsample
 #' size).
 #' @param B TBD
+#' @param boot TBD
 #' @param criterion The criterion of optimal subsampling probabilities.
 #' @param sampling.method The sampling method for drawing the optimal subsample.
-#' @param estimate.method The type of the maximum likelihood function used to
+#' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator.
 #'
 #' @return
@@ -50,16 +52,16 @@
 #' formula <- Y ~ X
 #' n.plt <- 1000
 #' n.ssp <- 1000
-#' optL.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
+#' optL.results <- subsampling.quantile(formula,data,tau = tau,n.plt = n.plt,
 #' n.ssp = n.ssp,B,boot = TRUE,criterion = 'OptL',
 #' sampling.method = 'WithReplacement',likelihood = 'Weighted')
 #' summary(optL.results)
-#' uni.results <- quantile.subsampling(formula,data,tau = tau,n.plt = n.plt,
+#' uni.results <- subsampling.quantile(formula,data,tau = tau,n.plt = n.plt,
 #' n.ssp = n.ssp,B,boot = TRUE,criterion = 'Uniform',
 #' sampling.method = 'WithReplacement', likelihood = 'Weighted')
 #' summary(uni.results)
 
-quantile.subsampling <- function(formula,
+subsampling.quantile <- function(formula,
                                  data,
                                  tau,
                                  n.plt,
@@ -126,7 +128,7 @@ quantile.subsampling <- function(formula,
                     N = N,
                     subsample.size.expect = c(n.ssp, B)
                     )
-    class(results) <- "quantile.subsampling"
+    class(results) <- c("subsampling.quantile", "list")
     return(results)
   } else if (criterion == "Uniform"){
     ### subsampling and boot step ###
@@ -143,7 +145,7 @@ quantile.subsampling <- function(formula,
                     N = N,
                     subsample.size.expect = c(n.ssp, B)
                     )
-    class(results) <- "quantile.subsampling"
+    class(results) <- c("subsampling.quantile", "list")
     return(results)
   }
 }

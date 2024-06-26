@@ -179,7 +179,7 @@ quantile.ssp.estimation <- function(inputs,
 #' @examples
 #' #logistic regression
 #' set.seed(1)
-summary.quantile.subsampling <- function(object) {
+summary.subsampling.quantile <- function(object) {
   coef <- object$beta
   se <- sqrt(diag(object$est.cov))
   N <- object$N
