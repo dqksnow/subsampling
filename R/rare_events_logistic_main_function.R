@@ -57,7 +57,7 @@
 #'                                      n.ssp,
 #'                                      criterion = 'OptA',
 #'                                      likelihood = 'LogOddsCorrection')
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 
 
 rare.logistic.subsampling <-  function(formula,
@@ -133,18 +133,20 @@ rare.logistic.subsampling <-  function(formula,
                                         beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
     var.cmb <- combining.results$var.cmb
-
-    return(list(beta.plt = beta.plt,
-                beta.ssp = beta.ssp,
-                beta = beta.cmb,
-                var.ssp = var.ssp,
-                var = var.cmb,
-                index.plt = index.plt,
-                index = index.ssp,
-                N = N,
-                subsample.size.expect = N1 + n.ssp
-                )
-           )
+    results <- list(model.call = model.call,
+                    beta.plt = beta.plt,
+                    beta.ssp = beta.ssp,
+                    beta = beta.cmb,
+                    var.ssp = var.ssp,
+                    var = var.cmb,
+                    index.plt = index.plt,
+                    index = index.ssp,
+                    N = N,
+                    subsample.size.expect = N1 + n.ssp
+                    )
+    
+    class(results) <- c("subsampling.glm", "list")
+    return(results)
   } else if (criterion == "Uniform"){
     ## Poisson sampling
     n.uni <- N1 + n.ssp
@@ -155,15 +157,15 @@ rare.logistic.subsampling <-  function(formula,
     beta.uni <- results.uni$beta
     var.uni <- results.uni$cov
     beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept
-
-    return(list(model.call = model.call,
-                index = index.uni,
-                beta = beta.uni,
-                var = var.uni,
-                N = N,
-                subsample.size.expect = n.uni
-                )
-           )
+    results <- list(model.call = model.call,
+                    index = index.uni,
+                    beta = beta.uni,
+                    var = var.uni,
+                    N = N,
+                    subsample.size.expect = n.uni
+                    )
+    class(results) <- c("subsampling.glm", "list")
+    return(results)
   }
 }
 

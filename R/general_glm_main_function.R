@@ -42,7 +42,7 @@
 #' @examples
 #' # logistic regression
 #' set.seed(1)
-#' N <- 2e4
+#' N <- 1e4
 #' beta0 <- rep(-0.5, 7)
 #' d <- length(beta0) - 1
 #' X <- matrix(0, N, d)
@@ -58,14 +58,14 @@
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
 #' likelihood = "LogOddsCorrection")
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "OptL",
 #' sampling.method = 'WithReplacement', likelihood = "Weighted")
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 #' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = 'Uniform')
-#' subsampling.summary(Uni.subsampling.results)
+#' summary(Uni.subsampling.results)
 #' ############################################################################
 #' # poisson regression
 #' set.seed(1)
@@ -84,14 +84,14 @@
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "OptL", sampling.method = 'Poisson',
 #' likelihood = "Weighted")
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "OptL", sampling.method = 'WithReplacement',
 #' likelihood = "Weighted")
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 #' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = 'Uniform')
-#' subsampling.summary(Uni.subsampling.results)
+#' summary(Uni.subsampling.results)
 #' @export
 
 glm.subsampling <- function(formula,
@@ -189,19 +189,21 @@ glm.subsampling <- function(formula,
                                    beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
     var.cmb <- combining.results$var.cmb
-
-    return(list(model.call = model.call,
-                beta.plt = beta.plt,
-                beta.ssp = beta.ssp,
-                beta = beta.cmb,
-                var.ssp = var.ssp,
-                var = var.cmb,
-                index.plt = index.plt,
-                index = index.ssp,
-                N = N,
-                subsample.size.expect = n.ssp
-                )
-           )
+    
+    results <- list(model.call = model.call,
+                    beta.plt = beta.plt,
+                    beta.ssp = beta.ssp,
+                    beta = beta.cmb,
+                    var.ssp = var.ssp,
+                    var = var.cmb,
+                    index.plt = index.plt,
+                    index = index.ssp,
+                    N = N,
+                    subsample.size.expect = n.ssp
+                    )
+    
+    class(results) <- c("subsampling.glm", "list")
+    return(results)
   } else if (criterion == "Uniform"){
     n.uni <- n.plt + n.ssp
     index.uni <- random.index(N, n.uni)
@@ -221,14 +223,15 @@ glm.subsampling <- function(formula,
                        family = family)
     var.uni <- solve(ddL.uni) %*% 
                     (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
-
-    return(list(model.call = model.call,
-                index = index.uni,
-                beta = beta.uni,
-                var = var.uni,
-                N = N,
-                subsample.size.expect = n.uni
-                )
-           )
+    
+    results <- list(model.call = model.call,
+                    index = index.uni,
+                    beta = beta.uni,
+                    var = var.uni,
+                    N = N,
+                    subsample.size.expect = n.uni
+                    )
+    class(results) <- c("subsampling.glm", "list")
+    return(results)
   }
 }

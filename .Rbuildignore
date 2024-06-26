@@ -9,4 +9,4 @@
 ^Makefile$
 ^\.DS_Store$
 ^\.Rcheck$
-^\README.org$
+^README\.org$

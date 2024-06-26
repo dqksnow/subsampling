@@ -408,9 +408,9 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 #' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
 #' likelihood = "LogOddsCorrection")
-#' subsampling.summary(subsampling.results)
+#' summary(subsampling.results)
 
-subsampling.summary <- function(object) {
+summary.subsampling.glm <- function(object) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
   N <- object$N

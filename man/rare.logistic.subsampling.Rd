@@ -82,5 +82,5 @@ subsampling.results <- rare.logistic.subsampling(formula,
                                      n.ssp,
                                      criterion = 'OptA',
                                      likelihood = 'LogOddsCorrection')
-subsampling.summary(subsampling.results)
+summary(subsampling.results)
 }

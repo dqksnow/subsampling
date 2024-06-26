@@ -73,7 +73,7 @@ Additional details... briefly introduce the idea.
 \examples{
 # logistic regression
 set.seed(1)
-N <- 2e4
+N <- 1e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
 X <- matrix(0, N, d)
@@ -89,14 +89,14 @@ n.ssp <- 1000
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
 likelihood = "LogOddsCorrection")
-subsampling.summary(subsampling.results)
+summary(subsampling.results)
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = "OptL",
 sampling.method = 'WithReplacement', likelihood = "Weighted")
-subsampling.summary(subsampling.results)
+summary(subsampling.results)
 Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'binomial', criterion = 'Uniform')
-subsampling.summary(Uni.subsampling.results)
+summary(Uni.subsampling.results)
 ############################################################################
 # poisson regression
 set.seed(1)
@@ -115,12 +115,12 @@ n.ssp <- 600
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'poisson', criterion = "OptL", sampling.method = 'Poisson',
 likelihood = "Weighted")
-subsampling.summary(subsampling.results)
+summary(subsampling.results)
 subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'poisson', criterion = "OptL", sampling.method = 'WithReplacement',
 likelihood = "Weighted")
-subsampling.summary(subsampling.results)
+summary(subsampling.results)
 Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
 family = 'poisson', criterion = 'Uniform')
-subsampling.summary(Uni.subsampling.results)
+summary(Uni.subsampling.results)
 }
