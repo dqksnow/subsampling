@@ -1,5 +1,41 @@
 * Meeting summary
 
+** Jun 12
+*** To do list
+- [X] rename variables. For example, 'Uniform' should be moved from argument 
+  'estimate.method' to 'criterion'. Argument 'estimate.method' is renamed as
+  'likelihood' which contains c('Weighted', 'MSCLE').
+- [ ] test files
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
+  input to build-in functions. This makes the main function look clean. Make
+  sure it won't copy those variables.
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- [ ] Collect messgages that show the status of convergence.
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- [ ] Use S3 method to write summary function.
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- For glm:
+  - [ ] uniform + Poisson has not been implemented.
+  - [ ] sometimes there are warnings when use glm() except uniform.
+  - [ ] add example for gamma regression
+- For softmax:
+  - [ ] input data should be in the form of (formula, data) rather than (Y, X).
+- For quantile:
+  - [ ] Don't compute stand error in summary when boot=F.
+
 ** May 29
 *** Discussion Points
 - For quantile regression, since the total subsample size is n.ssp*B, we should
@@ -29,7 +65,7 @@
 
 
 ** Mar 20
-*** Discussion Points*** Points
+*** Discussion Points
 - Fix (n.plt+n.ssp) and then enlarge n.plt so that \(Var(\hat{\beta}_{cmb} -
    \beta_{true})\) should be close to \(Var(\hat{\beta}_{plt} - \beta_{true})\)
    . The simulation results show that it meets expectation except when n.plt
