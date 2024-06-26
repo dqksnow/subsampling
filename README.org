@@ -25,8 +25,8 @@
 - [ ] Use S3 method to write summary function.
   - [X] quantile
   - [ ] rare
-  - [ ] softmax
-  - [ ] glm
+  - [X] softmax
+  - [X] glm
 - For glm:
   - [ ] uniform + Poisson has not been implemented.
   - [ ] sometimes there are warnings when use glm() except uniform.
