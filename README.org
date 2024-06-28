@@ -1,5 +1,30 @@
 * Meeting summary
 
+** Jun 26
+- Environment variables (e.g. X, Y, N, n.plt) should be stored in an object for
+  input to build-in functions. R is copy-on-modify. Copying is done only when
+  objects are modified. An example:
+  > X <- rnorm(1e6)
+  > Y <- rnorm(1e6)
+  > X_list <- list(X=X)
+  > XX <- X_list$X
+  > tracemem(X) # address of X
+  [1] "<0x119f18000>"
+  > tracemem(X_list$X)
+  [1] "<0x119f18000>"
+  > tracemem(XX)
+  [1] "<0x119f18000>"
+  > model <- lm(Y~XX)
+  > tracemem(XX)[1] "<0x119f18000>"
+  > XX[1] <- 1
+  tracemem[0x119f18000 -> 0x10ef20000]:
+  > tracemem(XX)
+  [1] "<0x10ef20000>"
+  > tracemem(X)
+  [1] "<0x119f18000>"
+  > tracemem(X_list$X)
+  [1] "<0x119f18000>"
+
 ** Jun 12
 *** To do list
 - [X] rename variables. For example, 'Uniform' should be moved from argument 
