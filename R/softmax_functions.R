@@ -75,16 +75,27 @@ softmax.Omega <- function(X, P1, p, K, d, scale){
   return(Omega)
 }
 ###############################################################################
-softmax.plt.estimate <- function(X, Y, Y.matrix, n.plt, N, K, d, criterion){
+softmax.plt.estimate <- function(inputs){
+  
+  X <- inputs$X
+  Y <- inputs$Y
+  Y.matrix <- inputs$Y.matrix
+  n.plt <- inputs$n.plt
+  N <- inputs$N
+  K <- inputs$K
+  d <- inputs$d
+  criterion <- inputs$criterion
+
   index.plt <- random.index(N, n.plt)
-  p.plt <- rep(1 / N, n.plt) # plt sampling probability
-  x.plt <- X[index.plt,]
+  p.plt <- rep(1 / N, n.plt) # pilot sampling probability, uniform
+  x.plt <- X[index.plt, ]
   y.plt <- Y[index.plt]
   results <- softmax.coef.estimate(x.plt, y.plt)
   beta.plt <- results$beta
   P1.plt <-  results$P1 # n.plt*(K+1) matrix
   ddL.plt <- softmax_ddL_cpp(X = x.plt, P = P1.plt[, -1], p = rep(1, n.plt), K,
                              d, scale = n.plt)
+  
   dL.sq.plt <- softmax_dL_sq_cpp(X = x.plt, Y_matrix = Y.matrix[index.plt, ],
                                  P = P1.plt[, -1], p = rep(1, n.plt), K = K,
                                  d = d, scale = n.plt^2)
@@ -332,7 +343,7 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
 #'
 #' @param object A list object output by the main function, which contains the
 #'  results of the estimation of the parameters, the estimation of the
-#'  variance, subsample size, etc.
+#'  covariance matrix, subsample index, etc.
 #'
 #' @return A series of data.frame will be printed.
 #' @export
@@ -340,7 +351,7 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
 #' @examples
 #' #TBD
 
-softmax.summary <- function(object) {
+summary.subsampling.softmax <- function(object) {
   dimension <- dim(object$beta)
   d <- dimension[1]
   K <- dimension[2]

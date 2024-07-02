@@ -2,11 +2,11 @@
 
 S3method(summary,subsampling.glm)
 S3method(summary,subsampling.quantile)
-export(Softmax.subsampling)
+S3method(summary,subsampling.softmax)
 export(glm.subsampling)
 export(rare.logistic.subsampling)
-export(softmax.summary)
 export(subsampling.quantile)
+export(subsampling.softmax)
 importFrom(Rcpp,evalCpp)
 importFrom(parallel,clusterExport)
 importFrom(parallel,makeCluster)

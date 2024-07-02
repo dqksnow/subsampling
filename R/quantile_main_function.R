@@ -82,10 +82,14 @@ subsampling.quantile <- function(formula,
   N <- nrow(X)
   d <- ncol(X)
   
+  criterion <- match.arg(criterion)
+  sampling.method <- match.arg(sampling.method)
+  likelihood <- match.arg(likelihood)
+  
   ## check inputs
   if (n.ssp * B > 0.1 * N) {
-    warning("The total subsample size n.ssp*B exceeds the recommended
-    value (10% of full sample size nrow(X)).")
+    warning("The total subsample size n.ssp*B exceeds the recommended maximum
+    value (10% of full sample size).")
   }
   
   if (boot == FALSE | B == 1){
@@ -131,7 +135,7 @@ subsampling.quantile <- function(formula,
     class(results) <- c("subsampling.quantile", "list")
     return(results)
   } else if (criterion == "Uniform"){
-    ### subsampling and boot step ###
+    ### subsampling and boot step
     uni.results <- quantile.ssp.estimation(inputs)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp

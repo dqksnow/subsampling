@@ -18,20 +18,6 @@ quantile.plt.estimation <- function(inputs){
   )
 }
 ###############################################################################
-# quantile.plt.estimation <- function(X, Y, tau, N, n.plt){
-#   index.plt <- sample(N, n.plt, replace = TRUE)
-#   results <- quantreg::rq(Y[index.plt] ~ X[index.plt,] - 1, tau=tau)
-#   beta.plt <- results$coefficients
-#   Ie.full <- (c(Y - X %*% beta.plt) < 0)
-#   return(
-#     list(
-#       beta.plt = beta.plt,
-#       Ie.full = Ie.full,
-#       index.plt = index.plt
-#     )
-#   )
-# }
-###############################################################################
 quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
   if (sampling.method == "Poisson"){
     if (criterion == "Uniform") {
@@ -171,7 +157,7 @@ quantile.ssp.estimation <- function(inputs,
 #'
 #' @param object A list object output by the main function, which contains the
 #'  results of the estimation of the parameters, the estimation of the
-#'  covariance matrix, subsample size, etc.
+#'  covariance matrix, subsample index, etc.
 #'
 #' @return A data frame will be printed.
 #' @export

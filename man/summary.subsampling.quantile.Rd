@@ -9,7 +9,7 @@
 \arguments{
 \item{object}{A list object output by the main function, which contains the
 results of the estimation of the parameters, the estimation of the
-covariance matrix, subsample size, etc.}
+covariance matrix, subsample index, etc.}
 }
 \value{
 A data frame will be printed.

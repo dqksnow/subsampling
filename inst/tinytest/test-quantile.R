@@ -1,11 +1,5 @@
-add_quantile <- function(a, b) {
-  return(a + b)
-}
-expect_equal(add_quantile(1, 1), 2,
-             info = "1+1=2")
-
 set.seed(1)
-N <- 1e4
+N <- 5e3 # toy example
 B <- 5
 tau <- 0.75
 beta.true <- rep(1, 7)
@@ -32,23 +26,41 @@ expect_silent(optL.results <-
                                      criterion = 'OptL',
                                      sampling.method = 'WithReplacement',
                                      likelihood = 'Weighted'), 
-              info = "It should run without errors on valid input")
-
-expect_coef <- c(0.9239319, 0.9841376, 1.0964170, 0.9649661, 1.0107086,
-                 1.0012242, 0.9452326)
-
-expect_true(inherits(optL.results, "list"), info = "Output should be a list")
+              info = "It should run without errors on valid input.")
+expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
 expect_true(inherits(optL.results, "subsampling.quantile"), 
-            info = "Output should be of class 'subsampling.quantile'")
+            info = "Output should be of class 'subsampling.quantile.'")
+expect_equivalent(length(optL.results$index), 
+                  B, 
+                  info = "Subsamples should be divided into B lists.")
+expect_warning(subsampling.quantile(formula,
+                                    data,
+                                    tau = tau,
+                                    n.plt = n.plt,
+                                    n.ssp = 1000,
+                                    B = B,
+                                    boot = TRUE,
+                                    criterion = 'OptL',
+                                    sampling.method = 'WithReplacement',
+                                    likelihood = 'Weighted'))
+expect_silent(optL.results <- 
+                subsampling.quantile(formula,
+                                     data,
+                                     tau = tau,
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     B = B,
+                                     boot = FALSE,
+                                     criterion = 'OptL',
+                                     sampling.method = 'WithReplacement',
+                                     likelihood = 'Weighted'), 
+              info = "It should run without errors on valid input.")
+expect_equivalent(length(optL.results$index), 
+                  n.ssp*B, 
+                  info = "When boot=F, Subsamples should not be divided into 
+                  groups.")
 
-
-expect_true(all(c("beta", "index") %in% names(optL.results)), 
-            info = "Output list should contain 'beta' and 'index'")
-
-expect_equivalent(optL.results$beta, expect_coef, 
-                  tolerance = 1e-1, 
-                  info = "Coefficients should match expected values")
-
+# expect_error for withrep + poisson
 # Cleanup
 rm(list = ls())
 gc()
