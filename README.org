@@ -5,24 +5,43 @@
   input to build-in functions. R is copy-on-modify. Copying is done only when
   objects are modified. An example:
   > X <- rnorm(1e6)
+  
   > Y <- rnorm(1e6)
+  
   > X_list <- list(X=X)
+  
   > XX <- X_list$X
+  
   > tracemem(X) # address of X
+  
   [1] "<0x119f18000>"
+  
   > tracemem(X_list$X)
+  
   [1] "<0x119f18000>"
+  
   > tracemem(XX)
+  
   [1] "<0x119f18000>"
+  
   > model <- lm(Y~XX)
+  
   > tracemem(XX)[1] "<0x119f18000>"
+  
   > XX[1] <- 1
+  
   tracemem[0x119f18000 -> 0x10ef20000]:
+  
   > tracemem(XX)
+  
   [1] "<0x10ef20000>"
+  
   > tracemem(X)
+  
   [1] "<0x119f18000>"
+  
   > tracemem(X_list$X)
+  
   [1] "<0x119f18000>"
 
 ** Jun 12
@@ -33,7 +52,7 @@
 - [ ] test files
   - [X] quantile
   - [ ] rare
-  - [ ] softmax
+  - [X] softmax
   - [ ] glm
 - [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
   input to build-in functions. This makes the main function look clean. Make
@@ -57,7 +76,7 @@
   - [ ] sometimes there are warnings when use glm() except uniform.
   - [ ] add example for gamma regression
 - For softmax:
-  - [ ] input data should be in the form of (formula, data) rather than (Y, X).
+  - [X] input data should be in the form of (formula, data) rather than (Y, X).
 - For quantile:
   - [ ] Don't compute stand error in summary when boot=F.
 - Write vignettes
