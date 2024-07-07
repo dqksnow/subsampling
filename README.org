@@ -1,5 +1,53 @@
 * Meeting summary
 
+
+*** To do list
+- Jul 3: 
+- [ ] write arguments in lowercase
+- [ ] contrast of covariate matrix X
+- [ ] add subset argument
+- [ ] use control object to collect arguments
+- [ ] rename functions, for example, ssp.quantreg
+- [ ] double check the necessarity of the family object extension I wrote.
+- [ ] allow user defined family object
+  
+- Jun 12:
+- [X] rename variables. For example, 'Uniform' should be moved from argument 
+  'estimate.method' to 'criterion'. Argument 'estimate.method' is renamed as
+  'likelihood' which contains c('Weighted', 'MSCLE').
+- [ ] test files
+  - [X] quantile
+  - [ ] rare
+  - [X] softmax
+  - [ ] glm
+- [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
+  input to build-in functions. This makes the main function look clean. Make
+  sure it won't copy those variables.
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- [ ] Collect messgages that show the status of convergence.
+  - [X] quantile
+  - [ ] rare
+  - [ ] softmax
+  - [ ] glm
+- [ ] Use S3 method to write summary function.
+  - [X] quantile
+  - [ ] rare
+  - [X] softmax
+  - [X] glm
+- For glm:
+  - [ ] uniform + Poisson has not been implemented.
+  - [ ] sometimes there are warnings when use glm() except uniform.
+  - [ ] add example for gamma regression
+- For softmax:
+  - [X] input data should be in the form of (formula, data) rather than (Y, X).
+- For quantile:
+  - [ ] Don't compute stand error in summary when boot=F.
+- Write vignettes
+  (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
+
 ** Jun 26
 - Environment variables (e.g. X, Y, N, n.plt) should be stored in an object for
   input to build-in functions. R is copy-on-modify. Copying is done only when
@@ -44,44 +92,6 @@
   
   [1] "<0x119f18000>"
 
-** Jun 12
-*** To do list
-- [X] rename variables. For example, 'Uniform' should be moved from argument 
-  'estimate.method' to 'criterion'. Argument 'estimate.method' is renamed as
-  'likelihood' which contains c('Weighted', 'MSCLE').
-- [ ] test files
-  - [X] quantile
-  - [ ] rare
-  - [X] softmax
-  - [ ] glm
-- [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
-  input to build-in functions. This makes the main function look clean. Make
-  sure it won't copy those variables.
-  - [X] quantile
-  - [ ] rare
-  - [ ] softmax
-  - [ ] glm
-- [ ] Collect messgages that show the status of convergence.
-  - [X] quantile
-  - [ ] rare
-  - [ ] softmax
-  - [ ] glm
-- [ ] Use S3 method to write summary function.
-  - [X] quantile
-  - [ ] rare
-  - [X] softmax
-  - [X] glm
-- For glm:
-  - [ ] uniform + Poisson has not been implemented.
-  - [ ] sometimes there are warnings when use glm() except uniform.
-  - [ ] add example for gamma regression
-- For softmax:
-  - [X] input data should be in the form of (formula, data) rather than (Y, X).
-- For quantile:
-  - [ ] Don't compute stand error in summary when boot=F.
-- Write vignettes
-  (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
-  
 ** May 29
 *** Discussion Points
 - For quantile regression, since the total subsample size is n.ssp*B, we should
