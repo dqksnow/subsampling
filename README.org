@@ -4,6 +4,10 @@
 *** To do list
 - Jul 3: 
 - [ ] write arguments in lowercase
+  - [ ] quantile
+  - [ ] rare
+  - [X] softmax
+  - [ ] glm
 - [ ] contrast of covariate matrix X
 - [ ] add subset argument
 - [ ] use control object to collect arguments

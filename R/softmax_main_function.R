@@ -32,7 +32,7 @@
 #' d <- 3 # dim of covariates
 #' K <- 5 # K + 1 classes
 #' G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
-#' N <- 5e4
+#' N <- 1e4
 #' beta.true <- 0.2 * matrix(-1, d, K)
 #' beta.true.sum <- cbind(rep(1, d), beta.true)
 #' set.seed(1)
@@ -46,21 +46,33 @@
 #' n.plt <- 500
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
-#' formula <- Y ~ X
-#' WithRep.MSPE <- subsampling.softmax(formula, data, n.plt, n.ssp, criterion = 'MSPE', 
-#' sampling.method = 'WithReplacement', likelihood = 'Weighted',
+#' formula <- Y ~ .
+#' WithRep.MSPE <- ssp.softmax(formula, data, n.plt, n.ssp, criterion = 'MSPE', 
+#' sampling.method = 'withReplacement', likelihood = 'weighted',
 #' constraint = 'baseline')
 #' summary(WithRep.MSPE)
 
-subsampling.softmax <-
+ssp.softmax <-
   function(formula, data, n.plt, n.ssp,
-           criterion = c('OptL', 'OptA', 'MSPE', 'LUC', 'Uniform'),
-           sampling.method = c('Poisson', 'WithReplacement'),
-           likelihood = c('Weighted', 'MSCLE'),
+           criterion = c('optL', 'optA', 'MSPE', 'LUC', 'uniform'),
+           sampling.method = c('poisson', 'withReplacement'),
+           likelihood = c('weighted', 'MSCLE'),
            constraint = c('baseline', 'summation'),
            alpha = 0,
            b = 2) {
     
+    # model.call <- match.call()
+    # m <- match.call(expand.dots = FALSE)
+    # m[[1L]] <- quote(stats::model.frame)
+    # m <- eval.parent(m)
+    # Terms <- attr(m, "terms")
+    # print(Terms)
+    # X <- model.matrix(Terms, m, contrasts)
+    # print(head(X))
+    # cons <- attr(X, "contrasts")
+    # print(cons)
+    # Y <- model.response(m)
+
   model.call <- match.call()
   mf <- model.frame(formula, data)
   Y <- model.response(mf, "any")
@@ -70,7 +82,7 @@ subsampling.softmax <-
   criterion <- match.arg(criterion)
   sampling.method <- match.arg(sampling.method)
   likelihood <- match.arg(likelihood)
-  constraint <- match.arg(likelihood)
+  constraint <- match.arg(constraint)
   
   dimension <- dim(X)
   N <- dimension[1]
@@ -80,7 +92,7 @@ subsampling.softmax <-
   ## G: transformation matrix
   Y.matrix <- matrix(0, nrow = N, ncol = K)
   Y.matrix[cbind(seq_along(Y), Y)] <- 1
-
+  
   ## create a list to store variables
   inputs <- list(X = X, Y = Y, Y.matrix = Y.matrix,
                  N = N, d = d, K = K, G = G, 
@@ -89,7 +101,7 @@ subsampling.softmax <-
                  likelihood = likelihood, constraint = constraint
                  )
   
-  if (criterion %in% c('OptL', 'OptA', 'MSPE', 'LUC')) {
+  if (criterion %in% c('optL', 'optA', 'MSPE', 'LUC')) {
     ## pilot step
     # plt.estimate.results <- softmax.plt.estimate(X = X, Y = Y, Y.matrix,
     #                                              n.plt = n.plt, N, K, d,
@@ -125,7 +137,7 @@ subsampling.softmax <-
                                        index.plt = index.plt)
     index.ssp <- ssp.results$index.ssp
     p.ssp <- ssp.results$p.ssp
-    offset <- ssp.results$offset
+    offsets <- ssp.results$offsets
 
     ## subsample estimating step
     ssp.estimate.results <-
@@ -135,7 +147,7 @@ subsampling.softmax <-
                                  n.ssp = length(index.ssp),
                                  index.ssp = index.ssp,
                                  p.ssp = p.ssp[index.ssp],
-                                 offset = offset,
+                                 offsets = offsets,
                                  beta.plt = beta.plt,
                                  sampling.method = sampling.method,
                                  likelihood = likelihood,
@@ -169,17 +181,16 @@ subsampling.softmax <-
                     cov.plt = cov.plt.b,
                     cov.ssp = cov.ssp.b,
                     cov = cov.cmb.b,
-                    P.cmb = P.cmb,
                     index.plt = index.plt,
                     index.ssp = index.ssp,
                     N = N,
                     subsample.size.expect = n.ssp
                     )
-    class(results) <- c("subsampling.softmax", "list")
+    class(results) <- c("ssp.softmax", "list")
     return(results)
-  } else if (criterion == "Uniform"){
+  } else if (criterion == "uniform"){
     n.uni <- n.plt + n.ssp
-    if (sampling.method == 'WithReplacement') {
+    if (sampling.method == 'withReplacement') {
       index.uni <- random.index(N, n.uni)
       x.uni <- X[index.uni, ]
       y.uni <- Y[index.uni]
@@ -194,7 +205,7 @@ subsampling.softmax <-
                                      d = d, scale = N^2*n.uni^2)
       c <- n.uni / N
       cov.uni.b <- solve(ddL.uni) %*% (dL.sq.uni * (1+c)) %*% solve(ddL.uni)
-    } else if (sampling.method == 'Poisson') {
+    } else if (sampling.method == 'poisson') {
       index.uni <- poisson.index(N, n.uni/N)
       p.uni <- rep(n.uni / N, length(index.uni))
       x.uni <- X[index.uni, ]
@@ -215,11 +226,11 @@ subsampling.softmax <-
                     index.ssp = index.uni,
                     beta = matrix(beta.uni.b, nrow = d),
                     cov = cov.uni.b,
-                    P = P.uni,
+                    # P = P.uni,
                     N = N,
                     subsample.size.expect = n.uni
                     )
-    class(results) <- c("subsampling.softmax", "list")
+    class(results) <- c("ssp.softmax", "list")
     return(results)
   }
 }
