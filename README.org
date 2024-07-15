@@ -47,6 +47,7 @@
   - [ ] add example for gamma regression
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
+  - [X] a message when use MSPE: it is free from constraint.
 - For quantile:
   - [ ] Don't compute stand error in summary when boot=F.
 - Write vignettes

@@ -30,23 +30,23 @@
 #' @examples
 #' # softmax regression
 #' d <- 3 # dim of covariates
-#' K <- 5 # K + 1 classes
+#' K <- 2 # K + 1 classes
 #' G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
 #' N <- 1e4
-#' beta.true <- 0.2 * matrix(-1, d, K)
-#' beta.true.sum <- cbind(rep(1, d), beta.true)
+#' beta.true.baseline <- cbind(rep(0, d), matrix(-1.5, d, K))
+#' beta.true.summation <- cbind(rep(1, d), 0.5 * matrix(-1, d, K))
 #' set.seed(1)
 #' mu <- rep(0, d)
 #' sigma <- matrix(0.5, nrow = d, ncol = d)
 #' diag(sigma) <- rep(1, d)
 #' X <- MASS::mvrnorm(N, mu, sigma)
-#' prob <- exp( X %*% beta.true.sum)
+#' prob <- exp( X %*% beta.true.summation)
 #' prob <- prob / rowSums(prob)
 #' Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 #' n.plt <- 500
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
-#' formula <- Y ~ .
+#' formula <- Y ~ X - 1
 #' WithRep.MSPE <- ssp.softmax(formula, data, n.plt, n.ssp, criterion = 'MSPE', 
 #' sampling.method = 'withReplacement', likelihood = 'weighted',
 #' constraint = 'baseline')
@@ -77,8 +77,9 @@ ssp.softmax <-
   mf <- model.frame(formula, data)
   Y <- model.response(mf, "any")
   X <- model.matrix(formula, mf)
-  colnames(X)[1] <- "intercept"
+  # colnames(X)[1] <- "intercept"
   
+
   criterion <- match.arg(criterion)
   sampling.method <- match.arg(sampling.method)
   likelihood <- match.arg(likelihood)
@@ -174,6 +175,13 @@ ssp.softmax <-
     cov.cmb.b <- combining.results$cov.cmb
     P.cmb <- combining.results$P.cmb
 
+    # beta.plt.b <- G %*% as.vector(beta.plt.b)
+    # beta.ssp.b <- G %*% as.vector(beta.ssp.b)
+    # beta.cmb.b <- G %*% as.vector(beta.cmb.b)
+    # cov.plt.b <- G %*% cov.plt.b %*% t(G)
+    # cov.ssp.b <- G %*% cov.ssp.b %*% t(G)
+    # cov.cmb.b <- G %*% cov.cmb.b %*% t(G)
+    
     results <- list(model.call = model.call,
                     beta.plt = matrix(beta.plt.b, nrow = d),
                     beta.ssp = matrix(beta.ssp.b, nrow = d),
