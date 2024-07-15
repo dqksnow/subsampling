@@ -4,7 +4,7 @@
 *** To do list
 - Jul 3: 
 - [ ] write arguments in lowercase
-  - [ ] quantile
+  - [X] quantile
   - [ ] rare
   - [X] softmax
   - [ ] glm
@@ -50,6 +50,8 @@
   - [X] a message when use MSPE: it is free from constraint.
 - For quantile:
   - [ ] Don't compute stand error in summary when boot=F.
+  - [ ] threshold for poisson sampling probability.
+  - [ ] variable names in the summary function.
 - Write vignettes
   (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
 

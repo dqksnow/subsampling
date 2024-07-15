@@ -19,14 +19,14 @@ quantile.plt.estimation <- function(inputs){
 }
 ###############################################################################
 quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
-  if (sampling.method == "Poisson"){
-    if (criterion == "Uniform") {
+  if (sampling.method == "poisson"){
+    if (criterion == "uniform") {
       index.ssp <- which(runif(N) <= n.ssp/N)
     } else {
       index.ssp <- which(runif(N) <= p.ssp)
     }
-  } else if (sampling.method == "WithReplacement") {
-    if (criterion == "Uniform") {
+  } else if (sampling.method == "withReplacement") {
+    if (criterion == "uniform") {
       index.ssp <- sample(1:N, n.ssp, replace = TRUE)
     } else {
       index.ssp <- sample(1:N, n.ssp, replace = TRUE, prob = p.ssp)
@@ -50,14 +50,14 @@ quantile.ssp.estimation <- function(inputs,
   boot <- inputs$boot
   
   
-  if (criterion == "Uniform"){
+  if (criterion == "uniform"){
     p.ssp <- NA
-  } else if (criterion %in% c("OptL")) {
+  } else if (criterion %in% c("optL")) {
     p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(inputs$X^2))
-    if (sampling.method == "Poisson"){
+    if (sampling.method == "poisson"){
       dm <- N * sum(p.ssp[index.plt]) / n.plt
       p.ssp <- n.ssp * p.ssp / dm
-    } else if (sampling.method == "WithReplacement") {
+    } else if (sampling.method == "withReplacement") {
       p.ssp <- p.ssp / sum(p.ssp)
     }
   }
@@ -65,8 +65,8 @@ quantile.ssp.estimation <- function(inputs,
   if (boot == TRUE) {
     Betas.ssp <- matrix(NA, nrow = d, ncol = B)
     Index.ssp <- list()
-    if (sampling.method == "Poisson"){
-      if (criterion == "Uniform") {
+    if (sampling.method == "poisson"){
+      if (criterion == "uniform") {
         index.ssp <- which(runif(N) <= B*n.ssp/N)
       } else {
         index.ssp <- which(runif(N) <= B*p.ssp)
@@ -80,7 +80,7 @@ quantile.ssp.estimation <- function(inputs,
         each.ssp <- split(index.ssp, rep(1:B, each = each.ssp.length))
       }
       for(i in 1:B){
-        if (criterion == "Uniform") {
+        if (criterion == "uniform") {
           fit <- quantreg::rq(inputs$Y[each.ssp[[i]]] ~ 
                                 inputs$X[each.ssp[[i]], ] - 1,
                               tau = tau)
@@ -93,11 +93,11 @@ quantile.ssp.estimation <- function(inputs,
         Betas.ssp[, i] <- fit$coefficients
         Index.ssp[[i]] <- each.ssp[[i]]
       }
-    } else if (sampling.method == "WithReplacement") {
+    } else if (sampling.method == "withReplacement") {
       for(i in 1:B){
         index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
                                        sampling.method, criterion)
-        if (criterion == "Uniform") {
+        if (criterion == "uniform") {
           fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
                               tau = tau)
         } else {
@@ -113,7 +113,7 @@ quantile.ssp.estimation <- function(inputs,
   } else if (boot == FALSE) {
     index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
                                    sampling.method, criterion)
-    if (criterion == "Uniform") {
+    if (criterion == "uniform") {
       fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
                           tau = tau)
     } else {
@@ -128,10 +128,10 @@ quantile.ssp.estimation <- function(inputs,
   if (boot == TRUE) {
     Beta.ssp.centered <- Betas.ssp - beta.ssp.mean
     mean.outer.prod <- Beta.ssp.centered %*% t(Beta.ssp.centered)
-    if(sampling.method == "Poisson"){
+    if(sampling.method == "poisson"){
       est.cov.ssp <- mean.outer.prod / (B*(B-1))
     } else {
-      r.ef <- ifelse(criterion == "Uniform",
+      r.ef <- ifelse(criterion == "uniform",
                      1 - (n.ssp*B-1)/N/2,
                      1 - (sum(p.ssp^2) / n.ssp^2) * (n.ssp*B - 1) / 2)
       est.cov.ssp <- mean.outer.prod / (r.ef * B*(B-1))
@@ -165,27 +165,43 @@ quantile.ssp.estimation <- function(inputs,
 #' @examples
 #' #logistic regression
 #' set.seed(1)
-summary.subsampling.quantile <- function(object) {
+summary.ssp.quantreg <- function(object) {
   coef <- object$beta
-  se <- sqrt(diag(object$est.cov))
   N <- object$N
-  cat("Model Summary\n\n")
-  cat("\nCall:\n")
-  cat("\n")
-  print(object$model.call)
-  cat("\n")
-  cat("Subsample Size:\n")
-  cat("\n")
-  cat("Coefficients:\n")
-  cat("\n")
-  coef_table <- data.frame(
-    Estimate = round(coef, digits = 4),
-    `Std. Error` = round(se, digits = 4),
-    `z value` = round(coef / se, digits = 4),
-    `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
-                                 threshold = 0.0001),
-    check.names = FALSE
-  )
+  if (!all(is.na(object$est.cov))) {
+    se <- sqrt(diag(object$est.cov))
+    cat("Model Summary\n\n")
+    cat("\nCall:\n")
+    cat("\n")
+    print(object$model.call)
+    cat("\n")
+    cat("Subsample Size:\n")
+    cat("\n")
+    cat("Coefficients:\n")
+    cat("\n")
+    coef_table <- data.frame(
+      Estimate = round(coef, digits = 4),
+      `Std. Error` = round(se, digits = 4),
+      `z value` = round(coef / se, digits = 4),
+      `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
+                                   threshold = 0.0001),
+      check.names = FALSE
+    )
+  } else {
+    cat("Model Summary\n\n")
+    cat("\nCall:\n")
+    cat("\n")
+    print(object$model.call)
+    cat("\n")
+    cat("Subsample Size:\n")
+    cat("\n")
+    cat("Coefficients:\n")
+    cat("\n")
+    coef_table <- data.frame(
+      Estimate = round(coef, digits = 4),
+      check.names = FALSE
+    )
+  }
   rownames(coef_table) <- names(coef)
   print(coef_table)
   # Add more summary information as needed

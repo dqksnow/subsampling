@@ -36,8 +36,8 @@
 #' @examples
 #' #quantile regression
 #' set.seed(1)
-#' N <- 1e6
-#' B <- 10
+#' N <- 1e4
+#' B <- 5
 #' tau <- 0.75
 #' beta.true <- rep(1, 7)
 #' d <- length(beta.true) - 1
@@ -50,29 +50,29 @@
 #' err * rowMeans(abs(X))
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ X
-#' n.plt <- 1000
-#' n.ssp <- 1000
-#' optL.results <- subsampling.quantile(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'OptL',
-#' sampling.method = 'WithReplacement',likelihood = 'Weighted')
+#' n.plt <- 200
+#' n.ssp <- 200
+#' optL.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
+#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'optL',
+#' sampling.method = 'withReplacement',likelihood = 'weighted')
 #' summary(optL.results)
-#' uni.results <- subsampling.quantile(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'Uniform',
-#' sampling.method = 'WithReplacement', likelihood = 'Weighted')
+#' uni.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
+#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'uniform',
+#' sampling.method = 'withReplacement', likelihood = 'weighted')
 #' summary(uni.results)
 
-subsampling.quantile <- function(formula,
-                                 data,
-                                 tau,
-                                 n.plt,
-                                 n.ssp,
-                                 B = 10,
-                                 boot = TRUE,
-                                 criterion = c('OptL', 'Uniform'),
-                                 sampling.method = c('WithReplacement',
-                                                     'Poisson'),
-                                 likelihood = c('Weighted')
-                                 ) {
+ssp.quantreg <- function(formula,
+                         data,
+                         tau,
+                         n.plt,
+                         n.ssp,
+                         B = 10,
+                         boot = TRUE,
+                         criterion = c('optL', 'uniform'),
+                         sampling.method = c('withReplacement',
+                                             'poisson'),
+                         likelihood = c('weighted')
+                         ) {
   
   model.call <- match.call()
   mf <- model.frame(formula, data)
@@ -105,7 +105,7 @@ subsampling.quantile <- function(formula,
                  likelihood = likelihood
                  )
   
-  if (criterion %in% c("OptL")) {
+  if (criterion %in% c("optL")) {
     
     ## pilot step
     plt.results <- quantile.plt.estimation(inputs)
@@ -132,9 +132,9 @@ subsampling.quantile <- function(formula,
                     N = N,
                     subsample.size.expect = c(n.ssp, B)
                     )
-    class(results) <- c("subsampling.quantile", "list")
+    class(results) <- c("ssp.quantreg", "list")
     return(results)
-  } else if (criterion == "Uniform"){
+  } else if (criterion == "uniform"){
     ### subsampling and boot step
     uni.results <- quantile.ssp.estimation(inputs)
     Betas.uni <- uni.results$Betas.ssp
@@ -149,7 +149,7 @@ subsampling.quantile <- function(formula,
                     N = N,
                     subsample.size.expect = c(n.ssp, B)
                     )
-    class(results) <- c("subsampling.quantile", "list")
+    class(results) <- c("ssp.quantreg", "list")
     return(results)
   }
 }
