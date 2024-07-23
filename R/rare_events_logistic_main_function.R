@@ -13,10 +13,10 @@
 #' @param n.ssp The expected optimal subsample size (the second-step subsample
 #' size) drawn from those samples with \code{Y=0}.
 #' @param criterion The criterion of optimal subsampling probabilities,
-#' currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
+#' currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator, currently there are two choices
-#'  \code{Weighted} and \code{LogOddsCorrection}.
+#'  \code{weighted} and \code{logOddsCorrection}.
 #' @param alpha Mixture proportions of optimal subsampling probability and
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling
@@ -38,7 +38,7 @@
 #'
 #' @examples
 #' set.seed(1)
-#' N <- 5 * 1e5
+#' N <- 2 * 1e4
 #' beta0 <- c(-1.8, -rep(1, 6))
 #' d <- length(beta0) - 1
 #' X <- matrix(0, N, d)
@@ -48,28 +48,28 @@
 #' print(paste('N: ', N))
 #' print(paste('sum(Y): ', sum(Y)))
 #' n.plt <- 200
-#' n.ssp <- 2000
+#' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
-#' subsampling.results <- rare.logistic.subsampling(formula,
+#' subsampling.results <- relogit.ssp(formula,
 #'                                      data,
 #'                                      n.plt,
 #'                                      n.ssp,
-#'                                      criterion = 'OptA',
-#'                                      likelihood = 'LogOddsCorrection')
+#'                                      criterion = 'optA',
+#'                                      likelihood = 'logOddsCorrection')
 #' summary(subsampling.results)
 
 
-rare.logistic.subsampling <-  function(formula,
-                                       data,
-                                       n.plt,
-                                       n.ssp,
-                                       criterion = c('OptL', 'OptA', 'LCC', 
-                                                     'Uniform'),
-                                       likelihood = c('LogOddsCorrection',
-                                                      'Weighted'),
-                                       alpha = 0.1,
-                                       b = 2) {
+relogit.ssp <-  function(formula,
+                         data,
+                         n.plt,
+                         n.ssp,
+                         criterion = c('optL', 'optA', 'LCC', 
+                                       'uniform'),
+                         likelihood = c('logOddsCorrection',
+                                        'weighted'),
+                         alpha = 0.1,
+                         b = 2) {
   model.call <- match.call()
   mf <- model.frame(formula, data)
   Y <- model.response(mf, "numeric")
@@ -80,7 +80,7 @@ rare.logistic.subsampling <-  function(formula,
   N1 <- sum(Y)
   N0 <- N - N1
 
-  if (criterion %in% c('OptL', 'OptA', 'LCC')){
+  if (criterion %in% c('optL', 'optA', 'LCC')){
 
     ## pilot step
     plt.estimate.results <- rare.pilot.estimate(X = X, Y = Y, n.plt = n.plt)
@@ -145,9 +145,9 @@ rare.logistic.subsampling <-  function(formula,
                     subsample.size.expect = N1 + n.ssp
                     )
     
-    class(results) <- c("subsampling.glm", "list")
+    class(results) <- c("relogit.ssp", "list")
     return(results)
-  } else if (criterion == "Uniform"){
+  } else if (criterion == "uniform"){
     ## Poisson sampling
     n.uni <- N1 + n.ssp
     pi.uni <- rep(1, N)
@@ -164,7 +164,7 @@ rare.logistic.subsampling <-  function(formula,
                     N = N,
                     subsample.size.expect = n.uni
                     )
-    class(results) <- c("subsampling.glm", "list")
+    class(results) <- c("relogit.ssp", "list")
     return(results)
   }
 }

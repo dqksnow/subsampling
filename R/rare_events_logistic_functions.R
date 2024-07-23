@@ -7,7 +7,7 @@ rare.coef.estimate <- function(X,
   data <- as.data.frame(cbind(Y, X))
   formula <- as.formula(paste(colnames(data)[1], "~",
                               paste(colnames(data)[-1], collapse = "+"), "-1"))
-  # #use '-1' to avoid adding intercept column again.
+  ## use '-1' to avoid adding intercept column again.
   design <- survey::svydesign(ids =  ~ 1,
                               weights =  ~ weights,
                               data = data)
@@ -23,10 +23,10 @@ rare.coef.estimate <- function(X,
                                           family = quasibinomial(link="logit")))
   beta <- results$coefficients
   cov <- results$cov.unscaled
-  # pbeta <- as.vector(results$fitted.values)
+  pbeta <- as.vector(results$fitted.values)
   return (list(beta = beta,
-              cov = cov
-              # pbeta <- pbeta
+              cov = cov,
+              pbeta = pbeta
               )
          )
 }
@@ -46,10 +46,10 @@ pbeta <- function(X, beta, offset = NA){
   return (p)
 }
 rare.calculate.nm <- function(X, Y, ddL.plt.correction, P.plt, criterion){
-  if (criterion == "OptA"){
+  if (criterion == "optA"){
     nm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2)) # norm
     nm <- P.plt * sqrt(1 - P.plt) * nm # numerator
-  } else if (criterion == "OptL"){
+  } else if (criterion == "optL"){
     nm <- sqrt(rowSums(X^2))
     nm <- P.plt * sqrt(1 - P.plt) * nm
   } else if (criterion == "LCC"){
@@ -114,7 +114,7 @@ rare.subsampling <- function(X,
   w.ssp <- offset <- NA
   nm <- rare.calculate.nm(X, Y, ddL.plt.correction, P.plt, criterion)
   ## Currently only Poisson sampling method has been implemented.
-  if(criterion %in% c('OptL', 'OptA')){
+  if(criterion %in% c('optL', 'optA')){
     H <- quantile(nm, 1 - n.ssp / (b * N)) # if consider threshold
     nm[nm > H] <- H
     NPhi <- (N0 / N) * sum(nm[index.plt] / p.plt) / n.plt
@@ -122,9 +122,9 @@ rare.subsampling <- function(X,
     index.ssp <- poisson.index(N, Y + (1 - Y) * p.ssp)
     p.ssp <- pmin(p.ssp[index.ssp], 1)
     ## calculate offset or weights:
-    if (likelihood == 'LogOddsCorrection') {
+    if (likelihood == 'logOddsCorrection') {
       offset <- -log(p.ssp)
-    } else if (likelihood == 'Weighted') {
+    } else if (likelihood == 'weighted') {
       w.ssp <- 1 / (Y[index.ssp] + (1 - Y[index.ssp]) * p.ssp)
     }
   } else if (criterion == 'LCC'){
@@ -133,13 +133,13 @@ rare.subsampling <- function(X,
     index.ssp <- poisson.index(N, p.ssp)
     p.ssp <- pmin(p.ssp[index.ssp], 1)
     ## calculate offset or weights:
-    if (likelihood == 'LogOddsCorrection') {
+    if (likelihood == 'logOddsCorrection') {
       nm.1 <- abs(1 - P.plt[index.ssp])
       nm.0 <- abs(P.plt[index.ssp])
       pi.1 <- pmin((n.ssp + N1) * nm.1 / dm, 1)
       pi.0 <- pmin((n.ssp + N1) * nm.0 / dm, 1)
       offset <- log(pi.1 / pi.0)
-    } else if (likelihood == 'Weighted') {
+    } else if (likelihood == 'weighted') {
       w.ssp <- 1 / p.ssp
     }
   }
@@ -158,22 +158,22 @@ rare.subsample.estimate <- function(x.ssp,
                                     offset,
                                     beta.plt,
                                     likelihood) {
-  if (likelihood == "Weighted"){
+  if (likelihood == "weighted"){
     results.ssp <- rare.coef.estimate(x.ssp, y.ssp, weights = w.ssp)
     beta.ssp <- results.ssp$beta
-    P.ssp <- pbeta(x.ssp, beta.ssp)
-    # P.ssp <- results.ssp$pbeta
+    P.ssp <- results.ssp$pbeta
+    # P.ssp <- pbeta(x.ssp, beta.ssp) # as same as results.ssp$pbeta
     var.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = w.ssp * n.ssp / N)
     dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = w.ssp^2 * n.ssp^2 / N^2)
-  } else if (likelihood == 'LogOddsCorrection'){
+  } else if (likelihood == 'logOddsCorrection'){
     results.ssp <- rare.coef.estimate(X = x.ssp,
                                       Y = y.ssp,
                                       start = beta.plt,
                                       offset = offset)
     beta.ssp <- results.ssp$beta
-    P.ssp <- pbeta(x.ssp, beta.ssp, offset)
-    # P.ssp <- results.ssp$pbeta
+    P.ssp <- results.ssp$pbeta
+    # P.ssp <- pbeta(x.ssp, beta.ssp, offset)
     var.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = 1 / n.ssp)
     dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = 1 / n.ssp ^ 2)
@@ -207,3 +207,68 @@ rare.combining <- function(ddL.plt,
   )
 }
 ###############################################################################
+#' relogit Main results summary
+#'
+#' @param object A list object output by the main function, which contains the
+#'  results of the estimation of the parameters, the estimation of the
+#'  covariance matrix, subsample index, etc.
+#'
+#' @return A series of data.frame will be printed.
+#' @export
+#'
+#' @examples
+#' #TBD
+summary.relogit.ssp <- function(object) {
+  coef <- object$beta
+  se <- sqrt(diag(object$var))
+  N <- object$N
+  n.ssp.expect <- object$subsample.size.expect
+  n.ssp.actual <- length(object$index)
+  n.ssp.unique <- length(unique(object$index))
+  subsample.rate.expect <- (n.ssp.expect / N) * 100
+  subsample.rate.actual <- (n.ssp.actual / N) * 100
+  subsample.rate.unique <- (n.ssp.unique / N) * 100
+  cat("Model Summary\n\n")
+  cat("\nCall:\n")
+  cat("\n")
+  print(object$model.call)
+  cat("\n")
+  cat("Subsample Size:\n")
+  size_table <- data.frame(
+    'Variable' = c(
+      'Total Sample Size',
+      'Expected Subsample Size',
+      'Actual Subsample Size',
+      'Unique Subsample Size',
+      'Expected Subample Rate',
+      'Actual Subample Rate',
+      'Unique Subample Rate'
+    ),
+    'Value' = c(
+      N,
+      n.ssp.expect,
+      n.ssp.actual,
+      n.ssp.unique,
+      paste0(subsample.rate.expect, "%"),
+      paste0(subsample.rate.actual, "%"),
+      paste0(subsample.rate.unique, "%")
+    )
+  )
+  colnames(size_table) <- NULL
+  rownames(size_table) <- NULL
+  print(size_table)
+  cat("\n")
+  cat("Coefficients:\n")
+  cat("\n")
+  coef_table <- data.frame(
+    Estimate = round(coef, digits = 4),
+    `Std. Error` = round(se, digits = 4),
+    `z value` = round(coef / se, digits = 4),
+    `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
+                                 threshold = 0.0001),
+    check.names = FALSE
+  )
+  rownames(coef_table) <- names(coef)
+  print(coef_table)
+  # Add more summary information as needed
+}
