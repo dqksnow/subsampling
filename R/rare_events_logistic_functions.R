@@ -210,6 +210,7 @@ rare.combining <- function(ddL.plt,
 #' relogit Main results summary
 #'
 #' @param object A list object output by the main function, which contains the
+#' @param ... Additional arguments passed to the summary function.
 #'  results of the estimation of the parameters, the estimation of the
 #'  covariance matrix, subsample index, etc.
 #'
@@ -218,7 +219,7 @@ rare.combining <- function(ddL.plt,
 #'
 #' @examples
 #' #TBD
-summary.relogit.ssp <- function(object) {
+summary.relogit.ssp <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
   N <- object$N

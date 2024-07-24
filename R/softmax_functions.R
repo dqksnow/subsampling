@@ -196,7 +196,6 @@ softmax.calculate.offsets <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
       offsets[, k] <- log(pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1))
     }
   }
-  print(head(offsets))
   return(offsets)
 }
 ###############################################################################
@@ -354,14 +353,14 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
 #' @param object A list object output by the main function, which contains the
 #'  results of the estimation of the parameters, the estimation of the
 #'  covariance matrix, subsample index, etc.
-#'
+#' @param ... Additional arguments passed to the summary function.
 #' @return A series of data.frame will be printed.
 #' @export
 #'
 #' @examples
 #' #TBD
 
-summary.ssp.softmax <- function(object) {
+summary.ssp.softmax <- function(object, ...) {
   dimension <- dim(object$beta)
   d <- dimension[1]
   K <- dimension[2]

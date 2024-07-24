@@ -158,14 +158,14 @@ quantile.ssp.estimation <- function(inputs,
 #' @param object A list object output by the main function, which contains the
 #'  results of the estimation of the parameters, the estimation of the
 #'  covariance matrix, subsample index, etc.
-#'
+#' @param ... Additional arguments passed to the summary function.
 #' @return A data frame will be printed.
 #' @export
 #'
 #' @examples
 #' #logistic regression
 #' set.seed(1)
-summary.ssp.quantreg <- function(object) {
+summary.ssp.quantreg <- function(object, ...) {
   coef <- object$beta
   N <- object$N
   if (!all(is.na(object$est.cov))) {

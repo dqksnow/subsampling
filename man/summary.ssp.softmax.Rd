@@ -4,12 +4,14 @@
 \alias{summary.ssp.softmax}
 \title{Softmax Main results summary}
 \usage{
-\method{summary}{ssp.softmax}(object)
+\method{summary}{ssp.softmax}(object, ...)
 }
 \arguments{
 \item{object}{A list object output by the main function, which contains the
 results of the estimation of the parameters, the estimation of the
 covariance matrix, subsample index, etc.}
+
+\item{...}{Additional arguments passed to the summary function.}
 }
 \value{
 A series of data.frame will be printed.

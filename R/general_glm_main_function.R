@@ -17,12 +17,12 @@
 #' size).
 #' @param family defalut = 'binomial'.
 #' @param criterion The criterion of optimal subsampling probabilities,
-#' currently there are three choices \code{OptA}, \code{OptL}, and \code{LCC}.
+#' currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.
 #' @param sampling.method The sampling method for drawing the optimal subsample,
-#'  currently there are two choices \code{WithReplacement} and \code{Poisson}.
+#'  currently there are two choices \code{withReplacement} and \code{poisson}.
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator, currently there are two choices
-#'  \code{Weighted} and \code{LogOddsCorrection}.
+#'  \code{weighted} and \code{logOddsCorrection}.
 #' @param alpha Mixture proportions of optimal subsampling probability and
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling
@@ -48,23 +48,23 @@
 #' X <- matrix(0, N, d)
 #' generate_rexp <- function(x) x <- rexp(N, rate = 2)
 #' X <- apply(X, 2, generate_rexp)
-#' Y <- as.integer(rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))))
+#' Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
 #' print(paste('N: ', N))
 #' print(paste('sum(Y): ', sum(Y)))
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
 #' n.plt <- 500
 #' n.ssp <- 1000
-#' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
-#' likelihood = "LogOddsCorrection")
+#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'binomial', criterion = "optL", sampling.method = 'poisson',
+#' likelihood = "logOddsCorrection")
 #' summary(subsampling.results)
-#' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = "OptL",
-#' sampling.method = 'WithReplacement', likelihood = "Weighted")
+#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'binomial', criterion = "optL",
+#' sampling.method = 'withReplacement', likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = 'Uniform')
+#' Uni.subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'binomial', criterion = 'uniform')
 #' summary(Uni.subsampling.results)
 #' ############################################################################
 #' # poisson regression
@@ -81,32 +81,37 @@
 #' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 600
-#' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = "OptL", sampling.method = 'Poisson',
-#' likelihood = "Weighted")
+#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'poisson', criterion = "optL", sampling.method = 'poisson',
+#' likelihood = "weighted")
 #' summary(subsampling.results)
-#' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = "OptL", sampling.method = 'WithReplacement',
-#' likelihood = "Weighted")
+#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'poisson', criterion = "optL", sampling.method = 'withReplacement',
+#' likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = 'Uniform')
+#' Uni.subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'poisson', criterion = 'uniform')
 #' summary(Uni.subsampling.results)
 #' @export
 
-glm.subsampling <- function(formula,
-                            data,
-                            n.plt,
-                            n.ssp,
-                            family = c('binomial', 'poisson', 'gamma'),
-                            criterion = c('OptL', 'OptA', 'LCC', 'Uniform'),
-                            sampling.method = c('Poisson', 'WithReplacement'),
-                            likelihood = c('LogOddsCorrection',
-                                                'Weighted'),
-                            alpha = 0.1,
-                            b = 2) {
+glm.ssp <- function(formula,
+                    data,
+                    n.plt,
+                    n.ssp,
+                    family = 'binomial',
+                    criterion = 'optL',
+                    sampling.method = 'poisson',
+                    likelihood = 'logOddsCorrection',
+                    alpha = 0.1,
+                    b = 2) {
 
   model.call <- match.call()
+  
+  family <- match.arg(family, c('binomial', 'poisson', 'gamma'))
+  criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
+  sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
+  likelihood <- match.arg(likelihood, c('logOddsCorrection', 'weighted'))
+  
   if(is.function(family)) family <- family$family
   if(missing(family)) {
     stop("Specify a valid 'family' from c('binomial','poisson',gamma')")
@@ -123,8 +128,8 @@ glm.subsampling <- function(formula,
   d <- ncol(X)
   N1 <- sum(Y)
   N0 <- N - N1
-
-  if (criterion %in% c('OptL', 'OptA', 'LCC')) {
+  
+  if (criterion %in% c('optL', 'optA', 'LCC')) {
 
     ### pilot step ###
     plt.estimate.results <- pilot.estimate(X = X,
@@ -141,7 +146,7 @@ glm.subsampling <- function(formula,
     d.psi <- plt.estimate.results$d.psi
     index.plt <- plt.estimate.results$index.plt
 
-    ### subsampling step ###
+    ## subsampling step
     ssp.results <- subsampling(X = X,
                                Y = Y,
                                n.ssp = n.ssp,
@@ -159,7 +164,7 @@ glm.subsampling <- function(formula,
     w.ssp <- ssp.results$w.ssp
     offset <- ssp.results$offset
 
-    ### subsample estimating step ###
+    ## subsample estimating step
     ssp.estimate.results <- subsample.estimate(x.ssp = X[index.ssp, ],
                                                y.ssp = Y[index.ssp],
                                                n.ssp = n.ssp,
@@ -176,7 +181,7 @@ glm.subsampling <- function(formula,
     Lambda.ssp <- ssp.estimate.results$Lambda.ssp
     var.ssp <- ssp.estimate.results$var.ssp
 
-    ### combining step ###
+    ## combining step
     combining.results <- combining(ddL.plt = ddL.plt,
                                    ddL.ssp = ddL.ssp,
                                    dL.sq.plt = dL.sq.plt,
@@ -201,12 +206,15 @@ glm.subsampling <- function(formula,
                     N = N,
                     subsample.size.expect = n.ssp
                     )
-    
-    class(results) <- c("subsampling.glm", "list")
+    class(results) <- c("glm.ssp", "list")
     return(results)
-  } else if (criterion == "Uniform"){
+  } else if (criterion == "uniform"){
     n.uni <- n.plt + n.ssp
-    index.uni <- random.index(N, n.uni)
+    if (sampling.method == 'withReplacement') {
+      index.uni <- random.index(N, n.uni)
+    } else if (sampling.method == 'poisson') {
+      index.uni <- poisson.index(N, n.uni / N)
+    }
     x.uni <- X[index.uni, ]
     y.uni = Y[index.uni]
     results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni, family = family)
@@ -221,8 +229,12 @@ glm.subsampling <- function(formula,
                        y.uni,
                        weights = 1 / n.uni ^ 2,
                        family = family)
-    var.uni <- solve(ddL.uni) %*% 
-                    (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
+    if (sampling.method == 'withReplacement') {
+      var.uni <- solve(ddL.uni) %*% 
+        (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
+    } else if (sampling.method == 'poisson') {
+      var.uni <- solve(ddL.uni) %*% dL.sq.plt %*% solve(ddL.uni)
+    }
     
     results <- list(model.call = model.call,
                     index = index.uni,
@@ -231,7 +243,7 @@ glm.subsampling <- function(formula,
                     N = N,
                     subsample.size.expect = n.uni
                     )
-    class(results) <- c("subsampling.glm", "list")
+    class(results) <- c("glm.ssp", "list")
     return(results)
   }
 }

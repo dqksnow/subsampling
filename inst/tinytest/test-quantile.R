@@ -16,44 +16,44 @@ n.plt <- 100
 n.ssp <- 100
 
 expect_silent(optL.results <- 
-                subsampling.quantile(formula,
+                ssp.quantreg(formula,
                                      data,
                                      tau = tau,
                                      n.plt = n.plt,
                                      n.ssp = n.ssp,
                                      B = B,
                                      boot = TRUE,
-                                     criterion = 'OptL',
-                                     sampling.method = 'WithReplacement',
-                                     likelihood = 'Weighted'), 
+                                     criterion = 'optL',
+                                     sampling.method = 'withReplacement',
+                                     likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
 expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
-expect_true(inherits(optL.results, "subsampling.quantile"), 
-            info = "Output should be of class 'subsampling.quantile.'")
+expect_true(inherits(optL.results, "ssp.quantreg"), 
+            info = "Output should be of class 'ssp.quantreg.'")
 expect_equivalent(length(optL.results$index), 
                   B, 
                   info = "Subsamples should be divided into B lists.")
-expect_warning(subsampling.quantile(formula,
+expect_warning(ssp.quantreg(formula,
                                     data,
                                     tau = tau,
                                     n.plt = n.plt,
                                     n.ssp = 1000,
                                     B = B,
                                     boot = TRUE,
-                                    criterion = 'OptL',
-                                    sampling.method = 'WithReplacement',
-                                    likelihood = 'Weighted'))
+                                    criterion = 'optL',
+                                    sampling.method = 'withReplacement',
+                                    likelihood = 'weighted'))
 expect_silent(optL.results <- 
-                subsampling.quantile(formula,
+                ssp.quantreg(formula,
                                      data,
                                      tau = tau,
                                      n.plt = n.plt,
                                      n.ssp = n.ssp,
                                      B = B,
                                      boot = FALSE,
-                                     criterion = 'OptL',
-                                     sampling.method = 'WithReplacement',
-                                     likelihood = 'Weighted'), 
+                                     criterion = 'optL',
+                                     sampling.method = 'withReplacement',
+                                     likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
 expect_equivalent(length(optL.results$index), 
                   n.ssp*B, 

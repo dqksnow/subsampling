@@ -6,7 +6,7 @@ glm.coef.estimate <- function(X,
                               family) {
 
   family <- switch(family$family.name,
-                  "binomial" = binomial(),
+                  "binomial" = quasibinomial(link="logit"), # binomial()
                   "poisson" = poisson(),
                   "gamma" = Gamma(link = "inverse"))
   data <- as.data.frame(cbind(Y, X))
@@ -105,11 +105,11 @@ calculate.offset <- function (X,
                               n.ssp = NULL,
                               criterion,
                               sampling.method) {
-  if (criterion == "OptA") {
-    norm <- sqrt(rowSums(X %*% t(solve(ddL.plt.correction))))
+  if (criterion == "optA") {
+    norm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
     nm.1 <- abs(1 - d.psi) * norm
     nm.0 <- abs(d.psi) * norm
-  } else if (criterion == "OptL") {
+  } else if (criterion == "optL") {
     norm <- sqrt(rowSums(X^2))
     nm.1 <- abs(1 - d.psi) * norm
     nm.0 <- abs(d.psi) * norm
@@ -117,10 +117,10 @@ calculate.offset <- function (X,
     nm.1 <- abs(1 - d.psi)
     nm.0 <- abs(d.psi)
   }
-  if (sampling.method == 'WithReplacement') {
-    stop("Currently only the 'LogOddsCorrection' likelihood with
-         'Poisson' sampling method has been implemented.")
-  } else if (sampling.method == 'Poisson') {
+  if (sampling.method == 'withReplacement') {
+    stop("Currently only the 'logOddsCorrection' likelihood with
+         'poisson' sampling method has been implemented.")
+  } else if (sampling.method == 'poisson') {
     pi.1 <- pmin(n.ssp * ((1 - alpha) * nm.1 / NPhi + alpha / N), 1)
     pi.0 <- pmin(n.ssp * ((1 - alpha) * nm.0 / NPhi + alpha / N), 1)
   }
@@ -129,10 +129,10 @@ calculate.offset <- function (X,
 }
 ###############################################################################
 calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
-  if (criterion == "OptA"){
+  if (criterion == "optA"){
     nm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
     nm <- abs(Y - d.psi) * nm # numerator
-  } else if (criterion == "OptL"){
+  } else if (criterion == "optL"){
     nm <- sqrt(rowSums(X^2))
     nm <- abs(Y - d.psi) * nm
   } else if (criterion == "LCC"){
@@ -148,7 +148,7 @@ pilot.estimate <- function(X, Y, n.plt, family){
     N0 <- N - N1
     ## This is case control sampling with replacement.
     ## For binary Y only.
-    ## We can also use uniform sampling with rep, half half sampling with rep
+    ## We can also use uniform sampling with rep, half half sampling 
     ## or poisson sampling.
     p.plt <- ifelse(Y == 1, 1/(2*N1), 1/(2*N0))
     index.plt <- random.index(N, n.plt, p = p.plt)
@@ -224,23 +224,23 @@ subsampling <- function(X,
   ## n.plt, so here we reset n.plt.
   w.ssp <- offset <- NA
   nm <- calculate.nm(X, Y, ddL.plt.correction, d.psi, criterion) # numerator
-  if (sampling.method == "WithReplacement"){
+  if (sampling.method == "withReplacement"){
     dm <- sum(nm) # denominator
     p.ssp <- (1 - alpha) * nm / dm + alpha / N
     index.ssp <- random.index(N, n.ssp, p.ssp)
-    if (likelihood == 'LogOddsCorrection') {
-      stop("Currently only the 'LogOddsCorrection' estimate method with
-         'Poisson' sampling method has been implemented.")
-    } else if (likelihood == 'Weighted') {
+    if (likelihood == 'logOddsCorrection') {
+      stop("Currently only the 'logOddsCorrection' estimate method with
+         'withReplacement' sampling method has not been implemented.")
+    } else if (likelihood == 'weighted') {
       w.ssp <- 1 / p.ssp[index.ssp]
     }
-  } else if (sampling.method == "Poisson"){
+  } else if (sampling.method == "poisson"){
     H <- quantile(nm, 1 - n.ssp / (b * N)) # threshold
     nm[nm > H] <- H
     NPhi <- sum(nm[index.plt] / p.plt) / n.plt
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, p.ssp)
-    if (likelihood == 'LogOddsCorrection') {
+    if (likelihood == 'logOddsCorrection') {
       offset <- calculate.offset(X = X[index.ssp,],
                                  N = N,
                                  dm = dm,
@@ -251,7 +251,7 @@ subsampling <- function(X,
                                  sampling.method = sampling.method,
                                  NPhi = NPhi,
                                  n.ssp = n.ssp)
-    } else if (likelihood == 'Weighted') {
+    } else if (likelihood == 'weighted') {
       w.ssp <- 1 / pmin(p.ssp[index.ssp], 1)
     }
   }
@@ -272,14 +272,14 @@ subsample.estimate <- function(x.ssp,
                                sampling.method,
                                likelihood,
                                family) {
-  if (likelihood == "Weighted") {
+  if (likelihood == "weighted") {
     results.ssp <- glm.coef.estimate(x.ssp,
                                      y.ssp,
                                      weights = w.ssp,
                                      family = family)
     beta.ssp <- results.ssp$beta
     linear.predictor.ssp <- as.vector(x.ssp %*% beta.ssp)
-    if (sampling.method == 'Poisson') {
+    if (sampling.method == 'poisson') {
       ddL.ssp <- ddL(linear.predictor.ssp,
                      x.ssp,
                      weights = w.ssp / N,
@@ -290,7 +290,7 @@ subsample.estimate <- function(x.ssp,
                          weights = w.ssp ^ 2 / N ^ 2,
                          family = family)
       Lambda.ssp <- 0 # placeholder
-    } else if (sampling.method == "WithReplacement") {
+    } else if (sampling.method == "withReplacement") {
       ddL.ssp <- ddL(linear.predictor.ssp,
                      x.ssp,
                      weights = w.ssp / (N * n.ssp),
@@ -307,9 +307,9 @@ subsample.estimate <- function(x.ssp,
                               weights = w.ssp / (N * n.ssp ^ 2),
                               family = family)
     }
-  } else if (likelihood == 'LogOddsCorrection') {
+  } else if (likelihood == 'logOddsCorrection') {
     if (family$family.name != "binomial") {
-      stop("Currently 'LogOddsCorrection' likelihood can only work for logistic
+      stop("Currently 'logOddsCorrection' likelihood can only work for logistic
            regression")
     }
     results.ssp <- glm.coef.estimate(X = x.ssp,
@@ -385,6 +385,7 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 #' @param object A list object output by the main function, which contains the
 #'  results of the estimation of the parameters, the estimation of the
 #'  covariance matrix, subsample size, etc.
+#' @param ... Additional arguments passed to the summary function.
 #'
 #' @return A data.frame will be printed.
 #' @export
@@ -405,12 +406,12 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 #' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 600
-#' subsampling.results <- glm.subsampling(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = "OptL", sampling.method = 'Poisson',
-#' likelihood = "LogOddsCorrection")
+#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' family = 'binomial', criterion = "optL", sampling.method = 'poisson',
+#' likelihood = "logOddsCorrection")
 #' summary(subsampling.results)
 
-summary.subsampling.glm <- function(object) {
+summary.glm.ssp <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
   N <- object$N

@@ -4,10 +4,12 @@
 \alias{summary.relogit.ssp}
 \title{relogit Main results summary}
 \usage{
-\method{summary}{relogit.ssp}(object)
+\method{summary}{relogit.ssp}(object, ...)
 }
 \arguments{
-\item{object}{A list object output by the main function, which contains the
+\item{object}{A list object output by the main function, which contains the}
+
+\item{...}{Additional arguments passed to the summary function.
 results of the estimation of the parameters, the estimation of the
 covariance matrix, subsample index, etc.}
 }
