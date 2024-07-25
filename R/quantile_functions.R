@@ -49,7 +49,6 @@ quantile.ssp.estimation <- function(inputs,
   sampling.method <- inputs$sampling.method
   boot <- inputs$boot
   
-  
   if (criterion == "uniform"){
     p.ssp <- NA
   } else if (criterion %in% c("optL")) {
@@ -168,6 +167,8 @@ quantile.ssp.estimation <- function(inputs,
 summary.ssp.quantreg <- function(object, ...) {
   coef <- object$beta
   N <- object$N
+  n.ssp <- object$subsample.size.expect[1]
+  B <- object$subsample.size.expect[2]
   if (!all(is.na(object$est.cov))) {
     se <- sqrt(diag(object$est.cov))
     cat("Model Summary\n\n")
@@ -176,6 +177,7 @@ summary.ssp.quantreg <- function(object, ...) {
     print(object$model.call)
     cat("\n")
     cat("Subsample Size:\n")
+    print(B*n.ssp)
     cat("\n")
     cat("Coefficients:\n")
     cat("\n")
@@ -194,6 +196,7 @@ summary.ssp.quantreg <- function(object, ...) {
     print(object$model.call)
     cat("\n")
     cat("Subsample Size:\n")
+    print(B*n.ssp)
     cat("\n")
     cat("Coefficients:\n")
     cat("\n")

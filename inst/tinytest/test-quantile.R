@@ -1,5 +1,5 @@
 set.seed(1)
-N <- 5e3 # toy example
+N <- 2e4 # toy example
 B <- 5
 tau <- 0.75
 beta.true <- rep(1, 7)
@@ -17,15 +17,15 @@ n.ssp <- 100
 
 expect_silent(optL.results <- 
                 ssp.quantreg(formula,
-                                     data,
-                                     tau = tau,
-                                     n.plt = n.plt,
-                                     n.ssp = n.ssp,
-                                     B = B,
-                                     boot = TRUE,
-                                     criterion = 'optL',
-                                     sampling.method = 'withReplacement',
-                                     likelihood = 'weighted'), 
+                             data,
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B,
+                             boot = TRUE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
 expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
 expect_true(inherits(optL.results, "ssp.quantreg"), 
@@ -34,33 +34,46 @@ expect_equivalent(length(optL.results$index),
                   B, 
                   info = "Subsamples should be divided into B lists.")
 expect_warning(ssp.quantreg(formula,
-                                    data,
-                                    tau = tau,
-                                    n.plt = n.plt,
-                                    n.ssp = 1000,
-                                    B = B,
-                                    boot = TRUE,
-                                    criterion = 'optL',
-                                    sampling.method = 'withReplacement',
-                                    likelihood = 'weighted'))
+                            data,
+                            tau = tau,
+                            n.plt = n.plt,
+                            n.ssp = 1000,
+                            B = B,
+                            boot = TRUE,
+                            criterion = 'optL',
+                            sampling.method = 'withReplacement',
+                            likelihood = 'weighted'))
 expect_silent(optL.results <- 
                 ssp.quantreg(formula,
-                                     data,
-                                     tau = tau,
-                                     n.plt = n.plt,
-                                     n.ssp = n.ssp,
-                                     B = B,
-                                     boot = FALSE,
-                                     criterion = 'optL',
-                                     sampling.method = 'withReplacement',
-                                     likelihood = 'weighted'), 
+                             data,
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B,
+                             boot = FALSE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
 expect_equivalent(length(optL.results$index), 
                   n.ssp*B, 
                   info = "When boot=F, Subsamples should not be divided into 
                   groups.")
 
-# expect_error for withrep + poisson
+expect_silent(optL.results <- 
+                ssp.quantreg(formula,
+                             data,
+                             subset = c(1:(N/2)), 
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B,
+                             boot = TRUE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted'),
+              info = "It should run without errors when use subset argument.")
+
 # Cleanup
 rm(list = ls())
 gc()

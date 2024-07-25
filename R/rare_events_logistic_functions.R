@@ -219,7 +219,7 @@ rare.combining <- function(ddL.plt,
 #'
 #' @examples
 #' #TBD
-summary.relogit.ssp <- function(object, ...) {
+summary.ssp.relogit <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
   N <- object$N

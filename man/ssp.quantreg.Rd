@@ -7,14 +7,18 @@
 ssp.quantreg(
   formula,
   data,
-  tau,
+  subset = NULL,
+  tau = 0.5,
   n.plt,
   n.ssp,
-  B = 10,
+  B = 5,
   boot = TRUE,
-  criterion = c("optL", "uniform"),
-  sampling.method = c("withReplacement", "poisson"),
-  likelihood = c("weighted")
+  criterion = "optL",
+  sampling.method = "withReplacement",
+  likelihood = c("weighted"),
+  control = list(...),
+  contrasts = NULL,
+  ...
 )
 }
 \arguments{
@@ -27,6 +31,8 @@ The binary response vector that takes the value of 0 or 1, where 1 means
 the event occurred.
 The design matrix contains predictor variables. A column representing
 the intercept term with all 1's will be automatically added.}
+
+\item{subset}{An optional vector specifying a subset of rows to be used}
 
 \item{tau}{The quantile.}
 
@@ -46,6 +52,12 @@ size).}
 
 \item{likelihood}{The type of the maximum likelihood function used to
 calculate the optimal subsampling estimator.}
+
+\item{control}{a list of parameters for controlling the fitting process.}
+
+\item{contrasts}{The type of the maximum likelihood function used to}
+
+\item{...}{a list of parameters for controlling the fitting process.}
 }
 \value{
 \describe{
@@ -81,13 +93,13 @@ err * rowMeans(abs(X))
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ X
 n.plt <- 200
-n.ssp <- 200
+n.ssp <- 100
 optL.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
-n.ssp = n.ssp,B,boot = TRUE,criterion = 'optL',
+n.ssp = n.ssp,B = B,boot = TRUE,criterion = 'optL',
 sampling.method = 'withReplacement',likelihood = 'weighted')
 summary(optL.results)
 uni.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
-n.ssp = n.ssp,B,boot = TRUE,criterion = 'uniform',
+n.ssp = n.ssp,B = B,boot = TRUE,criterion = 'uniform',
 sampling.method = 'withReplacement', likelihood = 'weighted')
 summary(uni.results)
 }

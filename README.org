@@ -3,15 +3,15 @@
 
 *** To do list
 - Jul 3: 
-- [ ] write arguments in lowercase
+- [X] write arguments in lowercase
   - [X] quantile
-  - [ ] rare
+  - [X] rare
   - [X] softmax
-  - [ ] glm
+  - [X] glm
 - [ ] contrast of covariate matrix X
 - [ ] add subset argument
 - [ ] use control object to collect arguments
-- [ ] rename functions, for example, ssp.quantreg
+- [X] rename functions, for example, ssp.quantreg
 - [ ] double check the necessarity of the family object extension I wrote.
 - [ ] allow user defined family object
   

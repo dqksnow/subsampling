@@ -11,6 +11,7 @@
 #'      the event occurred.
 #'     The design matrix contains predictor variables. A column representing
 #'     the intercept term with all 1's will be automatically added.
+#' @param subset An optional vector specifying a subset of rows to be used
 #' @param tau The quantile.
 #' @param n.plt The pilot subsample size (the first-step subsample size).
 #' These samples will be used to estimate the pilot estimator.
@@ -22,7 +23,10 @@
 #' @param sampling.method The sampling method for drawing the optimal subsample.
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator.
-#'
+#' @param contrasts The type of the maximum likelihood function used to
+#' @param control a list of parameters for controlling the fitting process. 
+#' @param ... a list of parameters for controlling the fitting process. 
+#' 
 #' @return
 #' \describe{
 #'   \item{model.call}{the model}
@@ -51,42 +55,78 @@
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ X
 #' n.plt <- 200
-#' n.ssp <- 200
+#' n.ssp <- 100
 #' optL.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'optL',
+#' n.ssp = n.ssp,B = B,boot = TRUE,criterion = 'optL',
 #' sampling.method = 'withReplacement',likelihood = 'weighted')
 #' summary(optL.results)
 #' uni.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
-#' n.ssp = n.ssp,B,boot = TRUE,criterion = 'uniform',
+#' n.ssp = n.ssp,B = B,boot = TRUE,criterion = 'uniform',
 #' sampling.method = 'withReplacement', likelihood = 'weighted')
 #' summary(uni.results)
 
 ssp.quantreg <- function(formula,
                          data,
-                         tau,
+                         subset = NULL,
+                         tau = 0.5,
                          n.plt,
                          n.ssp,
-                         B = 10,
+                         B = 5,
                          boot = TRUE,
-                         criterion = c('optL', 'uniform'),
-                         sampling.method = c('withReplacement',
-                                             'poisson'),
-                         likelihood = c('weighted')
+                         criterion = 'optL',
+                         sampling.method = 'withReplacement',
+                         likelihood = c('weighted'),
+                         control = list(...),
+                         contrasts = NULL,
+                         ...
                          ) {
   
+  ## mf represents the model frame that contains all the necessary variables 
+  ## for model fitting, including the response and predictors.
+  ## Initially, mf is the match.all() object containing all the arguments 
+  ## passed to the main function
+  ## After match() matching the relevant arguments, mf is subsetted to include
+  ## only those arguments.
+  ## It is then converted to a model frame using stats::model.frame
+  
   model.call <- match.call()
-  mf <- model.frame(formula, data)
-  Y <- model.response(mf, "numeric")
-  X <- model.matrix(formula, mf)
-  colnames(X)[1] <- "intercept"
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset"),
+             names(mf),
+             0L)
+  mf <- mf[c(1L, m)] # mf[[1]]) contains the original function call
+  mf$drop.unused.levels <- TRUE 
+  # Sometimes, not all levels are present in the subset of data being analyzed.
+  # drop.unused.levels drops any unused levels of factor variables.
+  
+  ## when mf is subsequently evaluated, it will execute stats::model.frame(...)
+  ## instead of mf[[1L]].
+  mf[[1L]] <- quote(stats::model.frame)
+  ## mf is just an expression before running eval(). eval() evaluate the
+  ## expression within a specific environment. parent.frame() is the 
+  ## environment of the caller function.
+  mf <- eval(mf, parent.frame())
+  ## mt extracts the terms object from the model frame mf. This object is
+  ## essential for understanding the structure of the model, such as which
+  ## variables are used and how they are transformed.
+  mt <- attr(mf, "terms") # allow model.frame to have updated it
+  Y <- model.response(mf, "any")
+  ## avoid problems with 1D arrays, but keep names
+  if(length(dim(Y)) == 1L) {
+    nm <- rownames(Y)
+    dim(Y) <- NULL
+    if(!is.null(nm)) names(Y) <- nm
+  }
+  X <- model.matrix(mt, mf, contrasts)
   N <- nrow(X)
   d <- ncol(X)
+  criterion <- match.arg(criterion, c('optL', 'uniform'))
+  sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
+  likelihood <- match.arg(likelihood, c('weighted'))
   
-  criterion <- match.arg(criterion)
-  sampling.method <- match.arg(sampling.method)
-  likelihood <- match.arg(likelihood)
+  control.tbd <- control
   
-  ## check inputs
+  ## check subsample size
   if (n.ssp * B > 0.1 * N) {
     warning("The total subsample size n.ssp*B exceeds the recommended maximum
     value (10% of full sample size).")
@@ -112,7 +152,6 @@ ssp.quantreg <- function(formula,
     beta.plt <- plt.results$beta.plt
     Ie.full <- plt.results$Ie.full
     index.plt <- plt.results$index.plt
-    
     ## subsampling and boot step
     ssp.results <- quantile.ssp.estimation(inputs,
                                            Ie.full = Ie.full,

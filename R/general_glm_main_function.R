@@ -25,8 +25,8 @@
 #'  \code{weighted} and \code{logOddsCorrection}.
 #' @param alpha Mixture proportions of optimal subsampling probability and
 #' uniform subsampling probability. Default = 0.1.
-#' @param b This parameter controls the upper threshold for optimal subsampling
-#'  probabilities.
+#' @param b This parameter controls the upper threshold for optimal subsampling probabilities.
+#' @param subset an optional vector specifying a subset of observations to be used in the fitting process.
 #'
 #' @return
 #' \describe{
@@ -55,15 +55,15 @@
 #' formula <- Y ~ .
 #' n.plt <- 500
 #' n.ssp <- 1000
-#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "optL", sampling.method = 'poisson',
 #' likelihood = "logOddsCorrection")
 #' summary(subsampling.results)
-#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "optL",
 #' sampling.method = 'withReplacement', likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = 'uniform')
 #' summary(Uni.subsampling.results)
 #' ############################################################################
@@ -81,20 +81,20 @@
 #' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 600
-#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "optL", sampling.method = 'poisson',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
-#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = "optL", sampling.method = 'withReplacement',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'poisson', criterion = 'uniform')
 #' summary(Uni.subsampling.results)
 #' @export
 
-glm.ssp <- function(formula,
+ssp.glm <- function(formula,
                     data,
                     n.plt,
                     n.ssp,
@@ -103,7 +103,8 @@ glm.ssp <- function(formula,
                     sampling.method = 'poisson',
                     likelihood = 'logOddsCorrection',
                     alpha = 0.1,
-                    b = 2) {
+                    b = 2,
+                    subset) {
 
   model.call <- match.call()
   
@@ -206,7 +207,7 @@ glm.ssp <- function(formula,
                     N = N,
                     subsample.size.expect = n.ssp
                     )
-    class(results) <- c("glm.ssp", "list")
+    class(results) <- c("ssp.glm", "list")
     return(results)
   } else if (criterion == "uniform"){
     n.uni <- n.plt + n.ssp
@@ -243,7 +244,7 @@ glm.ssp <- function(formula,
                     N = N,
                     subsample.size.expect = n.uni
                     )
-    class(results) <- c("glm.ssp", "list")
+    class(results) <- c("ssp.glm", "list")
     return(results)
   }
 }

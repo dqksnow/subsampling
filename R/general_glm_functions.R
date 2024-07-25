@@ -406,12 +406,12 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 #' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 600
-#' subsampling.results <- glm.ssp(formula, data, n.plt, n.ssp,
+#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
 #' family = 'binomial', criterion = "optL", sampling.method = 'poisson',
 #' likelihood = "logOddsCorrection")
 #' summary(subsampling.results)
 
-summary.glm.ssp <- function(object, ...) {
+summary.ssp.glm <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
   N <- object$N

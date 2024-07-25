@@ -51,7 +51,7 @@
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
-#' subsampling.results <- relogit.ssp(formula,
+#' subsampling.results <- ssp.relogit(formula,
 #'                                      data,
 #'                                      n.plt,
 #'                                      n.ssp,
@@ -60,7 +60,7 @@
 #' summary(subsampling.results)
 
 
-relogit.ssp <-  function(formula,
+ssp.relogit <-  function(formula,
                          data,
                          n.plt,
                          n.ssp,
@@ -145,7 +145,7 @@ relogit.ssp <-  function(formula,
                     subsample.size.expect = N1 + n.ssp
                     )
     
-    class(results) <- c("relogit.ssp", "list")
+    class(results) <- c("ssp.relogit", "list")
     return(results)
   } else if (criterion == "uniform"){
     ## Poisson sampling
@@ -164,7 +164,7 @@ relogit.ssp <-  function(formula,
                     N = N,
                     subsample.size.expect = n.uni
                     )
-    class(results) <- c("relogit.ssp", "list")
+    class(results) <- c("ssp.relogit", "list")
     return(results)
   }
 }
