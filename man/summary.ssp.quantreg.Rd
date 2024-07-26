@@ -19,7 +19,3 @@ A data frame will be printed.
 \description{
 Main results summary
 }
-\examples{
-#logistic regression
-set.seed(1)
-}

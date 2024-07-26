@@ -19,6 +19,3 @@ A series of data.frame will be printed.
 \description{
 Softmax Main results summary
 }
-\examples{
-#TBD
-}

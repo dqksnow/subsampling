@@ -3,6 +3,7 @@
 #' @details details TBD
 #' @param formula An object of class "formula" which describes the model to be fitted.
 #' @param data A data frame containing the variables in the model. Usually it 
+#' @param subset An optional vector specifying a subset of rows to be used
 #' @param n.plt The pilot subsample size (the first-step subsample size).
 #' @param n.ssp The expected optimal subsample size (the second-step subsample.
 #' @param criterion The criterion of optimal subsampling probabilities
@@ -11,6 +12,9 @@
 #' @param constraint 1
 #' @param alpha Mixture proportions of optimal subsampling probability and 
 #' @param b This parameter controls the upper threshold for optimal subsampling
+#' @param contrasts The type of the maximum likelihood function used to
+#' @param control a list of parameters for controlling the fitting process. 
+#' @param ... a list of parameters for controlling the fitting process. 
 #'
 #' @return
 #' \describe{
@@ -47,43 +51,54 @@
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ X - 1
-#' WithRep.MSPE <- ssp.softmax(formula, data, n.plt, n.ssp, criterion = 'MSPE', 
-#' sampling.method = 'withReplacement', likelihood = 'weighted',
-#' constraint = 'baseline')
+#' WithRep.MSPE <- ssp.softmax(formula = formula,
+#'  data = data, 
+#'  n.plt = n.plt,
+#'  n.ssp = n.ssp,
+#'  criterion = 'MSPE', 
+#'  sampling.method = 'withReplacement',
+#'  likelihood = 'weighted',
+#'  constraint = 'baseline')
 #' summary(WithRep.MSPE)
 
-ssp.softmax <-
-  function(formula, data, n.plt, n.ssp,
-           criterion = c('optL', 'optA', 'MSPE', 'LUC', 'uniform'),
-           sampling.method = c('poisson', 'withReplacement'),
-           likelihood = c('weighted', 'MSCLE'),
-           constraint = c('baseline', 'summation'),
-           alpha = 0,
-           b = 2) {
-    
-    # model.call <- match.call()
-    # m <- match.call(expand.dots = FALSE)
-    # m[[1L]] <- quote(stats::model.frame)
-    # m <- eval.parent(m)
-    # Terms <- attr(m, "terms")
-    # print(Terms)
-    # X <- model.matrix(Terms, m, contrasts)
-    # print(head(X))
-    # cons <- attr(X, "contrasts")
-    # print(cons)
-    # Y <- model.response(m)
-
-  model.call <- match.call()
-  mf <- model.frame(formula, data)
-  Y <- model.response(mf, "any")
-  X <- model.matrix(formula, mf)
-  # colnames(X)[1] <- "intercept"
+ssp.softmax <- function(formula, 
+                        data,
+                        subset,
+                        n.plt,
+                        n.ssp,
+                        criterion = 'MSPE',
+                        sampling.method = 'poisson',
+                        likelihood = 'MSCLE',
+                        constraint = 'summation',
+                        alpha = 0,
+                        b = 2,
+                        control = list(...),
+                        contrasts = NULL,
+                        ...
+                        ) {
   
-
-  criterion <- match.arg(criterion)
-  sampling.method <- match.arg(sampling.method)
-  likelihood <- match.arg(likelihood)
-  constraint <- match.arg(constraint)
+  model.call <- match.call()
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset"),
+             names(mf),
+             0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  mt <- attr(mf, "terms")
+  Y <- model.response(mf, "any")
+  if(length(dim(Y)) == 1L) {
+    nm <- rownames(Y)
+    dim(Y) <- NULL
+    if(!is.null(nm)) names(Y) <- nm
+  }
+  X <- model.matrix(mt, mf, contrasts)
+  colnames(X)[1] <- "Intercept"
+  criterion <- match.arg(criterion,c('optL', 'optA', 'MSPE', 'LUC', 'uniform'))
+  sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
+  likelihood <- match.arg(likelihood, c('weighted', 'MSCLE'))
+  constraint <- match.arg(constraint, c('baseline', 'summation'))
   
   dimension <- dim(X)
   N <- dimension[1]
@@ -92,7 +107,8 @@ ssp.softmax <-
   G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d) 
   ## G: transformation matrix
   Y.matrix <- matrix(0, nrow = N, ncol = K)
-  Y.matrix[cbind(seq_along(Y), Y)] <- 1
+  print(head(cbind(c(1:length(Y)), Y)))
+  Y.matrix[cbind(c(1:length(Y)), Y)] <- 1
   
   ## create a list to store variables
   inputs <- list(X = X, Y = Y, Y.matrix = Y.matrix,

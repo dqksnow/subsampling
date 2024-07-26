@@ -7,15 +7,18 @@
 ssp.glm(
   formula,
   data,
+  subset = NULL,
   n.plt,
   n.ssp,
   family = "binomial",
   criterion = "optL",
   sampling.method = "poisson",
-  likelihood = "logOddsCorrection",
+  likelihood = "weighted",
   alpha = 0.1,
   b = 2,
-  subset
+  control = list(...),
+  contrasts = NULL,
+  ...
 )
 }
 \arguments{
@@ -28,6 +31,8 @@ The binary response vector that takes the value of 0 or 1, where 1 means
 the event occurred.
 The design matrix contains predictor variables. A column representing
 the intercept term with all 1's will be automatically added.}
+
+\item{subset}{An optional vector specifying a subset of rows to be used}
 
 \item{n.plt}{The pilot subsample size (the first-step subsample size).
 These samples will be used to estimate the pilot estimator as well as to
@@ -53,7 +58,11 @@ uniform subsampling probability. Default = 0.1.}
 
 \item{b}{This parameter controls the upper threshold for optimal subsampling probabilities.}
 
-\item{subset}{an optional vector specifying a subset of observations to be used in the fitting process.}
+\item{control}{a list of parameters for controlling the fitting process.}
+
+\item{contrasts}{The type of the maximum likelihood function used to}
+
+\item{...}{a list of parameters for controlling the fitting process.}
 }
 \value{
 \describe{
@@ -74,7 +83,7 @@ Additional details... briefly introduce the idea.
 }
 \examples{
 # logistic regression
-set.seed(1)
+set.seed(2)
 N <- 1e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
@@ -82,22 +91,34 @@ X <- matrix(0, N, d)
 generate_rexp <- function(x) x <- rexp(N, rate = 2)
 X <- apply(X, 2, generate_rexp)
 Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X \%*\% beta0[-1])))
-print(paste('N: ', N))
-print(paste('sum(Y): ', sum(Y)))
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ .
 n.plt <- 500
 n.ssp <- 1000
-subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'binomial', criterion = "optL", sampling.method = 'poisson',
+subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'binomial',
+criterion = "optL",
+sampling.method = 'poisson',
 likelihood = "logOddsCorrection")
 summary(subsampling.results)
-subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'binomial', criterion = "optL",
-sampling.method = 'withReplacement', likelihood = "weighted")
+subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'binomial', 
+criterion = "optL",
+sampling.method = 'withReplacement', 
+likelihood = "weighted")
 summary(subsampling.results)
-Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'binomial', criterion = 'uniform')
+Uni.subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'binomial', 
+criterion = 'uniform')
 summary(Uni.subsampling.results)
 ############################################################################
 # poisson regression
@@ -109,20 +130,58 @@ X <- matrix(runif(N * d), N, d)
 epsilon <- runif(N)
 lambda <- exp(beta0[1] + X \%*\% beta0[-1])
 Y <- rpois(N, lambda)
-hist(Y)
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ .
 n.plt <- 200
 n.ssp <- 600
-subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'poisson', criterion = "optL", sampling.method = 'poisson',
+subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'poisson',
+criterion = "optL", 
+sampling.method = 'poisson',
 likelihood = "weighted")
 summary(subsampling.results)
-subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'poisson', criterion = "optL", sampling.method = 'withReplacement',
+subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'poisson', 
+criterion = "optL", 
+sampling.method = 'withReplacement',
 likelihood = "weighted")
 summary(subsampling.results)
-Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'poisson', criterion = 'uniform')
+Uni.subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'poisson', 
+criterion = 'uniform')
 summary(Uni.subsampling.results)
+############################################################################
+# gamma regression
+set.seed(1)
+N <- 1e4
+p <- 3
+beta0 <- rep(0.5, p + 1)
+d <- length(beta0) - 1
+shape <- 2
+X <- matrix(runif(N * d), N, d)
+link_function <- function(X, beta0) 1 / (beta0[1] + X \%*\% beta0[-1])
+scale <- link_function(X, beta0) / shape
+Y <- rgamma(N, shape = shape, scale = scale)
+data <- as.data.frame(cbind(Y, X))
+formula <- Y ~ .
+n.plt <- 200
+n.ssp <- 1000
+subsampling.results <- ssp.glm(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'gamma',
+criterion = "optL", 
+sampling.method = 'poisson',
+likelihood = "weighted")
+summary(subsampling.results)
 }

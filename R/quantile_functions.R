@@ -161,9 +161,7 @@ quantile.ssp.estimation <- function(inputs,
 #' @return A data frame will be printed.
 #' @export
 #'
-#' @examples
-#' #logistic regression
-#' set.seed(1)
+
 summary.ssp.quantreg <- function(object, ...) {
   coef <- object$beta
   N <- object$N

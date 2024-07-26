@@ -356,9 +356,7 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
 #' @param ... Additional arguments passed to the summary function.
 #' @return A series of data.frame will be printed.
 #' @export
-#'
-#' @examples
-#' #TBD
+
 
 summary.ssp.softmax <- function(object, ...) {
   dimension <- dim(object$beta)

@@ -19,24 +19,3 @@ A data.frame will be printed.
 \description{
 Main results summary
 }
-\examples{
-#logistic regression
-set.seed(1)
-N <- 1e4
-beta0 <- rep(-0.5, 7)
-d <- length(beta0) - 1
-X <- matrix(0, N, d)
-generate_rexp <- function(x) x <- rexp(N, rate = 2)
-X <- apply(X, 2, generate_rexp)
-Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X \%*\% beta0[-1])))
-print(paste('N: ', N))
-print(paste('sum(Y): ', sum(Y)))
-data <- as.data.frame(cbind(Y, X))
-formula <- Y ~ .
-n.plt <- 200
-n.ssp <- 600
-subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-family = 'binomial', criterion = "optL", sampling.method = 'poisson',
-likelihood = "logOddsCorrection")
-summary(subsampling.results)
-}

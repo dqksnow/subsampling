@@ -7,20 +7,26 @@
 ssp.softmax(
   formula,
   data,
+  subset,
   n.plt,
   n.ssp,
-  criterion = c("optL", "optA", "MSPE", "LUC", "uniform"),
-  sampling.method = c("poisson", "withReplacement"),
-  likelihood = c("weighted", "MSCLE"),
-  constraint = c("baseline", "summation"),
+  criterion = "MSPE",
+  sampling.method = "poisson",
+  likelihood = "MSCLE",
+  constraint = "summation",
   alpha = 0,
-  b = 2
+  b = 2,
+  control = list(...),
+  contrasts = NULL,
+  ...
 )
 }
 \arguments{
 \item{formula}{An object of class "formula" which describes the model to be fitted.}
 
 \item{data}{A data frame containing the variables in the model. Usually it}
+
+\item{subset}{An optional vector specifying a subset of rows to be used}
 
 \item{n.plt}{The pilot subsample size (the first-step subsample size).}
 
@@ -37,6 +43,12 @@ ssp.softmax(
 \item{alpha}{Mixture proportions of optimal subsampling probability and}
 
 \item{b}{This parameter controls the upper threshold for optimal subsampling}
+
+\item{control}{a list of parameters for controlling the fitting process.}
+
+\item{contrasts}{The type of the maximum likelihood function used to}
+
+\item{...}{a list of parameters for controlling the fitting process.}
 }
 \value{
 \describe{
@@ -77,8 +89,13 @@ n.plt <- 500
 n.ssp <- 1000
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ X - 1
-WithRep.MSPE <- ssp.softmax(formula, data, n.plt, n.ssp, criterion = 'MSPE', 
-sampling.method = 'withReplacement', likelihood = 'weighted',
-constraint = 'baseline')
+WithRep.MSPE <- ssp.softmax(formula = formula,
+ data = data, 
+ n.plt = n.plt,
+ n.ssp = n.ssp,
+ criterion = 'MSPE', 
+ sampling.method = 'withReplacement',
+ likelihood = 'weighted',
+ constraint = 'baseline')
 summary(WithRep.MSPE)
 }

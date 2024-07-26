@@ -118,6 +118,7 @@ ssp.quantreg <- function(formula,
     if(!is.null(nm)) names(Y) <- nm
   }
   X <- model.matrix(mt, mf, contrasts)
+  colnames(X)[1] <- "Intercept"
   N <- nrow(X)
   d <- ncol(X)
   criterion <- match.arg(criterion, c('optL', 'uniform'))

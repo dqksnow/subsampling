@@ -217,8 +217,6 @@ rare.combining <- function(ddL.plt,
 #' @return A series of data.frame will be printed.
 #' @export
 #'
-#' @examples
-#' #TBD
 summary.ssp.relogit <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))

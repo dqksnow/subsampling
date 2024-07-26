@@ -9,6 +9,7 @@
 #' that takes the value of 0 or 1, where 1 means the event occurred. The
 #' design matrix contains predictor variables. A column representing the
 #' intercept term with all 1's will be automatically added.
+#' @param subset An optional vector specifying a subset of rows to be used
 #' @param n.plt The pilot subsample size (the first-step subsample size).
 #' @param n.ssp The expected optimal subsample size (the second-step subsample
 #' size) drawn from those samples with \code{Y=0}.
@@ -21,6 +22,9 @@
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling
 #' probabilities.
+#' @param contrasts The type of the maximum likelihood function used to
+#' @param control a list of parameters for controlling the fitting process. 
+#' @param ... a list of parameters for controlling the fitting process. 
 #'
 #' @return
 #' \describe{
@@ -39,11 +43,13 @@
 #' @examples
 #' set.seed(1)
 #' N <- 2 * 1e4
-#' beta0 <- c(-1.8, -rep(1, 6))
+#' beta0 <- c(-5, -rep(0.7, 6))
 #' d <- length(beta0) - 1
 #' X <- matrix(0, N, d)
-#' generate_rexp <- function(x) x <- rexp(N)
-#' X <- apply(X, 2, generate_rexp)
+#' corr <- 0.5
+#' sigmax <- corr ^ abs(outer(1:d, 1:d, "-"))
+#' sigmax <- sigmax / 4
+#'X <- MASS::mvrnorm(n = N, mu = rep(0, d), Sigma = sigmax)
 #' Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
 #' print(paste('N: ', N))
 #' print(paste('sum(Y): ', sum(Y)))
@@ -51,10 +57,10 @@
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
-#' subsampling.results <- ssp.relogit(formula,
-#'                                      data,
-#'                                      n.plt,
-#'                                      n.ssp,
+#' subsampling.results <- ssp.relogit(formula = formula,
+#'                                      data = data,
+#'                                      n.plt = n.plt,
+#'                                      n.ssp = n.ssp,
 #'                                      criterion = 'optA',
 #'                                      likelihood = 'logOddsCorrection')
 #' summary(subsampling.results)
@@ -62,24 +68,42 @@
 
 ssp.relogit <-  function(formula,
                          data,
+                         subset = NULL,
                          n.plt,
                          n.ssp,
-                         criterion = c('optL', 'optA', 'LCC', 
-                                       'uniform'),
-                         likelihood = c('logOddsCorrection',
-                                        'weighted'),
+                         criterion = 'optL',
+                         likelihood = 'logOddsCorrection',
                          alpha = 0.1,
-                         b = 2) {
+                         b = 2,
+                         control = list(...),
+                         contrasts = NULL,
+                         ...
+                         ) {
   model.call <- match.call()
-  mf <- model.frame(formula, data)
-  Y <- model.response(mf, "numeric")
-  X <- model.matrix(formula, mf)
-  colnames(X)[1] <- "intercept"
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset"),
+             names(mf),
+             0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  mt <- attr(mf, "terms")
+  Y <- model.response(mf, "any")
+  if(length(dim(Y)) == 1L) {
+    nm <- rownames(Y)
+    dim(Y) <- NULL
+    if(!is.null(nm)) names(Y) <- nm
+  }
+  X <- model.matrix(mt, mf, contrasts)
+  colnames(X)[1] <- "Intercept"
   N <- nrow(X)
   d <- ncol(X)
   N1 <- sum(Y)
   N0 <- N - N1
-
+  criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
+  likelihood <- match.arg(likelihood, c('logOddsCorrection', 'weighted'))
+  
   if (criterion %in% c('optL', 'optA', 'LCC')){
 
     ## pilot step

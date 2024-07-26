@@ -10,6 +10,7 @@
 #'      the event occurred.
 #'     The design matrix contains predictor variables. A column representing
 #'     the intercept term with all 1's will be automatically added.
+#' @param subset An optional vector specifying a subset of rows to be used
 #' @param n.plt The pilot subsample size (the first-step subsample size).
 #' These samples will be used to estimate the pilot estimator as well as to
 #' estimate the optimal sampling probability.
@@ -26,7 +27,9 @@
 #' @param alpha Mixture proportions of optimal subsampling probability and
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling probabilities.
-#' @param subset an optional vector specifying a subset of observations to be used in the fitting process.
+#' @param contrasts The type of the maximum likelihood function used to
+#' @param control a list of parameters for controlling the fitting process. 
+#' @param ... a list of parameters for controlling the fitting process. 
 #'
 #' @return
 #' \describe{
@@ -41,7 +44,7 @@
 #'
 #' @examples
 #' # logistic regression
-#' set.seed(1)
+#' set.seed(2)
 #' N <- 1e4
 #' beta0 <- rep(-0.5, 7)
 #' d <- length(beta0) - 1
@@ -49,22 +52,34 @@
 #' generate_rexp <- function(x) x <- rexp(N, rate = 2)
 #' X <- apply(X, 2, generate_rexp)
 #' Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
-#' print(paste('N: ', N))
-#' print(paste('sum(Y): ', sum(Y)))
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
 #' n.plt <- 500
 #' n.ssp <- 1000
-#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = "optL", sampling.method = 'poisson',
+#' subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'binomial',
+#' criterion = "optL",
+#' sampling.method = 'poisson',
 #' likelihood = "logOddsCorrection")
 #' summary(subsampling.results)
-#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = "optL",
-#' sampling.method = 'withReplacement', likelihood = "weighted")
+#' subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'binomial', 
+#' criterion = "optL",
+#' sampling.method = 'withReplacement', 
+#' likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'binomial', criterion = 'uniform')
+#' Uni.subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'binomial', 
+#' criterion = 'uniform')
 #' summary(Uni.subsampling.results)
 #' ############################################################################
 #' # poisson regression
@@ -76,38 +91,97 @@
 #' epsilon <- runif(N)
 #' lambda <- exp(beta0[1] + X %*% beta0[-1])
 #' Y <- rpois(N, lambda)
-#' hist(Y)
 #' data <- as.data.frame(cbind(Y, X))
 #' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 600
-#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = "optL", sampling.method = 'poisson',
+#' subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'poisson',
+#' criterion = "optL", 
+#' sampling.method = 'poisson',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
-#' subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = "optL", sampling.method = 'withReplacement',
+#' subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'poisson', 
+#' criterion = "optL", 
+#' sampling.method = 'withReplacement',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
-#' Uni.subsampling.results <- ssp.glm(formula, data, n.plt, n.ssp,
-#' family = 'poisson', criterion = 'uniform')
+#' Uni.subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'poisson', 
+#' criterion = 'uniform')
 #' summary(Uni.subsampling.results)
+#' ############################################################################
+#' # gamma regression
+#' set.seed(1)
+#' N <- 1e4
+#' p <- 3
+#' beta0 <- rep(0.5, p + 1)
+#' d <- length(beta0) - 1
+#' shape <- 2
+#' X <- matrix(runif(N * d), N, d)
+#' link_function <- function(X, beta0) 1 / (beta0[1] + X %*% beta0[-1])
+#' scale <- link_function(X, beta0) / shape
+#' Y <- rgamma(N, shape = shape, scale = scale)
+#' data <- as.data.frame(cbind(Y, X))
+#' formula <- Y ~ .
+#' n.plt <- 200
+#' n.ssp <- 1000
+#' subsampling.results <- ssp.glm(formula = formula, 
+#' data = data, 
+#' n.plt = n.plt,
+#' n.ssp = n.ssp,
+#' family = 'gamma',
+#' criterion = "optL", 
+#' sampling.method = 'poisson',
+#' likelihood = "weighted")
+#' summary(subsampling.results)
+
 #' @export
 
 ssp.glm <- function(formula,
                     data,
+                    subset = NULL,
                     n.plt,
                     n.ssp,
                     family = 'binomial',
                     criterion = 'optL',
                     sampling.method = 'poisson',
-                    likelihood = 'logOddsCorrection',
+                    likelihood = 'weighted',
                     alpha = 0.1,
                     b = 2,
-                    subset) {
+                    control = list(...),
+                    contrasts = NULL,
+                    ...
+                    ) {
 
   model.call <- match.call()
-  
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset"),
+             names(mf),
+             0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  mt <- attr(mf, "terms")
+  Y <- model.response(mf, "any")
+  if(length(dim(Y)) == 1L) {
+    nm <- rownames(Y)
+    dim(Y) <- NULL
+    if(!is.null(nm)) names(Y) <- nm
+  }
+  X <- model.matrix(mt, mf, contrasts)
+  colnames(X)[1] <- "Intercept"
   family <- match.arg(family, c('binomial', 'poisson', 'gamma'))
   criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
@@ -121,18 +195,13 @@ ssp.glm <- function(formula,
                   "binomial" = binomial.expand(),
                   "poisson" = poisson.expand(),
                   "gamma" = gamma.expand())
-  mf <- model.frame(formula, data)
-  Y <- model.response(mf, "numeric")
-  X <- model.matrix(formula, mf)
-  colnames(X)[1] <- "intercept"
+
   N <- nrow(X)
   d <- ncol(X)
-  N1 <- sum(Y)
-  N0 <- N - N1
   
   if (criterion %in% c('optL', 'optA', 'LCC')) {
 
-    ### pilot step ###
+    ## pilot step
     plt.estimate.results <- pilot.estimate(X = X,
                                            Y = Y,
                                            n.plt = n.plt,
@@ -146,7 +215,7 @@ ssp.glm <- function(formula,
     Lambda.plt <- plt.estimate.results$Lambda.plt
     d.psi <- plt.estimate.results$d.psi
     index.plt <- plt.estimate.results$index.plt
-
+    
     ## subsampling step
     ssp.results <- subsampling(X = X,
                                Y = Y,

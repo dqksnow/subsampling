@@ -16,8 +16,8 @@ n.plt <- 100
 n.ssp <- 100
 
 expect_silent(optL.results <- 
-                ssp.quantreg(formula,
-                             data,
+                ssp.quantreg(formula = formula,
+                             data = data,
                              tau = tau,
                              n.plt = n.plt,
                              n.ssp = n.ssp,
@@ -27,14 +27,17 @@ expect_silent(optL.results <-
                              sampling.method = 'withReplacement',
                              likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
+
 expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
 expect_true(inherits(optL.results, "ssp.quantreg"), 
             info = "Output should be of class 'ssp.quantreg.'")
+
 expect_equivalent(length(optL.results$index), 
                   B, 
                   info = "Subsamples should be divided into B lists.")
-expect_warning(ssp.quantreg(formula,
-                            data,
+
+expect_warning(ssp.quantreg(formula = formula,
+                            data = data,
                             tau = tau,
                             n.plt = n.plt,
                             n.ssp = 1000,
@@ -43,9 +46,10 @@ expect_warning(ssp.quantreg(formula,
                             criterion = 'optL',
                             sampling.method = 'withReplacement',
                             likelihood = 'weighted'))
+
 expect_silent(optL.results <- 
-                ssp.quantreg(formula,
-                             data,
+                ssp.quantreg(formula = formula,
+                             data = data,
                              tau = tau,
                              n.plt = n.plt,
                              n.ssp = n.ssp,
@@ -55,14 +59,15 @@ expect_silent(optL.results <-
                              sampling.method = 'withReplacement',
                              likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
+
 expect_equivalent(length(optL.results$index), 
                   n.ssp*B, 
                   info = "When boot=F, Subsamples should not be divided into 
                   groups.")
 
 expect_silent(optL.results <- 
-                ssp.quantreg(formula,
-                             data,
+                ssp.quantreg(formula = formula,
+                             data = data,
                              subset = c(1:(N/2)), 
                              tau = tau,
                              n.plt = n.plt,

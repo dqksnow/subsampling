@@ -9,7 +9,7 @@
   - [X] softmax
   - [X] glm
 - [ ] contrast of covariate matrix X
-- [ ] add subset argument
+- [X] add subset argument
 - [ ] use control object to collect arguments
 - [X] rename functions, for example, ssp.quantreg
 - [ ] double check the necessarity of the family object extension I wrote.
@@ -21,9 +21,9 @@
   'likelihood' which contains c('Weighted', 'MSCLE').
 - [ ] test files
   - [X] quantile
-  - [ ] rare
+  - [X] rare
   - [X] softmax
-  - [ ] glm
+  - [X] glm
 - [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
   input to build-in functions. This makes the main function look clean. Make
   sure it won't copy those variables.
@@ -38,18 +38,19 @@
   - [ ] glm
 - [ ] Use S3 method to write summary function.
   - [X] quantile
-  - [ ] rare
+  - [X] rare
   - [X] softmax
   - [X] glm
 - For glm:
-  - [ ] uniform + Poisson has not been implemented.
-  - [ ] sometimes there are warnings when use glm() except uniform.
-  - [ ] add example for gamma regression
+  - [X] uniform + Poisson has not been implemented.
+  - [X] sometimes there are warnings when use glm() except uniform.
+  - [X] add example for gamma regression
+  - [ ] check the estimated var of gamma
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
   - [X] a message when use MSPE: it is free from constraint.
 - For quantile:
-  - [ ] Don't compute stand error in summary when boot=F.
+  - [X] Don't compute stand error in summary when boot=F.
   - [ ] threshold for poisson sampling probability.
   - [ ] variable names in the summary function.
 - Write vignettes
