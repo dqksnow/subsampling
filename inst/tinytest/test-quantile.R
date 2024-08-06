@@ -11,7 +11,7 @@ X <- MASS::mvrnorm(N, rep(0, d), sigmax)
 err <- rnorm(N, 0, 1) - qnorm(tau)
 Y <- beta.true[1] + X %*% beta.true[-1] + err * rowMeans(abs(X))
 data <- as.data.frame(cbind(Y, X))
-formula <- Y ~ X
+formula <- Y ~ .
 n.plt <- 100
 n.ssp <- 100
 
@@ -30,7 +30,7 @@ expect_silent(optL.results <-
 
 expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
 expect_true(inherits(optL.results, "ssp.quantreg"), 
-            info = "Output should be of class 'ssp.quantreg.'")
+            info = "Output should be of class 'ssp.quantreg'")
 
 expect_equivalent(length(optL.results$index), 
                   B, 
@@ -78,6 +78,20 @@ expect_silent(optL.results <-
                              sampling.method = 'withReplacement',
                              likelihood = 'weighted'),
               info = "It should run without errors when use subset argument.")
+
+data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+expect_silent(optL.results <- 
+                ssp.quantreg(formula,
+                             data,
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,B = B,boot = TRUE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted',
+                             contrasts = list(F1="contr.treatment")),
+             info = "It should run without errors when use contrast argument.")
 
 # Cleanup
 rm(list = ls())

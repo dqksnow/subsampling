@@ -19,10 +19,51 @@ expect_silent(subsampling.results <- ssp.relogit(formula = formula,
                                              n.plt = n.plt,
                                              n.ssp = n.ssp), 
               info = "It should run without errors on valid input.")
-# expect_true(inherits(subsampling.results, "list"),
-#             info = "Output should be a list.")
-# expect_true(inherits(subsampling.results, "ssp.relogit"), 
-#             info = "Output should be of class 'ssp.relogit'")
+expect_true(inherits(subsampling.results, "list"),
+            info = "Output should be a list.")
+expect_true(inherits(subsampling.results, "ssp.relogit"),
+            info = "Output should be of class 'ssp.relogit'")
+
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'LCC',
+                            likelihood = 'logOddsCorrection'), 
+              info = "It should run without errors on valid input.")
+
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'optA',
+                            likelihood = 'weighted'), 
+              info = "It should run without errors on valid input.")
+
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
+                            subset = c(1:(N/2)), 
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'optA',
+                            likelihood = 'logOddsCorrection'),
+             info = "It should run without errors when use subset argument.")
+
+data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'optA',
+                            likelihood = 'logOddsCorrection',
+                            contrasts = list(F1="contr.treatment")), 
+              info = "It should run without errors when use contrasts argument.")
+
 
 # Cleanup
 rm(list = ls())

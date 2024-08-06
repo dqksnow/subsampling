@@ -11,7 +11,7 @@ formula <- Y ~ .
 n.plt <- 500
 n.ssp <- 1000
 
-expect_silent(subsampling.results <- ssp.glm(formula = formula,
+expect_silent(ssp.results <- ssp.glm(formula = formula,
                                              data = data,
                                              n.plt = n.plt,
                                              n.ssp = n.ssp,
@@ -20,10 +20,73 @@ expect_silent(subsampling.results <- ssp.glm(formula = formula,
                                              sampling.method = 'poisson',
                                              likelihood = "logOddsCorrection"), 
               info = "It should run without errors on valid input.")
-expect_true(inherits(subsampling.results, "list"),
+expect_true(inherits(ssp.results, "list"),
             info = "Output should be a list.")
-expect_true(inherits(subsampling.results, "ssp.glm"), 
+expect_true(inherits(ssp.results, "ssp.glm"), 
             info = "Output should be of class 'ssp.glm'")
+
+expect_silent(ssp.results <- ssp.glm(formula = formula,
+                                     data = data,
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     family = 'binomial', 
+                                     criterion = "optA",
+                                     sampling.method = 'poisson',
+                                     likelihood = "logOddsCorrection"), 
+              info = "It should run without errors on valid input.")
+expect_silent(ssp.results <- ssp.glm(formula = formula,
+                                     data = data,
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     family = 'binomial', 
+                                     criterion = "LCC",
+                                     sampling.method = 'poisson',
+                                     likelihood = "weighted"), 
+              info = "It should run without errors on valid input.")
+expect_silent(ssp.results <- ssp.glm(formula = formula,
+                                     data = data,
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     family = 'binomial', 
+                                     criterion = "uniform",
+                                     sampling.method = 'poisson',
+                                     likelihood = "logOddsCorrection"), 
+              info = "It should run without errors on valid input.")
+expect_silent(ssp.results <- 
+                ssp.glm(formula = formula,
+                        data = data,
+                        subset = c(1:(N/2)), 
+                        n.plt = n.plt,
+                        n.ssp = n.ssp,
+                        family = 'binomial', 
+                        criterion = "optL",
+                        sampling.method = 'poisson',
+                        likelihood = "logOddsCorrection"),
+              info = "It should run without errors when use subset")
+data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+expect_silent(ssp.results <- 
+                ssp.glm(formula = formula,
+                        data = data,
+                        n.plt = n.plt,
+                        n.ssp = n.ssp,
+                        family = 'binomial', 
+                        criterion = "optL",
+                        sampling.method = 'poisson',
+                        likelihood = "logOddsCorrection",
+                        contrasts = list(F1 = 'contr.sum')),
+              
+              info = "It should run without errors when use contrasts.")
+
+
+
+
+
+
+
+
+
+
 
 # Cleanup
 rm(list = ls())

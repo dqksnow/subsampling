@@ -50,7 +50,10 @@
 #' n.plt <- 500
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
-#' formula <- Y ~ X - 1
+#' data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+#' head(data)
+#' formula <- Y ~ . -1
 #' WithRep.MSPE <- ssp.softmax(formula = formula,
 #'  data = data, 
 #'  n.plt = n.plt,
@@ -58,7 +61,8 @@
 #'  criterion = 'MSPE', 
 #'  sampling.method = 'withReplacement',
 #'  likelihood = 'weighted',
-#'  constraint = 'baseline')
+#'  constraint = 'baseline',
+#'  contrasts = list(F1="contr.treatment"))
 #' summary(WithRep.MSPE)
 
 ssp.softmax <- function(formula, 
@@ -94,12 +98,11 @@ ssp.softmax <- function(formula,
     if(!is.null(nm)) names(Y) <- nm
   }
   X <- model.matrix(mt, mf, contrasts)
-  colnames(X)[1] <- "Intercept"
+  # colnames(X)[1] <- "Intercept"
   criterion <- match.arg(criterion,c('optL', 'optA', 'MSPE', 'LUC', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
   likelihood <- match.arg(likelihood, c('weighted', 'MSCLE'))
   constraint <- match.arg(constraint, c('baseline', 'summation'))
-  
   dimension <- dim(X)
   N <- dimension[1]
   d <- dimension[2]
@@ -107,7 +110,6 @@ ssp.softmax <- function(formula,
   G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d) 
   ## G: transformation matrix
   Y.matrix <- matrix(0, nrow = N, ncol = K)
-  print(head(cbind(c(1:length(Y)), Y)))
   Y.matrix[cbind(c(1:length(Y)), Y)] <- 1
   
   ## create a list to store variables
@@ -198,17 +200,22 @@ ssp.softmax <- function(formula,
     # cov.ssp.b <- G %*% cov.ssp.b %*% t(G)
     # cov.cmb.b <- G %*% cov.cmb.b %*% t(G)
     
+    beta.plt <- matrix(beta.plt.b, nrow = d)
+    beta.ssp = matrix(beta.ssp.b, nrow = d)
+    beta = matrix(beta.cmb.b, nrow = d)
+    rownames(beta.plt) <- rownames(beta.ssp) <- rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
-                    beta.plt = matrix(beta.plt.b, nrow = d),
-                    beta.ssp = matrix(beta.ssp.b, nrow = d),
-                    beta = matrix(beta.cmb.b, nrow = d),
+                    beta.plt = beta.plt,
+                    beta.ssp = beta.ssp,
+                    beta = beta,
                     cov.plt = cov.plt.b,
                     cov.ssp = cov.ssp.b,
                     cov = cov.cmb.b,
                     index.plt = index.plt,
                     index.ssp = index.ssp,
                     N = N,
-                    subsample.size.expect = n.ssp
+                    subsample.size.expect = n.ssp,
+                    terms = mt
                     )
     class(results) <- c("ssp.softmax", "list")
     return(results)
@@ -245,14 +252,16 @@ ssp.softmax <- function(formula,
                                      scale=(N^2))
       cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
     }
-    
+    beta <- matrix(beta.uni.b, nrow = d)
+    rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
                     index.ssp = index.uni,
-                    beta = matrix(beta.uni.b, nrow = d),
+                    beta = beta,
                     cov = cov.uni.b,
                     # P = P.uni,
                     N = N,
-                    subsample.size.expect = n.uni
+                    subsample.size.expect = n.uni,
+                    terms = mt
                     )
     class(results) <- c("ssp.softmax", "list")
     return(results)

@@ -88,7 +88,10 @@ Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 n.plt <- 500
 n.ssp <- 1000
 data <- as.data.frame(cbind(Y, X))
-formula <- Y ~ X - 1
+data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+head(data)
+formula <- Y ~ . -1
 WithRep.MSPE <- ssp.softmax(formula = formula,
  data = data, 
  n.plt = n.plt,
@@ -96,6 +99,7 @@ WithRep.MSPE <- ssp.softmax(formula = formula,
  criterion = 'MSPE', 
  sampling.method = 'withReplacement',
  likelihood = 'weighted',
- constraint = 'baseline')
+ constraint = 'baseline',
+ contrasts = list(F1="contr.treatment"))
 summary(WithRep.MSPE)
 }

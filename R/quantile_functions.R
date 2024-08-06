@@ -203,7 +203,9 @@ summary.ssp.quantreg <- function(object, ...) {
       check.names = FALSE
     )
   }
+
   rownames(coef_table) <- names(coef)
+
   print(coef_table)
   # Add more summary information as needed
 }

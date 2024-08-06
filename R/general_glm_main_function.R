@@ -27,7 +27,7 @@
 #' @param alpha Mixture proportions of optimal subsampling probability and
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling probabilities.
-#' @param contrasts The type of the maximum likelihood function used to
+#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
 #' @param control a list of parameters for controlling the fitting process. 
 #' @param ... a list of parameters for controlling the fitting process. 
 #'
@@ -72,8 +72,10 @@
 #' family = 'binomial', 
 #' criterion = "optL",
 #' sampling.method = 'withReplacement', 
-#' likelihood = "weighted")
+#' likelihood = "weighted",
+#' contrasts = list(F1 = 'contr.sum'))
 #' summary(subsampling.results)
+#' 
 #' Uni.subsampling.results <- ssp.glm(formula = formula, 
 #' data = data, 
 #' n.plt = n.plt,
@@ -174,6 +176,7 @@ ssp.glm <- function(formula,
   mf[[1L]] <- quote(stats::model.frame)
   mf <- eval(mf, parent.frame())
   mt <- attr(mf, "terms")
+  
   Y <- model.response(mf, "any")
   if(length(dim(Y)) == 1L) {
     nm <- rownames(Y)
@@ -198,7 +201,6 @@ ssp.glm <- function(formula,
 
   N <- nrow(X)
   d <- ncol(X)
-  
   if (criterion %in% c('optL', 'optA', 'LCC')) {
 
     ## pilot step
@@ -265,6 +267,8 @@ ssp.glm <- function(formula,
     beta.cmb <- combining.results$beta.cmb
     var.cmb <- combining.results$var.cmb
     
+    names(beta.cmb) <- names(beta.ssp) <- names(beta.plt) <- colnames(X)
+    
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta.ssp = beta.ssp,
@@ -274,7 +278,8 @@ ssp.glm <- function(formula,
                     index.plt = index.plt,
                     index = index.ssp,
                     N = N,
-                    subsample.size.expect = n.ssp
+                    subsample.size.expect = n.ssp,
+                    terms = mt
                     )
     class(results) <- c("ssp.glm", "list")
     return(results)
@@ -305,13 +310,14 @@ ssp.glm <- function(formula,
     } else if (sampling.method == 'poisson') {
       var.uni <- solve(ddL.uni) %*% dL.sq.plt %*% solve(ddL.uni)
     }
-    
+    names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
                     beta = beta.uni,
                     var = var.uni,
                     N = N,
-                    subsample.size.expect = n.uni
+                    subsample.size.expect = n.uni,
+                    terms = mt
                     )
     class(results) <- c("ssp.glm", "list")
     return(results)

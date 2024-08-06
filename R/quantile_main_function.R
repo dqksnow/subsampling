@@ -23,7 +23,7 @@
 #' @param sampling.method The sampling method for drawing the optimal subsample.
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator.
-#' @param contrasts The type of the maximum likelihood function used to
+#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
 #' @param control a list of parameters for controlling the fitting process. 
 #' @param ... a list of parameters for controlling the fitting process. 
 #' 
@@ -53,7 +53,8 @@
 #' Y <- beta.true[1] + X %*% beta.true[-1] + 
 #' err * rowMeans(abs(X))
 #' data <- as.data.frame(cbind(Y, X))
-#' formula <- Y ~ X
+#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
+#' formula <- Y ~ .
 #' n.plt <- 200
 #' n.ssp <- 100
 #' optL.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,
@@ -86,7 +87,7 @@ ssp.quantreg <- function(formula,
   ## Initially, mf is the match.all() object containing all the arguments 
   ## passed to the main function
   ## After match() matching the relevant arguments, mf is subsetted to include
-  ## only those arguments.
+  ## only those relevant arguments.
   ## It is then converted to a model frame using stats::model.frame
   
   model.call <- match.call()
@@ -99,7 +100,7 @@ ssp.quantreg <- function(formula,
   # Sometimes, not all levels are present in the subset of data being analyzed.
   # drop.unused.levels drops any unused levels of factor variables.
   
-  ## when mf is subsequently evaluated, it will execute stats::model.frame(...)
+  ## when mf is evaluated, it will execute stats::model.frame(...)
   ## instead of mf[[1L]].
   mf[[1L]] <- quote(stats::model.frame)
   ## mf is just an expression before running eval(). eval() evaluate the
@@ -124,7 +125,6 @@ ssp.quantreg <- function(formula,
   criterion <- match.arg(criterion, c('optL', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
   likelihood <- match.arg(likelihood, c('weighted'))
-  
   control.tbd <- control
   
   ## check subsample size
@@ -138,7 +138,6 @@ ssp.quantreg <- function(formula,
     B <- 1
     boot <- FALSE
   }
-  
   ## create a list to store variables
   inputs <- list(X = X, Y = Y, tau = tau, N = N, d = d,
                  n.plt = n.plt, n.ssp = n.ssp, B = B, boot = boot, 
@@ -162,7 +161,8 @@ ssp.quantreg <- function(formula,
     beta.ssp <- ssp.results$beta.ssp
     est.cov.ssp <- ssp.results$est.cov.ssp
     index.ssp <- ssp.results$index.ssp
-    
+    names(beta.ssp) <- names(beta.plt) <- colnames(X)
+
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta = beta.ssp,
@@ -170,24 +170,27 @@ ssp.quantreg <- function(formula,
                     index.plt = index.plt,
                     index = index.ssp,
                     N = N,
-                    subsample.size.expect = c(n.ssp, B)
+                    subsample.size.expect = c(n.ssp, B),
+                    terms = mt
                     )
     class(results) <- c("ssp.quantreg", "list")
     return(results)
   } else if (criterion == "uniform"){
-    ### subsampling and boot step
+    ## subsampling and boot step
     uni.results <- quantile.ssp.estimation(inputs)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$est.cov.ssp
     index.uni <- uni.results$index.ssp
+    names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     beta.plt = NA,
                     beta = beta.uni,
                     est.cov = est.cov.uni,
                     index = index.uni,
                     N = N,
-                    subsample.size.expect = c(n.ssp, B)
+                    subsample.size.expect = c(n.ssp, B),
+                    terms = mt
                     )
     class(results) <- c("ssp.quantreg", "list")
     return(results)

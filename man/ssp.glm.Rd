@@ -60,7 +60,7 @@ uniform subsampling probability. Default = 0.1.}
 
 \item{control}{a list of parameters for controlling the fitting process.}
 
-\item{contrasts}{The type of the maximum likelihood function used to}
+\item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
 
 \item{...}{a list of parameters for controlling the fitting process.}
 }
@@ -111,8 +111,10 @@ n.ssp = n.ssp,
 family = 'binomial', 
 criterion = "optL",
 sampling.method = 'withReplacement', 
-likelihood = "weighted")
+likelihood = "weighted",
+contrasts = list(F1 = 'contr.sum'))
 summary(subsampling.results)
+
 Uni.subsampling.results <- ssp.glm(formula = formula, 
 data = data, 
 n.plt = n.plt,

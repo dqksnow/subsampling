@@ -55,7 +55,7 @@ calculate the optimal subsampling estimator.}
 
 \item{control}{a list of parameters for controlling the fitting process.}
 
-\item{contrasts}{The type of the maximum likelihood function used to}
+\item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
 
 \item{...}{a list of parameters for controlling the fitting process.}
 }
@@ -91,7 +91,8 @@ err <- rnorm(N, 0, 1) - qnorm(tau)
 Y <- beta.true[1] + X \%*\% beta.true[-1] + 
 err * rowMeans(abs(X))
 data <- as.data.frame(cbind(Y, X))
-formula <- Y ~ X
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
+formula <- Y ~ .
 n.plt <- 200
 n.ssp <- 100
 optL.results <- ssp.quantreg(formula,data,tau = tau,n.plt = n.plt,

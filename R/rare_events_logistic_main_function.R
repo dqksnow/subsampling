@@ -22,7 +22,7 @@
 #' uniform subsampling probability. Default = 0.1.
 #' @param b This parameter controls the upper threshold for optimal subsampling
 #' probabilities.
-#' @param contrasts The type of the maximum likelihood function used to
+#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
 #' @param control a list of parameters for controlling the fitting process. 
 #' @param ... a list of parameters for controlling the fitting process. 
 #'
@@ -49,22 +49,24 @@
 #' corr <- 0.5
 #' sigmax <- corr ^ abs(outer(1:d, 1:d, "-"))
 #' sigmax <- sigmax / 4
-#'X <- MASS::mvrnorm(n = N, mu = rep(0, d), Sigma = sigmax)
+#' X <- MASS::mvrnorm(n = N, mu = rep(0, d), Sigma = sigmax)
 #' Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
 #' print(paste('N: ', N))
 #' print(paste('sum(Y): ', sum(Y)))
 #' n.plt <- 200
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
+#' data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
+#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
 #' formula <- Y ~ .
 #' subsampling.results <- ssp.relogit(formula = formula,
 #'                                      data = data,
 #'                                      n.plt = n.plt,
 #'                                      n.ssp = n.ssp,
 #'                                      criterion = 'optA',
-#'                                      likelihood = 'logOddsCorrection')
+#'                                      likelihood = 'logOddsCorrection',
+#'                                      contrasts = list(F1="contr.treatment"))
 #' summary(subsampling.results)
-
 
 ssp.relogit <-  function(formula,
                          data,
@@ -157,6 +159,7 @@ ssp.relogit <-  function(formula,
                                         beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
     var.cmb <- combining.results$var.cmb
+    names(beta.plt) <- names(beta.ssp) <- names(beta.cmb) <- colnames(X)
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta.ssp = beta.ssp,
@@ -181,6 +184,7 @@ ssp.relogit <-  function(formula,
     beta.uni <- results.uni$beta
     var.uni <- results.uni$cov
     beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept
+    names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
                     beta = beta.uni,

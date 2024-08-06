@@ -8,8 +8,9 @@
   - [X] rare
   - [X] softmax
   - [X] glm
-- [ ] contrast of covariate matrix X
+- [X] contrast of covariate matrix X
 - [X] add subset argument
+- [X] make sure variable names are shown in summary function
 - [ ] use control object to collect arguments
 - [X] rename functions, for example, ssp.quantreg
 - [ ] double check the necessarity of the family object extension I wrote.
@@ -19,7 +20,7 @@
 - [X] rename variables. For example, 'Uniform' should be moved from argument 
   'estimate.method' to 'criterion'. Argument 'estimate.method' is renamed as
   'likelihood' which contains c('Weighted', 'MSCLE').
-- [ ] test files
+- [X] test files
   - [X] quantile
   - [X] rare
   - [X] softmax
@@ -36,7 +37,7 @@
   - [ ] rare
   - [ ] softmax
   - [ ] glm
-- [ ] Use S3 method to write summary function.
+- [X] Use S3 method to write summary function.
   - [X] quantile
   - [X] rare
   - [X] softmax
