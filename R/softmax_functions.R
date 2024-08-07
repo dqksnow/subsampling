@@ -1,11 +1,14 @@
 ###############################################################################
-softmax.coef.estimate <- function(X, y, weights = NULL, offsets = NULL){
-  if (is.null(offsets)) {
+softmax.coef.estimate <- function(X, y, weights = NULL, offsets = NULL, 
+                                  ...){
+
+
+    if (is.null(offsets)) {
     ifelse(is.null(weights),
-           fit <- nnet::multinom(y ~ X - 1, trace = FALSE),
-           fit <- nnet::multinom(y ~ X - 1, weights = weights, trace = FALSE))
+           fit <- nnet::multinom(y ~ X - 1, ...),
+           fit <- nnet::multinom(y ~ X - 1, weights = weights, ...))
   } else {
-    fit <- nnet::multinom(y ~ X + offset(offsets) - 1, trace = FALSE)
+    fit <- nnet::multinom(y ~ X + offset(offsets) - 1, ...)
   }
   return(list(beta = t(coef(fit)), # return a d*K matrix
               P1 = fit$fitted.values)) # return a N*(K+1) matrix
@@ -21,7 +24,8 @@ pbeta.multi <- function(X, beta, offsets = NULL){ # beta is a Kd*1 vector
   }
 }
 ###############################################################################
-softmax.ddL <- function(X, P, p, K, d, scale){ ## cpp version is used.
+softmax.ddL <- function(X, P, p, K, d, scale){
+  ## This is R version. cpp version is used.
   ddL <- matrix(0, nrow = K * d, ncol = K * d)
   X.t <- t(X)
   for (i in 1:K){
@@ -39,7 +43,7 @@ softmax.ddL <- function(X, P, p, K, d, scale){ ## cpp version is used.
 }
 ###############################################################################
 softmax.dL.sq <- function(X, Y.matrix, P, p, K, d, scale){ 
-  ## cpp version is used.
+  ## This is R version. cpp version is used.
   S <- Y.matrix - P
   dL <- matrix(0, nrow = K * d, ncol = K * d)
   X.t <- t(X)
@@ -56,6 +60,7 @@ softmax.dL.sq <- function(X, Y.matrix, P, p, K, d, scale){
 }
 ###############################################################################
 softmax.Omega <- function(X, P1, p, K, d, scale){
+  ## This is R version. cpp version is used.
   Omega <- matrix(0, nrow = K * d, ncol = K * d)
   P.sq <- rowSums(P1^2) # N * 1
   P0 <- P1[, -1]
@@ -75,7 +80,7 @@ softmax.Omega <- function(X, P1, p, K, d, scale){
   return(Omega)
 }
 ###############################################################################
-softmax.plt.estimate <- function(inputs){
+softmax.plt.estimate <- function(inputs, ...){
   
   X <- inputs$X
   Y <- inputs$Y
@@ -90,7 +95,7 @@ softmax.plt.estimate <- function(inputs){
   p.plt <- rep(1 / N, n.plt) # pilot sampling probability, uniform
   x.plt <- X[index.plt, ]
   y.plt <- Y[index.plt]
-  results <- softmax.coef.estimate(x.plt, y.plt)
+  results <- softmax.coef.estimate(x.plt, y.plt, ...)
   beta.plt <- results$beta
   P1.plt <-  results$P1 # n.plt*(K+1) matrix
   ddL.plt <- softmax_ddL_cpp(X = x.plt, P = P1.plt[, -1], p = rep(1, n.plt), K,
@@ -199,10 +204,23 @@ softmax.calculate.offsets <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
   return(offsets)
 }
 ###############################################################################
-softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
-                                b, criterion, likelihood, sampling.method,
-                                constraint, p.plt, ddL.plt, P1.plt, Omega.plt,
-                                index.plt) {
+softmax.subsampling <- function(inputs,
+                                p.plt, ddL.plt, P1.plt, Omega.plt, index.plt) {
+  X <- inputs$X
+  Y.matrix <- inputs$Y.matrix
+  G <- inputs$G
+  n.ssp <- inputs$n.ssp
+  N <- inputs$N
+  K <- inputs$K
+  d <- inputs$d
+  criterion <- inputs$criterion
+  likelihood <- inputs$likelihood
+  sampling.method <- inputs$sampling.method
+  constraint <- inputs$constraint
+  control <- inputs$control
+  alpha <- control$alpha
+  b <- control$b
+  
   if (criterion == 'LUC') {
     Y.matrix.1 <- cbind(1-rowSums(Y.matrix), Y.matrix) #add class 1 to Y.matrix
     q <- pmax(apply(P1.plt, 1, max), 0.5)
@@ -269,12 +287,22 @@ softmax.subsampling <- function(X, Y.matrix, G, n.ssp, N, K, d, alpha,
               offsets = offsets))
 }
 ###############################################################################
-softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
+softmax.subsample.estimate <- function(inputs,
                                        index.ssp, p.ssp, offsets, beta.plt,
-                                       sampling.method, likelihood,
-                                       N, K, d) {
+                                       ...) {
+  x.ssp <- inputs$X[index.ssp, ]
+  y.ssp <- inputs$Y[index.ssp]
+  y.matrix.ssp <- inputs$Y.matrix[index.ssp, ]
+  n.ssp <- length(index.ssp)
+  N <- inputs$N
+  K <- inputs$K
+  d <- inputs$d
+  likelihood <- inputs$likelihood
+  sampling.method <- inputs$sampling.method
+
   if (likelihood == "weighted"){
-    results <- softmax.coef.estimate(x.ssp, y.ssp, weights = 1 / p.ssp)
+    results <- softmax.coef.estimate(x.ssp, y.ssp, weights = 1 / p.ssp,
+                                     ...)
     beta.ssp <- results$beta
     P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
     if (sampling.method == "withReplacement") {
@@ -296,7 +324,8 @@ softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
       Lambda.ssp <- 0
     }
   } else if (likelihood == 'MSCLE'){
-      results <- softmax.coef.estimate(x.ssp, y.ssp, offsets = offsets)
+      results <- softmax.coef.estimate(x.ssp, y.ssp, offsets = offsets,
+                                       ...)
       beta.ssp <- results$beta
       # P.ssp <- pbeta.multi(x.ssp, beta.ssp, offsets)[, -1] # same
       P.ssp <- (results$P1)[, -1] # n.ssp*K matrix
@@ -323,9 +352,15 @@ softmax.subsample.estimate <- function(x.ssp, y.ssp, y.matrix.ssp, n.ssp,
   )
 }
 ###############################################################################
-softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
-                              Lambda.plt, Lambda.ssp, n.plt, n.ssp, beta.plt, 
-                              beta.ssp, X, N, K, d) {
+softmax.combining <- function(inputs, n.ssp,
+                              ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
+                              Lambda.plt, Lambda.ssp, beta.plt, beta.ssp) {
+  n.plt <- inputs$n.plt
+  X <- inputs$X
+  N <- inputs$N
+  K <- inputs$K
+  d <- inputs$d
+  
   ddL.plt <- n.plt * ddL.plt
   ddL.ssp <- n.ssp * ddL.ssp
   dL.sq.plt <- n.plt * dL.sq.plt
@@ -348,6 +383,14 @@ softmax.combining <- function(ddL.plt, ddL.ssp, dL.sq.plt, dL.sq.ssp,
   )
 }
 ###############################################################################
+softmax.control <- function(alpha = 0, b = 2, ...){
+  if(!is.numeric(alpha) || alpha < 0 || alpha > 1)
+    stop("sampling probability weight 'alpha' must between [0, 1]")
+  if(!is.numeric(b) || b < 0)
+    stop("sampling probability threshold 'b' must > 0")
+  list(alpha = alpha, b = b)
+}
+###############################################################################
 #' Softmax Main results summary
 #'
 #' @param object A list object output by the main function, which contains the
@@ -364,6 +407,7 @@ summary.ssp.softmax <- function(object, ...) {
   K <- dimension[2]
   coef <- object$beta
   se <- matrix(sqrt(diag(object$cov)), nrow = d, ncol=K)
+  rownames(se) <- rownames(coef) 
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
   n.ssp.actual <- length(object$index.ssp)

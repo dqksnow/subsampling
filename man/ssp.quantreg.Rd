@@ -53,11 +53,12 @@ size).}
 \item{likelihood}{The type of the maximum likelihood function used to
 calculate the optimal subsampling estimator.}
 
-\item{control}{a list of parameters for controlling the fitting process.}
+\item{control}{a list of parameters for controlling the computing process.}
 
 \item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
 
-\item{...}{a list of parameters for controlling the fitting process.}
+\item{...}{an optional list of parameters which will be passed to
+quantreg::rq().}
 }
 \value{
 \describe{

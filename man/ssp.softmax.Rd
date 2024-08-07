@@ -14,8 +14,6 @@ ssp.softmax(
   sampling.method = "poisson",
   likelihood = "MSCLE",
   constraint = "summation",
-  alpha = 0,
-  b = 2,
   control = list(...),
   contrasts = NULL,
   ...
@@ -38,13 +36,12 @@ ssp.softmax(
 
 \item{likelihood}{The type of the maximum likelihood function used to}
 
-\item{constraint}{1}
+\item{constraint}{tbd}
 
-\item{alpha}{Mixture proportions of optimal subsampling probability and}
-
-\item{b}{This parameter controls the upper threshold for optimal subsampling}
-
-\item{control}{a list of parameters for controlling the fitting process.}
+\item{control}{a list of parameters for controlling the fitting process.
+alpha is the mixture proportions of optimal subsampling probability and
+uniform sampling probability. b is the parameter controls the upper
+threshold for optimal subsampling probability.}
 
 \item{contrasts}{The type of the maximum likelihood function used to}
 
@@ -88,8 +85,7 @@ Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 n.plt <- 500
 n.ssp <- 1000
 data <- as.data.frame(cbind(Y, X))
-data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
-colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 head(data)
 formula <- Y ~ . -1
 WithRep.MSPE <- ssp.softmax(formula = formula,
@@ -99,7 +95,6 @@ WithRep.MSPE <- ssp.softmax(formula = formula,
  criterion = 'MSPE', 
  sampling.method = 'withReplacement',
  likelihood = 'weighted',
- constraint = 'baseline',
- contrasts = list(F1="contr.treatment"))
+ constraint = 'baseline')
 summary(WithRep.MSPE)
 }

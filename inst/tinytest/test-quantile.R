@@ -79,6 +79,37 @@ expect_silent(optL.results <-
                              likelihood = 'weighted'),
               info = "It should run without errors when use subset argument.")
 
+expect_silent(optL.results <- 
+                ssp.quantreg(formula = formula,
+                             data = data,
+                             subset = c(1:(N/2)), 
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B,
+                             boot = TRUE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted',
+                             control = list(alpha=0.1)),
+              info = "It should run without errors when use control argument.")
+
+expect_silent(optL.results <- 
+                ssp.quantreg(formula = formula,
+                             data = data,
+                             subset = c(1:(N/2)), 
+                             tau = tau,
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B,
+                             boot = TRUE,
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement',
+                             likelihood = 'weighted',
+                             method = "fn"),
+              info = "It should run without errors when pass
+              arguments through '...' .")
+
 data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
 colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
 expect_silent(optL.results <- 

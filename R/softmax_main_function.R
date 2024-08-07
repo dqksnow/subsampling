@@ -9,11 +9,12 @@
 #' @param criterion The criterion of optimal subsampling probabilities
 #' @param sampling.method The sampling method for drawing the optimal subsample
 #' @param likelihood The type of the maximum likelihood function used to 
-#' @param constraint 1
-#' @param alpha Mixture proportions of optimal subsampling probability and 
-#' @param b This parameter controls the upper threshold for optimal subsampling
+#' @param constraint tbd
 #' @param contrasts The type of the maximum likelihood function used to
 #' @param control a list of parameters for controlling the fitting process. 
+#' alpha is the mixture proportions of optimal subsampling probability and 
+#' uniform sampling probability. b is the parameter controls the upper 
+#' threshold for optimal subsampling probability. 
 #' @param ... a list of parameters for controlling the fitting process. 
 #'
 #' @return
@@ -50,8 +51,7 @@
 #' n.plt <- 500
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
-#' data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
-#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 #' head(data)
 #' formula <- Y ~ . -1
 #' WithRep.MSPE <- ssp.softmax(formula = formula,
@@ -61,8 +61,7 @@
 #'  criterion = 'MSPE', 
 #'  sampling.method = 'withReplacement',
 #'  likelihood = 'weighted',
-#'  constraint = 'baseline',
-#'  contrasts = list(F1="contr.treatment"))
+#'  constraint = 'baseline')
 #' summary(WithRep.MSPE)
 
 ssp.softmax <- function(formula, 
@@ -74,8 +73,6 @@ ssp.softmax <- function(formula,
                         sampling.method = 'poisson',
                         likelihood = 'MSCLE',
                         constraint = 'summation',
-                        alpha = 0,
-                        b = 2,
                         control = list(...),
                         contrasts = NULL,
                         ...
@@ -99,10 +96,7 @@ ssp.softmax <- function(formula,
   }
   X <- model.matrix(mt, mf, contrasts)
   # colnames(X)[1] <- "Intercept"
-  criterion <- match.arg(criterion,c('optL', 'optA', 'MSPE', 'LUC', 'uniform'))
-  sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
-  likelihood <- match.arg(likelihood, c('weighted', 'MSCLE'))
-  constraint <- match.arg(constraint, c('baseline', 'summation'))
+  
   dimension <- dim(X)
   N <- dimension[1]
   d <- dimension[2]
@@ -112,21 +106,23 @@ ssp.softmax <- function(formula,
   Y.matrix <- matrix(0, nrow = N, ncol = K)
   Y.matrix[cbind(c(1:length(Y)), Y)] <- 1
   
+  criterion <- match.arg(criterion,c('optL', 'optA', 'MSPE', 'LUC', 'uniform'))
+  sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
+  likelihood <- match.arg(likelihood, c('weighted', 'MSCLE'))
+  constraint <- match.arg(constraint, c('baseline', 'summation'))
+  control <- do.call("softmax.control", control)
+  
   ## create a list to store variables
   inputs <- list(X = X, Y = Y, Y.matrix = Y.matrix,
                  N = N, d = d, K = K, G = G, 
                  n.plt = n.plt, n.ssp = n.ssp, 
                  criterion = criterion, sampling.method = sampling.method,
-                 likelihood = likelihood, constraint = constraint
+                 likelihood = likelihood, constraint = constraint,
+                 control = control
                  )
   
   if (criterion %in% c('optL', 'optA', 'MSPE', 'LUC')) {
-    ## pilot step
-    # plt.estimate.results <- softmax.plt.estimate(X = X, Y = Y, Y.matrix,
-    #                                              n.plt = n.plt, N, K, d,
-    #                                              criterion)
-    plt.estimate.results <- softmax.plt.estimate(inputs)
-    
+    plt.estimate.results <- softmax.plt.estimate(inputs, ...)
     p.plt <- plt.estimate.results$p.plt
     beta.plt.b <- plt.estimate.results$beta.plt
     P1.plt <- plt.estimate.results$P1.plt
@@ -138,17 +134,7 @@ ssp.softmax <- function(formula,
     Lambda.plt <- plt.estimate.results$Lambda.plt
 
     ## subsampling step
-    ssp.results <- softmax.subsampling(X = X,
-                                       Y.matrix = Y.matrix,
-                                       G = G,
-                                       n.ssp = n.ssp,
-                                       N = N, K = K, d = d,
-                                       alpha = alpha,
-                                       b = b,
-                                       criterion = criterion,
-                                       likelihood = likelihood,
-                                       sampling.method = sampling.method,
-                                       constraint = constraint,
+    ssp.results <- softmax.subsampling(inputs,
                                        p.plt = p.plt,
                                        ddL.plt = ddL.plt,
                                        P1.plt = P1.plt,
@@ -160,17 +146,12 @@ ssp.softmax <- function(formula,
 
     ## subsample estimating step
     ssp.estimate.results <-
-      softmax.subsample.estimate(X[index.ssp, ],
-                                 Y[index.ssp],
-                                 Y.matrix[index.ssp, ],
-                                 n.ssp = length(index.ssp),
+      softmax.subsample.estimate(inputs,
                                  index.ssp = index.ssp,
                                  p.ssp = p.ssp[index.ssp],
                                  offsets = offsets,
                                  beta.plt = beta.plt,
-                                 sampling.method = sampling.method,
-                                 likelihood = likelihood,
-                                 N=N, K=K, d=d)
+                                 ...)
     beta.ssp.b <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
@@ -178,17 +159,16 @@ ssp.softmax <- function(formula,
     cov.ssp.b <- ssp.estimate.results$cov.ssp
 
     ## combining step
-    combining.results <- softmax.combining(ddL.plt = ddL.plt,
+    combining.results <- softmax.combining(inputs,
+                                           n.ssp = length(index.ssp),
+                                           ddL.plt = ddL.plt,
                                            ddL.ssp = ddL.ssp,
                                            dL.sq.plt = dL.sq.plt,
                                            dL.sq.ssp = dL.sq.ssp,
                                            Lambda.plt = Lambda.plt,
                                            Lambda.ssp = Lambda.ssp,
-                                           n.plt = n.plt,
-                                           n.ssp = length(index.ssp),
                                            beta.plt = beta.plt.b,
-                                           beta.ssp = beta.ssp.b,
-                                           X = X, N = N, K = K, d = d)
+                                           beta.ssp = beta.ssp.b)
     beta.cmb.b <- combining.results$beta.cmb
     cov.cmb.b <- combining.results$cov.cmb
     P.cmb <- combining.results$P.cmb
@@ -225,7 +205,7 @@ ssp.softmax <- function(formula,
       index.uni <- random.index(N, n.uni)
       x.uni <- X[index.uni, ]
       y.uni <- Y[index.uni]
-      results <- softmax.coef.estimate(x.uni, y.uni)
+      results <- softmax.coef.estimate(x.uni, y.uni, ...)
       beta.uni.b <- results$beta
       P.uni <-results$P1
       ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni[, -1], p = rep(1, n.uni),
@@ -241,7 +221,7 @@ ssp.softmax <- function(formula,
       p.uni <- rep(n.uni / N, length(index.uni))
       x.uni <- X[index.uni, ]
       y.uni <- Y[index.uni]
-      results <- softmax.coef.estimate(x.uni, y.uni)
+      results <- softmax.coef.estimate(x.uni, y.uni, ...)
       beta.uni.b <- results$beta
       P.uni <- results$P1
       ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni[, -1], p = p.uni, K, d,

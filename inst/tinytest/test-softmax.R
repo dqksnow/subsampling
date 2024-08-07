@@ -47,15 +47,59 @@ expect_silent(results <- ssp.softmax(formula = formula,
                                           subset = c(1:(N/2)),
                                           n.plt = n.plt, 
                                           n.ssp = n.ssp, 
-                                          criterion = 'MSPE', 
-                                          sampling.method = 'withReplacement',
+                                          criterion = 'LUC', 
+                                          sampling.method = 'poisson',
                                           likelihood = 'weighted',
                                           constraint = 'baseline'), 
               info = "It should run without errors when use subset argument.")
 
+expect_silent(results <- ssp.softmax(formula = formula,
+                                     data = data, 
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     criterion = 'uniform', 
+                                     sampling.method = 'withReplacement',
+                                     likelihood = 'weighted',
+                                     constraint = 'baseline',
+                                     trace = TRUE), 
+              info = "trace=T leads to fitting information from 
+              nnet::multinom().")
+
+expect_silent(results <- ssp.softmax(formula = formula,
+                                     data = data, 
+                                     n.plt = n.plt,
+                                     n.ssp = n.ssp,
+                                     criterion = 'uniform', 
+                                     sampling.method = 'withReplacement',
+                                     likelihood = 'weighted',
+                                     constraint = 'baseline',
+                                     method = 'fn'), 
+              info = "method is an argument passed to nnet::multinom().")
+
+expect_silent(results <- ssp.softmax(formula = formula,
+                                    data = data, 
+                                    n.plt = n.plt,
+                                    n.ssp = n.ssp,
+                                    criterion = 'MSPE', 
+                                    sampling.method = 'withReplacement',
+                                    likelihood = 'weighted',
+                                    constraint = 'baseline',
+                                    control = list(alpha=0.1)),
+             info = "valid value of control arguments.")
+
+expect_error(results <- ssp.softmax(formula = formula,
+                            data = data, 
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'MSPE', 
+                            sampling.method = 'withReplacement',
+                            likelihood = 'weighted',
+                            constraint = 'baseline',
+                            control = list(alpha=1.5)),
+             info = "Invalid value of control arguments leads to error.")
+
 data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
 colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
-
 expect_silent(results <- 
                 ssp.softmax(formula = formula,
                             data = data,
@@ -67,6 +111,8 @@ expect_silent(results <-
                             constraint = 'baseline',
                             contrasts = list(F1="contr.treatment")),
               info = "It should run without errors when use contrast argument.")
+
+
 ## Cleanup
 rm(list = ls())
 gc()

@@ -24,8 +24,9 @@
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator.
 #' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
-#' @param control a list of parameters for controlling the fitting process. 
-#' @param ... a list of parameters for controlling the fitting process. 
+#' @param control a list of parameters for controlling the computing process. 
+#' @param ... an optional list of parameters which will be passed to 
+#' quantreg::rq().
 #' 
 #' @return
 #' \describe{
@@ -125,8 +126,7 @@ ssp.quantreg <- function(formula,
   criterion <- match.arg(criterion, c('optL', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
   likelihood <- match.arg(likelihood, c('weighted'))
-  control.tbd <- control
-  
+
   ## check subsample size
   if (n.ssp * B > 0.1 * N) {
     warning("The total subsample size n.ssp*B exceeds the recommended maximum
@@ -138,29 +138,36 @@ ssp.quantreg <- function(formula,
     B <- 1
     boot <- FALSE
   }
+  
+  control <- do.call("quantreg.control", control)
+  
   ## create a list to store variables
   inputs <- list(X = X, Y = Y, tau = tau, N = N, d = d,
                  n.plt = n.plt, n.ssp = n.ssp, B = B, boot = boot, 
                  criterion = criterion, sampling.method = sampling.method,
-                 likelihood = likelihood
+                 likelihood = likelihood,
+                 control = control
                  )
   
   if (criterion %in% c("optL")) {
     
     ## pilot step
-    plt.results <- quantile.plt.estimation(inputs)
+    plt.results <- quantile.plt.estimation(inputs, ...)
     beta.plt <- plt.results$beta.plt
     Ie.full <- plt.results$Ie.full
     index.plt <- plt.results$index.plt
+
     ## subsampling and boot step
     ssp.results <- quantile.ssp.estimation(inputs,
                                            Ie.full = Ie.full,
-                                           index.plt = index.plt
+                                           index.plt = index.plt,
+                                           ...
                                            )
     Betas.ssp <- ssp.results$Betas.ssp
     beta.ssp <- ssp.results$beta.ssp
     est.cov.ssp <- ssp.results$est.cov.ssp
     index.ssp <- ssp.results$index.ssp
+    
     names(beta.ssp) <- names(beta.plt) <- colnames(X)
 
     results <- list(model.call = model.call,
@@ -177,7 +184,7 @@ ssp.quantreg <- function(formula,
     return(results)
   } else if (criterion == "uniform"){
     ## subsampling and boot step
-    uni.results <- quantile.ssp.estimation(inputs)
+    uni.results <- quantile.ssp.estimation(inputs, ...)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$est.cov.ssp

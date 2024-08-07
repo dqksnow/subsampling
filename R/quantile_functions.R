@@ -1,12 +1,13 @@
 ###############################################################################
-quantile.plt.estimation <- function(inputs){
+quantile.plt.estimation <- function(inputs, ...){
   N <- inputs$N
   n.plt <- inputs$n.plt
   tau <- inputs$tau
+  control <- inputs$control
   
   index.plt <- sample(N, n.plt, replace = TRUE)
   results <- quantreg::rq(inputs$Y[index.plt] ~ inputs$X[index.plt, ] - 1,
-                          tau = tau)
+                          tau = tau, ...)
   beta.plt <- results$coefficients
   Ie.full <- (c(inputs$Y - inputs$X %*% beta.plt) < 0)
   return(
@@ -37,7 +38,8 @@ quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
 ###############################################################################
 quantile.ssp.estimation <- function(inputs,
                                     Ie.full = NA,
-                                    index.plt = NA
+                                    index.plt = NA,
+                                    ...
                                     ) {
   N <- inputs$N
   n.plt <- inputs$n.plt
@@ -48,6 +50,9 @@ quantile.ssp.estimation <- function(inputs,
   criterion <- inputs$criterion
   sampling.method <- inputs$sampling.method
   boot <- inputs$boot
+  control <- inputs$control
+  b <- control$b
+  alpha <- control$alpha
   
   if (criterion == "uniform"){
     p.ssp <- NA
@@ -55,7 +60,7 @@ quantile.ssp.estimation <- function(inputs,
     p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(inputs$X^2))
     if (sampling.method == "poisson"){
       dm <- N * sum(p.ssp[index.plt]) / n.plt
-      p.ssp <- n.ssp * p.ssp / dm
+      p.ssp <- pmin(n.ssp * ((1 - alpha) * p.ssp / dm + alpha / N), 1)
     } else if (sampling.method == "withReplacement") {
       p.ssp <- p.ssp / sum(p.ssp)
     }
@@ -82,12 +87,14 @@ quantile.ssp.estimation <- function(inputs,
         if (criterion == "uniform") {
           fit <- quantreg::rq(inputs$Y[each.ssp[[i]]] ~ 
                                 inputs$X[each.ssp[[i]], ] - 1,
-                              tau = tau)
+                              tau = tau,
+                              ...)
         } else {
           fit <- quantreg::rq(inputs$Y[each.ssp[[i]]] ~ 
                                 inputs$X[each.ssp[[i]], ] - 1,
                               tau = tau,
-                              weights = 1 / pmin(p.ssp[each.ssp[[i]]], 1))
+                              weights = 1 / pmin(p.ssp[each.ssp[[i]]], 1),
+                              ...)
         }
         Betas.ssp[, i] <- fit$coefficients
         Index.ssp[[i]] <- each.ssp[[i]]
@@ -98,11 +105,13 @@ quantile.ssp.estimation <- function(inputs,
                                        sampling.method, criterion)
         if (criterion == "uniform") {
           fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
-                              tau = tau)
+                              tau = tau,
+                              ...)
         } else {
           fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
                               tau = tau,
-                              weights = 1 / pmin(p.ssp[index.ssp], 1))
+                              weights = 1 / pmin(p.ssp[index.ssp], 1),
+                              ...)
         }
         Betas.ssp[, i] <- fit$coefficients
         Index.ssp[[i]] <- index.ssp
@@ -114,11 +123,13 @@ quantile.ssp.estimation <- function(inputs,
                                    sampling.method, criterion)
     if (criterion == "uniform") {
       fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
-                          tau = tau)
+                          tau = tau,
+                          ...)
     } else {
       fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
                           tau = tau,
-                          weights=1 / pmin(p.ssp[index.ssp], 1))
+                          weights=1 / pmin(p.ssp[index.ssp], 1),
+                          ...)
     }
     beta.ssp <- fit$coefficients
   }
@@ -150,7 +161,15 @@ quantile.ssp.estimation <- function(inputs,
            )
   }
 }
-
+###############################################################################
+quantreg.control <- function(alpha = 0, b = 2, ...)
+{
+  if(!is.numeric(alpha) || alpha < 0 || alpha > 1)
+    stop("sampling probability weight 'alpha' must between [0, 1]")
+  if(!is.numeric(b) || b < 0)
+    stop("sampling probability threshold 'b' must > 0")
+  list(alpha = alpha, b = b)
+}
 ###############################################################################
 #' Main results summary
 #'
