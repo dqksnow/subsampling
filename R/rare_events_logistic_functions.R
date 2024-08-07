@@ -3,7 +3,8 @@ rare.coef.estimate <- function(X,
                                Y,
                                offset = NULL,
                                start = rep(0, ncol(X)),
-                               weights = 1) {
+                               weights = 1,
+                               ...) {
   data <- as.data.frame(cbind(Y, X))
   formula <- as.formula(paste(colnames(data)[1], "~",
                               paste(colnames(data)[-1], collapse = "+"), "-1"))
@@ -15,12 +16,14 @@ rare.coef.estimate <- function(X,
                 results <- survey::svyglm(formula = formula,
                                           design = design,
                                           start = start,
-                                          family = quasibinomial(link="logit")),
+                                          family = quasibinomial(link="logit"),
+                                          ...),
                 results <- survey::svyglm(formula = formula,
                                           design = design,
                                           start = start,
                                           offset = offset,
-                                          family = quasibinomial(link="logit")))
+                                          family = quasibinomial(link="logit"),
+                                          ...))
   beta <- results$coefficients
   cov <- results$cov.unscaled
   pbeta <- as.vector(results$fitted.values)
@@ -58,11 +61,14 @@ rare.calculate.nm <- function(X, Y, ddL.plt.correction, P.plt, criterion){
   return(nm)
 }
 ###############################################################################
-rare.pilot.estimate <- function(X, Y, n.plt){
-  N <- nrow(X)
-  d <- ncol(X)
-  N1 <- sum(Y)
-  N0 <- N - N1
+rare.pilot.estimate <- function(inputs, ...){
+  X <- inputs$X
+  Y <- inputs$Y
+  n.plt <- inputs$n.plt
+  N <- inputs$N
+  N1 <- inputs$N1
+  N0 <- inputs$N0
+  
   ## half half sampling
   halfhalf.index.results <- halfhalf.index(N, Y, n.plt)
   index.plt <- halfhalf.index.results$index.plt
@@ -74,7 +80,7 @@ rare.pilot.estimate <- function(X, Y, n.plt){
   ## p: sampling probability
   ## P: Prob(Y=1 | X)
   ## unweighted likelihood estimation:
-  results.plt <- rare.coef.estimate(X = x.plt, Y = y.plt)
+  results.plt <- rare.coef.estimate(X = x.plt, Y = y.plt, ...)
   beta.plt <- results.plt$beta
   pbeta.plt <- pbeta(x.plt, beta.plt)
   ddL.plt <- rare.ddL(x.plt, pbeta.plt, 1 / n.plt)
@@ -95,20 +101,24 @@ rare.pilot.estimate <- function(X, Y, n.plt){
          )
 }
 ###############################################################################
-rare.subsampling <- function(X,
-                             Y,
-                             n.ssp,
-                             alpha,
-                             b,
-                             criterion,
-                             likelihood,
+rare.subsampling <- function(inputs,
                              p.plt,
                              ddL.plt.correction,
                              P.plt,
                              index.plt) {
-  N <- nrow(X)
-  N1 <- sum(Y)
-  N0 <- N - N1
+  
+  X <- inputs$X
+  Y <- inputs$Y
+  n.ssp <- inputs$n.ssp
+  control <- inputs$control
+  alpha <- control$alpha
+  b <- control$b
+  criterion <- inputs$criterion
+  likelihood <- inputs$likelihood
+  N <- inputs$N
+  N1 <- inputs$N1
+  N0 <- inputs$N0
+  
   n.plt <- length(index.plt)
   ## length(index.plt) might be smaller than n.plt, so here we reset n.plt.
   w.ssp <- offset <- NA
@@ -150,16 +160,24 @@ rare.subsampling <- function(X,
           )
 }
 ###############################################################################
-rare.subsample.estimate <- function(x.ssp,
-                                    y.ssp,
-                                    n.ssp,
-                                    N,
+rare.subsample.estimate <- function(inputs,
                                     w.ssp,
                                     offset,
                                     beta.plt,
-                                    likelihood) {
+                                    index.ssp,
+                                    ...) {
+  
+  x.ssp <- inputs$X[index.ssp, ]
+  y.ssp <- inputs$Y[index.ssp]
+  n.ssp <- inputs$n.ssp
+  N <- inputs$N
+  w.ssp <- w.ssp
+  offset <- offset
+  beta.plt <- beta.plt
+  likelihood <- inputs$likelihood
+  
   if (likelihood == "weighted"){
-    results.ssp <- rare.coef.estimate(x.ssp, y.ssp, weights = w.ssp)
+    results.ssp <- rare.coef.estimate(x.ssp, y.ssp, weights = w.ssp, ...)
     beta.ssp <- results.ssp$beta
     P.ssp <- results.ssp$pbeta
     # P.ssp <- pbeta(x.ssp, beta.ssp) # as same as results.ssp$pbeta
@@ -170,7 +188,8 @@ rare.subsample.estimate <- function(x.ssp,
     results.ssp <- rare.coef.estimate(X = x.ssp,
                                       Y = y.ssp,
                                       start = beta.plt,
-                                      offset = offset)
+                                      offset = offset,
+                                      ...)
     beta.ssp <- results.ssp$beta
     P.ssp <- results.ssp$pbeta
     # P.ssp <- pbeta(x.ssp, beta.ssp, offset)
@@ -205,6 +224,15 @@ rare.combining <- function(ddL.plt,
               var.cmb = var.cmb
               )
   )
+}
+###############################################################################
+relogit.control <- function(alpha = 0, b = 2, ...)
+{
+  if(!is.numeric(alpha) || alpha < 0 || alpha > 1)
+    stop("sampling probability weight 'alpha' must between [0, 1]")
+  if(!is.numeric(b) || b < 0)
+    stop("sampling probability threshold 'b' must > 0")
+  list(alpha = alpha, b = b)
 }
 ###############################################################################
 #' relogit Main results summary

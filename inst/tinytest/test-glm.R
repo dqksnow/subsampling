@@ -61,8 +61,37 @@ expect_silent(ssp.results <-
                         family = 'binomial', 
                         criterion = "optL",
                         sampling.method = 'poisson',
-                        likelihood = "logOddsCorrection"),
+                        likelihood = "weighted"),
               info = "It should run without errors when use subset")
+
+expect_silent(ssp.results <- 
+                ssp.glm(formula = formula,
+                        data = data,
+                        subset = c(1:(N/2)), 
+                        n.plt = n.plt,
+                        n.ssp = n.ssp,
+                        family = 'binomial', 
+                        criterion = "optA",
+                        sampling.method = 'poisson',
+                        likelihood = "logOddsCorrection",
+                        maxit = 30),
+              info = "It should run without errors when pass
+              arguments to svyglm() through '...' .")
+
+expect_silent(ssp.results <- 
+                ssp.glm(formula = formula,
+                        data = data,
+                        subset = c(1:(N/2)), 
+                        n.plt = n.plt,
+                        n.ssp = n.ssp,
+                        family = 'binomial', 
+                        criterion = "LCC",
+                        sampling.method = 'poisson',
+                        likelihood = "logOddsCorrection",
+                        control = list(alpha=0.1)),
+              info = "It should run without errors when use control argument.")
+
+
 data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
 colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
 expect_silent(ssp.results <- 

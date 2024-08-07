@@ -3,7 +3,8 @@ glm.coef.estimate <- function(X,
                               offset = NULL,
                               start = rep(0, ncol(X)),
                               weights = 1,
-                              family) {
+                              family,
+                              ...) {
 
   family <- switch(family$family.name,
                   "binomial" = quasibinomial(link="logit"), # binomial()
@@ -20,14 +21,15 @@ glm.coef.estimate <- function(X,
          results <- survey::svyglm(as.formula(formula),
                                    design = design,
                                    # start = start,
-                                   family = family),
+                                   family = family,
+                                   ...),
          results <- survey::svyglm(as.formula(formula),
                                    design = design,
                                    # start = start,
                                    offset = offset,
-                                   family = family)
+                                   family = family,
+                                   ...)
          )
-
   beta <- results$coefficients
   return(list(beta = beta))
 }
@@ -95,14 +97,14 @@ dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
 ###############################################################################
 calculate.offset <- function (X,
                               N,
-                              dm,
                               d.psi,
-                              alpha = alpha,
+                              alpha,
                               ddL.plt.correction,
                               NPhi = NULL,
                               n.ssp = NULL,
                               criterion,
                               sampling.method) {
+  
   if (criterion == "optA") {
     norm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
     nm.1 <- abs(1 - d.psi) * norm
@@ -115,6 +117,7 @@ calculate.offset <- function (X,
     nm.1 <- abs(1 - d.psi)
     nm.0 <- abs(d.psi)
   }
+  
   if (sampling.method == 'withReplacement') {
     stop("Currently only the 'logOddsCorrection' likelihood with
          'poisson' sampling method has been implemented.")
@@ -139,13 +142,19 @@ calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   return(nm)
 }
 ###############################################################################
-pilot.estimate <- function(X, Y, n.plt, family){
-  N <- nrow(X)
+pilot.estimate <- function(inputs, ...){
+  X <- inputs$X
+  Y <- inputs$Y
+  n.plt <- inputs$n.plt
+  family <-  inputs$family
+  N <- inputs$N
+  
   if (family$family.name == 'binomial'){
     N1 <- sum(Y)
     N0 <- N - N1
-    ## This is case control sampling with replacement.
-    ## For binary Y only.
+    ## This is case control sampling with replacement for binary Y logistic
+    ## regression.
+    ## 
     ## We can also use uniform sampling with rep, half half sampling 
     ## or poisson sampling.
     p.plt <- ifelse(Y == 1, 1/(2*N1), 1/(2*N0))
@@ -155,7 +164,7 @@ pilot.estimate <- function(X, Y, n.plt, family){
     p.plt <- p.plt[index.plt]
     ## weighted likelihood
     beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, weights = 1 / p.plt,
-                                  family = family)$beta
+                                  family = family, ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
     ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt,
                                          x.plt,
@@ -179,7 +188,8 @@ pilot.estimate <- function(X, Y, n.plt, family){
     x.plt <- X[index.plt,]
     y.plt <- Y[index.plt]
     p.plt <- rep(1 / N, n.plt)
-    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family)$beta
+    beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family,
+                                  ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
     ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt, 
                                          x.plt, weights = 1 / n.plt,
@@ -202,24 +212,29 @@ pilot.estimate <- function(X, Y, n.plt, family){
          )
 }
 ###############################################################################
-subsampling <- function(X,
-                        Y,
-                        n.ssp,
-                        alpha,
-                        b,
-                        criterion,
-                        likelihood,
-                        sampling.method,
+subsampling <- function(inputs,
                         p.plt,
                         ddL.plt.correction,
                         d.psi,
                         index.plt) {
-  N <- nrow(X)
+  X <- inputs$X
+  Y <- inputs$Y
+  family <-  inputs$family
+  n.ssp <- inputs$n.ssp
+  N <- inputs$N
+  control <- inputs$control
+  alpha <- control$alpha
+  b <- control$b
+  criterion <- inputs$criterion
+  likelihood <- inputs$likelihood
+  sampling.method <- inputs$sampling.method
   N1 <- sum(Y)
   N0 <- N - N1
   n.plt <- length(index.plt)
+  
   ## If use half half sampling, length(index.plt) might be smaller than 
   ## n.plt, so here we reset n.plt.
+  
   w.ssp <- offset <- NA
   nm <- calculate.nm(X, Y, ddL.plt.correction, d.psi, criterion) # numerator
   if (sampling.method == "withReplacement"){
@@ -239,9 +254,9 @@ subsampling <- function(X,
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, p.ssp)
     if (likelihood == 'logOddsCorrection') {
-      offset <- calculate.offset(X = X[index.ssp,],
+
+      offset <- calculate.offset(X = X[index.ssp, ],
                                  N = N,
-                                 dm = dm,
                                  d.psi = d.psi[index.ssp],
                                  alpha = alpha,
                                  ddL.plt.correction = ddL.plt.correction,
@@ -260,21 +275,26 @@ subsampling <- function(X,
          )
 }
 ###############################################################################
-subsample.estimate <- function(x.ssp,
-                               y.ssp,
-                               n.ssp,
-                               N,
-                               w.ssp,
-                               offset,
-                               beta.plt,
-                               sampling.method,
-                               likelihood,
-                               family) {
+subsample.estimate <- function(  inputs,
+                                 w.ssp,
+                                 offset,
+                                 beta.plt,
+                                 index.ssp,
+                                 ...) {
+  x.ssp <- inputs$X[index.ssp, ]
+  y.ssp = inputs$Y[index.ssp]
+  n.ssp <- inputs$n.ssp
+  N <- inputs$N
+  sampling.method <- inputs$sampling.method
+  likelihood <- inputs$likelihood
+  family <- inputs$family
+  
   if (likelihood == "weighted") {
     results.ssp <- glm.coef.estimate(x.ssp,
                                      y.ssp,
                                      weights = w.ssp,
-                                     family = family)
+                                     family = family,
+                                     ...)
     beta.ssp <- results.ssp$beta
     linear.predictor.ssp <- as.vector(x.ssp %*% beta.ssp)
     if (sampling.method == 'poisson') {
@@ -314,7 +334,8 @@ subsample.estimate <- function(x.ssp,
                                      Y = y.ssp,
                                      start = beta.plt,
                                      offset = offset,
-                                     family = family)
+                                     family = family,
+                                     ...)
     beta.ssp <- results.ssp$beta
     linear.predictor.ssp <- as.vector(x.ssp %*% beta.ssp)
     ddL.ssp <- ddL(linear.predictor.ssp,
@@ -365,6 +386,15 @@ combining <- function(ddL.plt,
               var.cmb = var.cmb
               )
          )
+}
+###############################################################################
+glm.control <- function(alpha = 0, b = 2, ...)
+{
+  if(!is.numeric(alpha) || alpha < 0 || alpha > 1)
+    stop("sampling probability weight 'alpha' must between [0, 1]")
+  if(!is.numeric(b) || b < 0)
+    stop("sampling probability threshold 'b' must > 0")
+  list(alpha = alpha, b = b)
 }
 ###############################################################################
 format.p.values <- function(p.values, threshold = 0.0001) {

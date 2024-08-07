@@ -2,7 +2,10 @@
 
 
 *** To do list
-- Jul 3: 
+softmax need ... to pass arguments to fitting function
+for quantile, test alpha in example, add alpha to test function.
+- Jul 3:
+- [X] use ... to pass arguments to fitting function, e.g. glm, rq.
 - [X] write arguments in lowercase
   - [X] quantile
   - [X] rare
@@ -11,7 +14,7 @@
 - [X] contrast of covariate matrix X
 - [X] add subset argument
 - [X] make sure variable names are shown in summary function
-- [ ] use control object to collect arguments
+- [X] use control object to collect arguments
 - [X] rename functions, for example, ssp.quantreg
 - [ ] double check the necessarity of the family object extension I wrote.
 - [ ] allow user defined family object
@@ -29,9 +32,9 @@
   input to build-in functions. This makes the main function look clean. Make
   sure it won't copy those variables.
   - [X] quantile
-  - [ ] rare
-  - [ ] softmax
-  - [ ] glm
+  - [X] rare
+  - [X] softmax
+  - [X] glm
 - [ ] Collect messgages that show the status of convergence.
   - [X] quantile
   - [ ] rare
@@ -50,10 +53,11 @@
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
   - [X] a message when use MSPE: it is free from constraint.
+  - [ ] the example doesn't use intercept
 - For quantile:
   - [X] Don't compute stand error in summary when boot=F.
-  - [ ] threshold for poisson sampling probability.
-  - [ ] variable names in the summary function.
+  - [ ] threshold b for poisson sampling probability.
+  - [X] variable names in the summary function.
 - Write vignettes
   (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
 
@@ -61,6 +65,7 @@
 - Environment variables (e.g. X, Y, N, n.plt) should be stored in an object for
   input to build-in functions. R is copy-on-modify. Copying is done only when
   objects are modified. An example:
+  
   > X <- rnorm(1e6)
   
   > Y <- rnorm(1e6)

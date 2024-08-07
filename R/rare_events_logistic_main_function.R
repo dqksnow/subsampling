@@ -18,10 +18,6 @@
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator, currently there are two choices
 #'  \code{weighted} and \code{logOddsCorrection}.
-#' @param alpha Mixture proportions of optimal subsampling probability and
-#' uniform subsampling probability. Default = 0.1.
-#' @param b This parameter controls the upper threshold for optimal subsampling
-#' probabilities.
 #' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
 #' @param control a list of parameters for controlling the fitting process. 
 #' @param ... a list of parameters for controlling the fitting process. 
@@ -56,16 +52,14 @@
 #' n.plt <- 200
 #' n.ssp <- 1000
 #' data <- as.data.frame(cbind(Y, X))
-#' data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
-#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+#' colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 #' formula <- Y ~ .
 #' subsampling.results <- ssp.relogit(formula = formula,
 #'                                      data = data,
 #'                                      n.plt = n.plt,
 #'                                      n.ssp = n.ssp,
 #'                                      criterion = 'optA',
-#'                                      likelihood = 'logOddsCorrection',
-#'                                      contrasts = list(F1="contr.treatment"))
+#'                                      likelihood = 'logOddsCorrection')
 #' summary(subsampling.results)
 
 ssp.relogit <-  function(formula,
@@ -75,8 +69,6 @@ ssp.relogit <-  function(formula,
                          n.ssp,
                          criterion = 'optL',
                          likelihood = 'logOddsCorrection',
-                         alpha = 0.1,
-                         b = 2,
                          control = list(...),
                          contrasts = NULL,
                          ...
@@ -105,11 +97,22 @@ ssp.relogit <-  function(formula,
   N0 <- N - N1
   criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
   likelihood <- match.arg(likelihood, c('logOddsCorrection', 'weighted'))
+  control <- do.call("relogit.control", control)
+  
+  
+  inputs <- list(X = X, Y = Y, N = N, N1 = N1, N0 = N0, d = d,
+                 n.plt = n.plt, n.ssp = n.ssp,
+                 criterion = criterion, 
+                 likelihood = likelihood, 
+                 control = control
+                 )
+  
   
   if (criterion %in% c('optL', 'optA', 'LCC')){
 
     ## pilot step
-    plt.estimate.results <- rare.pilot.estimate(X = X, Y = Y, n.plt = n.plt)
+    plt.estimate.results <- rare.pilot.estimate(inputs, ...)
+    # plt.estimate.results <- rare.pilot.estimate(X = X, Y = Y, n.plt = n.plt)
     p.plt <- plt.estimate.results$p.plt
     beta.plt <- plt.estimate.results$beta.plt
     ddL.plt <- plt.estimate.results$ddL.plt
@@ -119,30 +122,41 @@ ssp.relogit <-  function(formula,
     index.plt <- plt.estimate.results$index.plt
 
     ## subsampling step
-    ssp.results <- rare.subsampling(X = X,
-                                    Y = Y,
-                                    n.ssp = n.ssp,
-                                    alpha = alpha,
-                                    b = b,
-                                    criterion = criterion,
-                                    likelihood = likelihood,
+    ssp.results <- rare.subsampling(inputs,
                                     p.plt = p.plt,
                                     ddL.plt.correction = ddL.plt.correction,
                                     P.plt = P.plt,
                                     index.plt = index.plt)
+    # ssp.results <- rare.subsampling(X = X,
+    #                                 Y = Y,
+    #                                 n.ssp = n.ssp,
+    #                                 alpha = alpha,
+    #                                 b = b,
+    #                                 criterion = criterion,
+    #                                 likelihood = likelihood,
+    #                                 p.plt = p.plt,
+    #                                 ddL.plt.correction = ddL.plt.correction,
+    #                                 P.plt = P.plt,
+    #                                 index.plt = index.plt)
     index.ssp <- ssp.results$index.ssp
     w.ssp <- ssp.results$w.ssp
     offset <- ssp.results$offset
 
     ## subsample estimation step
-    ssp.estimate.results <- rare.subsample.estimate(X[index.ssp, ],
-                                             Y[index.ssp],
-                                             n.ssp = n.ssp,
-                                             N = N,
-                                             w.ssp = w.ssp,
-                                             offset = offset,
-                                             beta.plt = beta.plt,
-                                             likelihood = likelihood)
+    ssp.estimate.results <- rare.subsample.estimate(inputs, 
+                                                    w.ssp = w.ssp,
+                                                    offset = offset,
+                                                    beta.plt = beta.plt,
+                                                    index.ssp = index.ssp,
+                                                    ...)
+    # ssp.estimate.results <- rare.subsample.estimate(X[index.ssp, ],
+    #                                          Y[index.ssp],
+    #                                          n.ssp = n.ssp,
+    #                                          N = N,
+    #                                          w.ssp = w.ssp,
+    #                                          offset = offset,
+    #                                          beta.plt = beta.plt,
+    #                                          likelihood = likelihood)
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
@@ -180,7 +194,9 @@ ssp.relogit <-  function(formula,
     pi.uni <- rep(1, N)
     pi.uni[Y == 0] <- n.ssp / N0
     index.uni <- poisson.index(N, pi.uni)
-    results.uni <- rare.coef.estimate(X = X[index.uni, ], Y = Y[index.uni])
+    results.uni <- rare.coef.estimate(X = X[index.uni, ],
+                                      Y = Y[index.uni],
+                                      ...)
     beta.uni <- results.uni$beta
     var.uni <- results.uni$cov
     beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept

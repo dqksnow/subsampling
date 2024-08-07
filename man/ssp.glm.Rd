@@ -14,8 +14,6 @@ ssp.glm(
   criterion = "optL",
   sampling.method = "poisson",
   likelihood = "weighted",
-  alpha = 0.1,
-  b = 2,
   control = list(...),
   contrasts = NULL,
   ...
@@ -53,16 +51,12 @@ currently there are two choices \code{withReplacement} and \code{poisson}.}
 calculate the optimal subsampling estimator, currently there are two choices
 \code{weighted} and \code{logOddsCorrection}.}
 
-\item{alpha}{Mixture proportions of optimal subsampling probability and
-uniform subsampling probability. Default = 0.1.}
-
-\item{b}{This parameter controls the upper threshold for optimal subsampling probabilities.}
-
-\item{control}{a list of parameters for controlling the fitting process.}
+\item{control}{a list of parameters for controlling the sampling process.}
 
 \item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
 
-\item{...}{a list of parameters for controlling the fitting process.}
+\item{...}{a list of parameters for controlling the fitting process which
+will be passed to glm().}
 }
 \value{
 \describe{
@@ -114,7 +108,6 @@ sampling.method = 'withReplacement',
 likelihood = "weighted",
 contrasts = list(F1 = 'contr.sum'))
 summary(subsampling.results)
-
 Uni.subsampling.results <- ssp.glm(formula = formula, 
 data = data, 
 n.plt = n.plt,

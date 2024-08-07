@@ -62,7 +62,7 @@ quantile.ssp.estimation <- function(inputs,
       dm <- N * sum(p.ssp[index.plt]) / n.plt
       p.ssp <- pmin(n.ssp * ((1 - alpha) * p.ssp / dm + alpha / N), 1)
     } else if (sampling.method == "withReplacement") {
-      p.ssp <- p.ssp / sum(p.ssp)
+      p.ssp <- (1 - alpha) * p.ssp / sum(p.ssp) + alpha / N
     }
   }
   

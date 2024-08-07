@@ -12,8 +12,6 @@ ssp.relogit(
   n.ssp,
   criterion = "optL",
   likelihood = "logOddsCorrection",
-  alpha = 0.1,
-  b = 2,
   control = list(...),
   contrasts = NULL,
   ...
@@ -42,12 +40,6 @@ currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.}
 \item{likelihood}{The type of the maximum likelihood function used to
 calculate the optimal subsampling estimator, currently there are two choices
 \code{weighted} and \code{logOddsCorrection}.}
-
-\item{alpha}{Mixture proportions of optimal subsampling probability and
-uniform subsampling probability. Default = 0.1.}
-
-\item{b}{This parameter controls the upper threshold for optimal subsampling
-probabilities.}
 
 \item{control}{a list of parameters for controlling the fitting process.}
 
@@ -89,15 +81,13 @@ print(paste('sum(Y): ', sum(Y)))
 n.plt <- 200
 n.ssp <- 1000
 data <- as.data.frame(cbind(Y, X))
-data$F1 <- sample(c("A", "B", "C"), N, replace=TRUE)
-colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""), "F1")
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 formula <- Y ~ .
 subsampling.results <- ssp.relogit(formula = formula,
                                      data = data,
                                      n.plt = n.plt,
                                      n.ssp = n.ssp,
                                      criterion = 'optA',
-                                     likelihood = 'logOddsCorrection',
-                                     contrasts = list(F1="contr.treatment"))
+                                     likelihood = 'logOddsCorrection')
 summary(subsampling.results)
 }

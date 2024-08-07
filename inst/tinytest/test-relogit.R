@@ -45,6 +45,27 @@ expect_silent(subsampling.results <-
 expect_silent(subsampling.results <- 
                 ssp.relogit(formula = formula,
                             data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'optA',
+                            likelihood = 'weighted',
+                            epsilon = 1e-6),
+              info = "It should run without errors when pass
+              arguments to svyglm() through '...' .")
+
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'optA',
+                            likelihood = 'weighted',
+                            control = list(alpha=0.2)),
+              info = "It should run without errors when use control argument.")
+
+expect_silent(subsampling.results <- 
+                ssp.relogit(formula = formula,
+                            data = data,
                             subset = c(1:(N/2)), 
                             n.plt = n.plt,
                             n.ssp = n.ssp,
