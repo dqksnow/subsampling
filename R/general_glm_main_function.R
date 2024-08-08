@@ -58,7 +58,7 @@
 #' data = data, 
 #' n.plt = n.plt,
 #' n.ssp = n.ssp,
-#' family = 'binomial',
+#' family = 'quasibinomial',
 #' criterion = "optL",
 #' sampling.method = 'poisson',
 #' likelihood = "logOddsCorrection")
@@ -139,14 +139,13 @@
 #' data = data, 
 #' n.plt = n.plt,
 #' n.ssp = n.ssp,
-#' family = 'gamma',
+#' family = 'Gamma',
 #' criterion = "optL", 
 #' sampling.method = 'poisson',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
 
 #' @export
-
 ssp.glm <- function(formula,
                     data,
                     subset = NULL,
@@ -180,20 +179,21 @@ ssp.glm <- function(formula,
   }
   X <- model.matrix(mt, mf, contrasts)
   colnames(X)[1] <- "Intercept"
-  family <- match.arg(family, c('binomial', 'poisson', 'gamma'))
+  family <- match.arg(family, c('binomial', 'poisson', 'Gamma',
+                                'quasibinomial'))
   criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
   likelihood <- match.arg(likelihood, c('logOddsCorrection', 'weighted'))
   control <- do.call("glm.control", control)
-  if(is.function(family)) family <- family$family
-  if(missing(family)) {
-    stop("Specify a valid 'family' from c('binomial', 'poisson', gamma')")
+  
+  ## family 
+  if(is.character(family))
+    family <- get(family, mode = "function", envir = parent.frame())
+  if(is.function(family)) family <- family()
+  if(is.null(family$family)) {
+    print(family)
+    stop("'family' not recognized")
   }
-  family <- switch(family,
-                  "binomial" = binomial.expand(),
-                  "poisson" = poisson.expand(),
-                  "gamma" = gamma.expand()
-                  )
 
   N <- nrow(X)
   d <- ncol(X)
@@ -206,12 +206,6 @@ ssp.glm <- function(formula,
   
   if (criterion %in% c('optL', 'optA', 'LCC')) {
     plt.estimate.results <- pilot.estimate(inputs, ...)
-    ## pilot step
-    # plt.estimate.results <- pilot.estimate(X = X,
-    #                                        Y = Y,
-    #                                        n.plt = n.plt,
-    #                                        family = family
-    #                                       )
     p.plt <- plt.estimate.results$p.plt
     beta.plt <- plt.estimate.results$beta.plt
     ddL.plt <- plt.estimate.results$ddL.plt
@@ -220,6 +214,7 @@ ssp.glm <- function(formula,
     Lambda.plt <- plt.estimate.results$Lambda.plt
     d.psi <- plt.estimate.results$d.psi
     index.plt <- plt.estimate.results$index.plt
+    
     ## subsampling step
     ssp.results <- subsampling(inputs,
                                p.plt = p.plt,
@@ -227,19 +222,6 @@ ssp.glm <- function(formula,
                                d.psi = d.psi,
                                index.plt = index.plt
                                )
-    # ssp.results <- subsampling(X = X,
-    #                            Y = Y,
-    #                            n.ssp = n.ssp,
-    #                            alpha = alpha,
-    #                            b = b,
-    #                            criterion = criterion,
-    #                            likelihood = likelihood,
-    #                            sampling.method = sampling.method,
-    #                            p.plt = p.plt,
-    #                            ddL.plt.correction = ddL.plt.correction,
-    #                            d.psi = d.psi,
-    #                            index.plt = index.plt
-    #                            )
     index.ssp <- ssp.results$index.ssp
     w.ssp <- ssp.results$w.ssp
     offset <- ssp.results$offset
@@ -253,16 +235,6 @@ ssp.glm <- function(formula,
                                                index.ssp = index.ssp,
                                                ...
                                                )
-    # ssp.estimate.results <- subsample.estimate(x.ssp = X[index.ssp, ],
-    #                                            y.ssp = Y[index.ssp],
-    #                                            n.ssp = n.ssp,
-    #                                            N = N,
-    #                                            w.ssp = w.ssp,
-    #                                            offset = offset,
-    #                                            beta.plt = beta.plt,
-    #                                          sampling.method = sampling.method,
-    #                                          likelihood = likelihood,
-    #                                            family = family)
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
@@ -308,7 +280,8 @@ ssp.glm <- function(formula,
     }
     x.uni <- X[index.uni, ]
     y.uni = Y[index.uni]
-    results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni, family = family,
+    results.uni <- glm.coef.estimate(X = x.uni, Y = y.uni, 
+                                     family = family,
                                      ...)
     beta.uni <- results.uni$beta
     linear.predictor.uni <- as.vector(x.uni %*% beta.uni)

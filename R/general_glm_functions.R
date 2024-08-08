@@ -6,10 +6,10 @@ glm.coef.estimate <- function(X,
                               family,
                               ...) {
 
-  family <- switch(family$family.name,
-                  "binomial" = quasibinomial(link="logit"), # binomial()
-                  "poisson" = poisson(),
-                  "gamma" = Gamma(link = "inverse"))
+  # family <- switch(family$family.name,
+  #                 "binomial" = quasibinomial(link="logit"), # binomial()
+  #                 "poisson" = poisson(),
+  #                 "gamma" = Gamma(link = "inverse"))
   data <- as.data.frame(cbind(Y, X))
   formula <- as.formula(paste(colnames(data)[1], "~",
                    paste(colnames(data)[-1], collapse = "+"), "-1"))
@@ -74,27 +74,6 @@ poisson.index <- function (N, pi) {
   return(which(runif(N) <= pi))
 }
 ###############################################################################
-############## family version
-ddL <- function (eta, X, weights = 1, offset = NULL, family) {
-  if (family$canonical == TRUE){
-    dd.psi <- family$dd.psi(eta, offset)
-    ddL <- t(X) %*% (X * (dd.psi * weights))
-  } else {
-    temp <- family$dd.psi(eta, offset) * family$d.u(eta)^2
-    ddL <- t(X) %*% (X * (temp * weights))
-  }
-  return(ddL)
-}
-dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
-  if (family$canonical == TRUE){
-    temp <- (Y - family$d.psi(eta, offset))^2
-  } else {
-    temp <- (Y - family$d.psi(eta, offset))^2 * family$d.u(eta)^2
-  }
-  dL.sq <- t(X) %*% (X * (temp * weights))
-  return(dL.sq)
-}
-###############################################################################
 calculate.offset <- function (X,
                               N,
                               d.psi,
@@ -142,14 +121,62 @@ calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   return(nm)
 }
 ###############################################################################
+## second derivative of log likelihood function
+ddL <- function (eta, X, weights = 1, offset = NULL, family) {
+  # linkinv(eta): 
+  # (eta is linear predictor plus offset(if have))
+  # for binomial = exp(eta)/(1+exp(eta))
+  # poisson() = exp(eta)
+  # Gamma(link = "inverse") = 1/eta
+  # variance(mu):
+  # for logit = mu(1 - mu)
+  # for poisson() = mu
+  # for Gamma(link = "inverse") = mu^2
+  variance <- family$variance
+  linkinv  <- family$linkinv
+
+  dd.psi <- ifelse(is.null(offset),
+                   variance(linkinv(eta)),
+                   variance(linkinv(eta + offset))
+  )
+  ddL <- t(X) %*% (X * (dd.psi * weights))
+  
+  return(ddL)
+}
+## square of first derivative of log likelihood function
+dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
+  # linkinv(eta): 
+  # (eta is linear predictor plus offset(if have))
+  # for binomial = exp(eta)/(1+exp(eta))
+  # poisson() = exp(eta)
+  # Gamma(link = "inverse") = 1/eta
+  # variance(mu):
+  # for logit = mu(1 - mu)
+  # for poisson() = mu
+  # for Gamma(link = "inverse") = mu^2
+  variance <- family$variance
+  linkinv  <- family$linkinv
+  temp <- ifelse(is.null(offset),
+                 (Y - linkinv(eta))^2,
+                 (Y - linkinv(eta + offset))^2
+                 )
+  dL.sq <- t(X) %*% (X * (temp * weights))
+  return(dL.sq)
+}
+###############################################################################
 pilot.estimate <- function(inputs, ...){
   X <- inputs$X
   Y <- inputs$Y
   n.plt <- inputs$n.plt
   family <-  inputs$family
   N <- inputs$N
+  family <- inputs$family
+  variance <- family$variance
+  linkinv  <- family$linkinv
+
   
-  if (family$family.name == 'binomial'){
+  # if (family$family.name == 'binomial'){
+  if (family[["family"]] %in% c('binomial', 'quasibinomial')){
     N1 <- sum(Y)
     N0 <- N - N1
     ## This is case control sampling with replacement for binary Y logistic
@@ -166,22 +193,23 @@ pilot.estimate <- function(inputs, ...){
     beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, weights = 1 / p.plt,
                                   family = family, ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
-    ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt,
-                                         x.plt,
+    
+    ddL.plt <- ddL.plt.correction <- ddL(eta = linear.predictor.plt,
+                                         X = x.plt,
                                          weights = (1 / (p.plt*N*n.plt)),
                                          family = family)
-    dL.sq.plt <- dL.sq(linear.predictor.plt,
+    dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
                        x.plt,
                        y.plt,
                        weights = (1 / (p.plt*N*n.plt)^2),
                        family = family)
     c <- n.plt / N
-    Lambda.plt <- c * dL.sq(linear.predictor.plt,
+    Lambda.plt <- c * dL.sq(eta = linear.predictor.plt,
                             x.plt,
                             y.plt,
                             weights = (1 / (p.plt*N*n.plt^2)),
                             family = family)
-    d.psi <- family$d.psi(X %*% beta.plt)
+    d.psi <- linkinv(X %*% beta.plt) # N dimension
   } else {
     ## This is uniform sampling with replacement.
     index.plt <- random.index(N, n.plt)
@@ -191,14 +219,14 @@ pilot.estimate <- function(inputs, ...){
     beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family,
                                   ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
-    ddL.plt <- ddL.plt.correction <- ddL(linear.predictor.plt, 
+    ddL.plt <- ddL.plt.correction <- ddL(eta = linear.predictor.plt, 
                                          x.plt, weights = 1 / n.plt,
                                          family = family)
-    dL.sq.plt <- dL.sq(linear.predictor.plt,
+    dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
                        x.plt, y.plt, weights = 1 / n.plt^2, family = family)
     c <- n.plt / N
     Lambda.plt <- c * dL.sq.plt
-    d.psi <- family$d.psi(X %*% beta.plt)
+    d.psi <- linkinv(X %*% beta.plt)
   }
   return(list(p.plt = p.plt,
               beta.plt = beta.plt,
@@ -326,7 +354,7 @@ subsample.estimate <- function(  inputs,
                               family = family)
     }
   } else if (likelihood == 'logOddsCorrection') {
-    if (family$family.name != "binomial") {
+    if (!(family[["family"]]  %in% c('binomial', 'quasibinomial'))){
       stop("Currently 'logOddsCorrection' likelihood can only work for logistic
            regression")
     }

@@ -5,6 +5,7 @@
 softmax need ... to pass arguments to fitting function
 for quantile, test alpha in example, add alpha to test function.
 - Jul 3:
+- [ ] there are notes when I run the check. It's about global function.
 - [X] use ... to pass arguments to fitting function, e.g. glm, rq.
 - [X] write arguments in lowercase
   - [X] quantile
@@ -16,7 +17,8 @@ for quantile, test alpha in example, add alpha to test function.
 - [X] make sure variable names are shown in summary function
 - [X] use control object to collect arguments
 - [X] rename functions, for example, ssp.quantreg
-- [ ] double check the necessarity of the family object extension I wrote.
+- [X] Have delete my extension function. double check the necessarity of the
+  family object extension I wrote.
 - [ ] allow user defined family object
   
 - Jun 12:
@@ -28,7 +30,7 @@ for quantile, test alpha in example, add alpha to test function.
   - [X] rare
   - [X] softmax
   - [X] glm
-- [ ] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
+- [X] Environment variables (e.g. X, Y, N, n.plt) should be stored in a list for
   input to build-in functions. This makes the main function look clean. Make
   sure it won't copy those variables.
   - [X] quantile
@@ -50,6 +52,8 @@ for quantile, test alpha in example, add alpha to test function.
   - [X] sometimes there are warnings when use glm() except uniform.
   - [X] add example for gamma regression
   - [ ] check the estimated var of gamma
+  - [ ] warning message when use family=binomial. no warning when
+    family=quasibinomial
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
   - [X] a message when use MSPE: it is free from constraint.
