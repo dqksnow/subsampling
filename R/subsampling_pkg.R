@@ -5,7 +5,8 @@
 #' @aliases Add later
 #' @references Add later
 #'
-#' @importFrom stats as.formula quasibinomial runif model.frame model.matrix model.response pnorm
+#' @importFrom stats as.formula runif model.frame model.matrix model.response 
+#' pnorm quantile coef quasibinomial
 #' @importFrom quantreg rq
 #' @importFrom parallel makeCluster clusterExport parLapply stopCluster
 #' @importFrom Rcpp evalCpp

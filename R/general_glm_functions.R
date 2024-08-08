@@ -6,10 +6,6 @@ glm.coef.estimate <- function(X,
                               family,
                               ...) {
 
-  # family <- switch(family$family.name,
-  #                 "binomial" = quasibinomial(link="logit"), # binomial()
-  #                 "poisson" = poisson(),
-  #                 "gamma" = Gamma(link = "inverse"))
   data <- as.data.frame(cbind(Y, X))
   formula <- as.formula(paste(colnames(data)[1], "~",
                    paste(colnames(data)[-1], collapse = "+"), "-1"))
@@ -436,18 +432,8 @@ format.p.values <- function(p.values, threshold = 0.0001) {
   return(formatted)
 }
 ###############################################################################
-#' Main results summary
-#'
-#' @param object A list object output by the main function, which contains the
-#'  results of the estimation of the parameters, the estimation of the
-#'  covariance matrix, subsample size, etc.
-#' @param ... Additional arguments passed to the summary function.
-#'
-#' @return A data.frame will be printed.
+
 #' @export
-#'
-
-
 summary.ssp.glm <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))

@@ -171,16 +171,7 @@ quantreg.control <- function(alpha = 0, b = 2, ...)
   list(alpha = alpha, b = b)
 }
 ###############################################################################
-#' Main results summary
-#'
-#' @param object A list object output by the main function, which contains the
-#'  results of the estimation of the parameters, the estimation of the
-#'  covariance matrix, subsample index, etc.
-#' @param ... Additional arguments passed to the summary function.
-#' @return A data frame will be printed.
 #' @export
-#'
-
 summary.ssp.quantreg <- function(object, ...) {
   coef <- object$beta
   N <- object$N

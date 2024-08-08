@@ -235,16 +235,7 @@ relogit.control <- function(alpha = 0, b = 2, ...)
   list(alpha = alpha, b = b)
 }
 ###############################################################################
-#' relogit Main results summary
-#'
-#' @param object A list object output by the main function, which contains the
-#' @param ... Additional arguments passed to the summary function.
-#'  results of the estimation of the parameters, the estimation of the
-#'  covariance matrix, subsample index, etc.
-#'
-#' @return A series of data.frame will be printed.
 #' @export
-#'
 summary.ssp.relogit <- function(object, ...) {
   coef <- object$beta
   se <- sqrt(diag(object$var))
