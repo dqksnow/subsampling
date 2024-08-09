@@ -8,7 +8,7 @@
 \alias{later}
 \title{Title: Add later}
 \description{
-This package implements various subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in large data sets.
+When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. This package implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
 }
 \references{
 Add later
@@ -22,12 +22,13 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Qingkai Dong \email{qingkai.dong@uconn.edu} (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+\strong{Maintainer}: Qingkai Dong \email{qingkai.dong@uconn.edu}
 
 Authors:
 \itemize{
-  \item Haiying Wang (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
-  \item Yaqiong Yao (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+  \item Haiying Wang
+  \item Yaqiong Yao
+  \item Jun Yan
 }
 
 }

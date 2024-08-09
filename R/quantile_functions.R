@@ -1,5 +1,5 @@
 ###############################################################################
-quantile.plt.estimation <- function(inputs, ...){
+plt.estimation.quantreg <- function(inputs, ...){
   N <- inputs$N
   n.plt <- inputs$n.plt
   tau <- inputs$tau
@@ -19,7 +19,7 @@ quantile.plt.estimation <- function(inputs, ...){
   )
 }
 ###############################################################################
-quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
+sampling.quantreg <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
   if (sampling.method == "poisson"){
     if (criterion == "uniform") {
       index.ssp <- which(runif(N) <= n.ssp/N)
@@ -36,7 +36,7 @@ quantile.sampling <- function(N, n.ssp, p.ssp, tau, sampling.method, criterion){
   return(index.ssp)
 }
 ###############################################################################
-quantile.ssp.estimation <- function(inputs,
+ssp.estimation.quantreg <- function(inputs,
                                     Ie.full = NA,
                                     index.plt = NA,
                                     ...
@@ -101,7 +101,7 @@ quantile.ssp.estimation <- function(inputs,
       }
     } else if (sampling.method == "withReplacement") {
       for(i in 1:B){
-        index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
+        index.ssp <- sampling.quantreg(N, n.ssp, p.ssp, tau,
                                        sampling.method, criterion)
         if (criterion == "uniform") {
           fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,
@@ -119,7 +119,7 @@ quantile.ssp.estimation <- function(inputs,
     }
     beta.ssp.mean <- rowMeans(Betas.ssp)
   } else if (boot == FALSE) {
-    index.ssp <- quantile.sampling(N, n.ssp, p.ssp, tau,
+    index.ssp <- sampling.quantreg(N, n.ssp, p.ssp, tau,
                                    sampling.method, criterion)
     if (criterion == "uniform") {
       fit <- quantreg::rq(inputs$Y[index.ssp] ~ inputs$X[index.ssp, ] - 1,

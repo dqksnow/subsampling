@@ -43,7 +43,7 @@
 #' Additional details... briefly introduce the idea.
 #' 
 #' @references
-#' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \url{https://doi.org/10.1093/biomet/asaa043}
+#' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \doi{https://doi.org/10.1093/biomet/asaa043}
 #' 
 #' @examples
 #' #quantile regression
@@ -142,13 +142,13 @@ ssp.quantreg <- function(formula,
   if (criterion %in% c("optL")) {
     
     ## pilot step
-    plt.results <- quantile.plt.estimation(inputs, ...)
+    plt.results <- plt.estimation.quantreg(inputs, ...)
     beta.plt <- plt.results$beta.plt
     Ie.full <- plt.results$Ie.full
     index.plt <- plt.results$index.plt
 
     ## subsampling and boot step
-    ssp.results <- quantile.ssp.estimation(inputs,
+    ssp.results <- ssp.estimation.quantreg(inputs,
                                            Ie.full = Ie.full,
                                            index.plt = index.plt,
                                            ...
@@ -174,7 +174,7 @@ ssp.quantreg <- function(formula,
     return(results)
   } else if (criterion == "uniform"){
     ## subsampling and boot step
-    uni.results <- quantile.ssp.estimation(inputs, ...)
+    uni.results <- ssp.estimation.quantreg(inputs, ...)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
     est.cov.uni <- uni.results$cov.ssp

@@ -1,22 +1,18 @@
 Package: subsampling
 Type: Package
-Title: TBD
+Title: Optimal Subsampling Methods for Statistical Models
 Version: 0.1
-Date: 2024-02-06
+Date: 2024-08-06
 Authors@R: c(
     person(given = "Qingkai", family = "Dong",
            email = "qingkai.dong@uconn.edu",
-           role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0000-0000-0000")),
-    person(given = "Haiying", family = "Wang", role = "aut",
-           comment = c(ORCID = "0000-0000-0000-0000")),
-    person(given = "Yaqiong", family = "Yao", role = "aut",
-           comment = c(ORCID = "0000-0000-0000-0000"))       
+           role = c("aut", "cre")),
+    person(given = "Haiying", family = "Wang", role = "aut"),
+    person(given = "Yaqiong", family = "Yao", role = "aut"),
+    person(given = "Jun", family = "Yan", role = "aut") 
     )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
-Description: This package implements various subsampling methods for statistical
-    analysis, providing tools for efficient and accurate estimation in large data
-    sets. 
+Description: When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. It implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -27,8 +23,7 @@ Imports:
     survey,
     nnet,
     expm,
-    quantreg,
-    parallel
+    quantreg
 LinkingTo:
     Rcpp, 
     RcppArmadillo

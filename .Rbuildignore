@@ -10,3 +10,4 @@
 ^\.DS_Store$
 ^\.Rcheck$
 ^README\.org$
+^README\.Rmd$

@@ -2,9 +2,9 @@
 
 
 *** To do list
-softmax need ... to pass arguments to fitting function
-for quantile, test alpha in example, add alpha to test function.
-- Jul 3:
+- Aug 8:
+- [ ] notes from win-builder(), log is sent to my email.
+- [ ] update makefile
 - [X] help documents
   - [ ] description
   - [X] arguments
@@ -14,6 +14,8 @@ for quantile, test alpha in example, add alpha to test function.
   - [X] examples    
 - [X] there are notes when I run the check. It's about global function.
 - [X] use ... to pass arguments to fitting function, e.g. glm, rq.
+
+- Jul 3:
 - [X] write arguments in lowercase
   - [X] quantile
   - [X] rare

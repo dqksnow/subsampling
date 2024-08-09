@@ -116,5 +116,5 @@ Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{St
 
 Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625. \url{https://link.springer.com/article/10.1007/s11424-023-1179-z}
 
-Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201. \url{https://doi.org/10.1016/j.jspi.2022.12.004}
+Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201. \doi{https://doi.org/10.1016/j.jspi.2022.12.004}
 }

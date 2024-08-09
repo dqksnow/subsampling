@@ -108,5 +108,5 @@ sampling.method = 'withReplacement', likelihood = 'weighted')
 summary(uni.results)
 }
 \references{
-Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \url{https://doi.org/10.1093/biomet/asaa043}
+Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \doi{https://doi.org/10.1093/biomet/asaa043}
 }
