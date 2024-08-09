@@ -1,6 +1,6 @@
 #' Optimal Subsampling Methods for Generalized Linear Models
 #' @description
-#' This function fits generalized linear models using ....
+#' Draw subsample ...
 #'
 #' @param formula An object of class "formula" which describes the model to be
 #'  fitted.
@@ -52,7 +52,7 @@
 #' @references
 #' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59. \url{https://www.jmlr.org/papers/v20/18-596.html}
 #' 
-#' Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772. \url{https://www.jstor.org/stable/27008061}
+#' Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772. \doi{DOI:10.5705/ss.202018.0439}
 #' 
 #' Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50. \url{https://www.jmlr.org/papers/v23/21-0506.html}
 #' 
@@ -95,7 +95,7 @@
 #' family = 'binomial', 
 #' criterion = 'uniform')
 #' summary(Uni.subsampling.results)
-#' ############################################################################
+#' ####################
 #' # poisson regression
 #' set.seed(1)
 #' N <-  1e4
@@ -134,7 +134,7 @@
 #' family = 'poisson', 
 #' criterion = 'uniform')
 #' summary(Uni.subsampling.results)
-#' ############################################################################
+#' ##################
 #' # gamma regression
 #' set.seed(1)
 #' N <- 1e4

@@ -3,15 +3,10 @@
 \docType{package}
 \name{subsampling}
 \alias{subsampling}
-\alias{_PACKAGE}
-\alias{Add}
-\alias{later}
+\alias{subsampling-package}
 \title{Title: Add later}
 \description{
-When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. This package implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
-}
-\references{
-Add later
+When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. It implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
 }
 \seealso{
 Useful links:
@@ -28,6 +23,7 @@ Authors:
 \itemize{
   \item Haiying Wang
   \item Yaqiong Yao
+  \item Qiang Zhang
   \item Jun Yan
 }
 

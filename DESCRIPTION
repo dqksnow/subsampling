@@ -1,36 +1,39 @@
-Package: subsampling
 Type: Package
+Package: subsampling
 Title: Optimal Subsampling Methods for Statistical Models
 Version: 0.1
 Date: 2024-08-06
 Authors@R: c(
-    person(given = "Qingkai", family = "Dong",
-           email = "qingkai.dong@uconn.edu",
-           role = c("aut", "cre")),
-    person(given = "Haiying", family = "Wang", role = "aut"),
-    person(given = "Yaqiong", family = "Yao", role = "aut"),
-    person(given = "Jun", family = "Yan", role = "aut") 
-    )
+    person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre")),
+    person("Haiying", "Wang", role = "aut"),
+    person("Yaqiong", "Yao", role = "aut"),
+    person("Qiang", "Zhang", role = "aut"),
+    person("Jun", "Yan", role = "aut")
+  )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
-Description: When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. It implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
+Description: For common statistical models such as glm and
+    quantile regression model, draw subsamples from full dataset by different optimal
+    subsampling criterion and estimate coefficients and covariance matrix
+    based on the subsample. When developing statistical models on massive
+    datasets, subsampling is effective to reduce computational burden and
+    optimal subsampling methods can improve estimation efficiency.
 License: GPL (>= 3)
+URL: https://github.com/dqksnow/Subsampling
+BugReports: https://github.com/dqksnow/Subsampling/issues
+Imports: 
+    expm,
+    nnet,
+    quantreg,
+    Rcpp(>= 1.0.12),
+    stats,
+    survey
+Suggests: 
+    MASS,
+    tinytest
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
+Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Imports: 
-    Rcpp(>= 1.0.12),
-    stats,
-    survey,
-    nnet,
-    expm,
-    quantreg
-LinkingTo:
-    Rcpp, 
-    RcppArmadillo
-Suggests: 
-    tinytest,
-    MASS
-Config/testthat/edition: 3
-URL: https://github.com/dqksnow/Subsampling
-BugReports: https://github.com/dqksnow/Subsampling/issues
-

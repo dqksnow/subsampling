@@ -3,10 +3,22 @@
 
 *** To do list
 - Aug 8:
-- [ ] notes from win-builder(), log is sent to my email.
+- [ ] submit to [here](https://cran.r-project.org/submit.html)
+- [ ] Write vignettes [example](https://wwenjie.org/splines2/articles/splines2-intro)
+- [ ] DESCRIPTION file
+  - [ ] description paragraph
+  - [ ] reference
+- [ ] license
+- [X] check_win_devel() to check package on windows platform. One note:
+  potential misspell: subsampling.
+- [X] usethis::use_cran_comments() to create cran-comments.md file to
+  communicate with CRAN staff.
+- [X] usethis::use_news_md() to create NEWS.md file and maintain it.
+- [X] urlchecker::url_check() to check links in the package.
+- [X] devtools::check() to check it locally.
 - [ ] update makefile
 - [X] help documents
-  - [ ] description
+  - [ ] description for each export function
   - [X] arguments
   - [X] details
   - [X] values

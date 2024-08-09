@@ -11,3 +11,4 @@
 ^\.Rcheck$
 ^README\.org$
 ^README\.Rmd$
+^cran-comments\.md$
