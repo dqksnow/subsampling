@@ -1,45 +1,61 @@
 #' Optimal Subsampling Methods for Generalized Linear Models
-#' @details
-#' Additional details... briefly introduce the idea.
+#' @description
+#' This function fits generalized linear models using ....
 #'
 #' @param formula An object of class "formula" which describes the model to be
 #'  fitted.
-#' @param data A data frame containing the variables in the model. Usually it
-#' contains a response vector and a design matrix.
-#'     The binary response vector that takes the value of 0 or 1, where 1 means
-#'      the event occurred.
-#'     The design matrix contains predictor variables. A column representing
-#'     the intercept term with all 1's will be automatically added.
-#' @param subset An optional vector specifying a subset of rows to be used
+#' @param data A data frame containing the variables in the model.
+#' @param subset An optional vector specifying a subset of observations to be used.
 #' @param n.plt The pilot subsample size (the first-step subsample size).
 #' These samples will be used to estimate the pilot estimator as well as to
-#' estimate the optimal sampling probability.
-#' @param n.ssp The expected optimal subsample size (the second-step subsample
-#' size).
-#' @param family defalut = 'binomial'.
-#' @param criterion The criterion of optimal subsampling probabilities,
-#' currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.
-#' @param sampling.method The sampling method for drawing the optimal subsample,
-#'  currently there are two choices \code{withReplacement} and \code{poisson}.
+#' estimate the optimal subsampling probability.
+#' @param n.ssp The expectation optimal subsample size (the second-step subsample
+#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
+#' @param family \code{family} can be a character string naming a family function, a family function or the result of a call to a family function. Currently \code{'binomial'}, \code{'poisson'} and \code{'Gamma'} are implemented. 
+#' @param criterion The criterion of optimal subsampling probabilities.
+#' Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}. 
+#' @param sampling.method The sampling method for drawing the optimal subsample. 
+#' Choices include \code{withReplacement} and \code{poisson}(default).
 #' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator, currently there are two choices
-#'  \code{weighted} and \code{logOddsCorrection}.
-#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
-#' @param control a list of parameters for controlling the sampling process. 
-#' @param ... a list of parameters for controlling the fitting process which 
-#' will be passed to glm(). 
+#' calculate the optimal subsampling estimator. Choices include 
+#'  \code{weighted} and \code{logOddsCorrection}. 
+#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
+#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param ... A list of parameters which will be passed to \code{svyglm()}. 
 #'
 #' @return
+#' ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
+#' 
 #' \describe{
+#'   \item{model.call}{model call}
 #'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator}
-#'   \item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-#'   \item{var.ssp}{covariance matrix of \code{beta.ssp}}
-#'   \item{var.cmb}{covariance matrix of \code{beta.cmb}}
-#'   \item{index.plt}{index of pilot subsample}
-#'   \item{index.ssp}{index of optimal subsample}
+#'   \item{beta.ssp}{optimal subsample estimator.}
+#'   \item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+#'   \item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+#'   \item{cov}{covariance matrix of \code{beta.cmb}}
+#'   \item{index.plt}{index of pilot subsample in the full sample}
+#'   \item{index.ssp}{index of optimal subsample in the full sample}
+#'   \item{N}{number of observations in the full sample}
+#'   \item{subsample.size.expect}{expected subsample size}
+#'   \item{terms}{model terms}
 #' }
 #'
+#' @details
+#' As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems. For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
+#' 
+#' \code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
+#'
+#' In \code{control}, alpha is the mixture proportions of optimal subsampling probability and 
+#' uniform sampling probability. b is the parameter controls the upper 
+#' threshold for optimal subsampling probability. 
+#'
+#' @references
+#' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59. \url{https://www.jmlr.org/papers/v20/18-596.html}
+#' 
+#' Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772. \url{https://www.jstor.org/stable/27008061}
+#' 
+#' Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50. \url{https://www.jmlr.org/papers/v23/21-0506.html}
+#' 
 #' @examples
 #' # logistic regression
 #' set.seed(2)
@@ -70,8 +86,7 @@
 #' family = 'binomial', 
 #' criterion = "optL",
 #' sampling.method = 'withReplacement', 
-#' likelihood = "weighted",
-#' contrasts = list(F1 = 'contr.sum'))
+#' likelihood = "weighted")
 #' summary(subsampling.results)
 #' Uni.subsampling.results <- ssp.glm(formula = formula, 
 #' data = data, 
@@ -144,7 +159,6 @@
 #' sampling.method = 'poisson',
 #' likelihood = "weighted")
 #' summary(subsampling.results)
-
 #' @export
 ssp.glm <- function(formula,
                     data,
@@ -180,7 +194,7 @@ ssp.glm <- function(formula,
   X <- model.matrix(mt, mf, contrasts)
   colnames(X)[1] <- "Intercept"
   family <- match.arg(family, c('binomial', 'poisson', 'Gamma',
-                                'quasibinomial'))
+                                'quasibinomial', 'quasipoisson'))
   criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))
   sampling.method <- match.arg(sampling.method, c('poisson', 'withReplacement'))
   likelihood <- match.arg(likelihood, c('logOddsCorrection', 'weighted'))
@@ -239,7 +253,7 @@ ssp.glm <- function(formula,
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
     Lambda.ssp <- ssp.estimate.results$Lambda.ssp
-    var.ssp <- ssp.estimate.results$var.ssp
+    cov.ssp <- ssp.estimate.results$cov.ssp
 
     ## combining step
     combining.results <- combining(ddL.plt = ddL.plt,
@@ -253,16 +267,16 @@ ssp.glm <- function(formula,
                                    beta.plt = beta.plt,
                                    beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
-    var.cmb <- combining.results$var.cmb
+    cov.cmb <- combining.results$cov.cmb
     
     names(beta.cmb) <- names(beta.ssp) <- names(beta.plt) <- colnames(X)
     
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta.ssp = beta.ssp,
-                    beta = beta.cmb,
-                    var.ssp = var.ssp,
-                    var = var.cmb,
+                    coefficients = beta.cmb,
+                    cov.ssp = cov.ssp,
+                    cov = cov.cmb,
                     index.plt = index.plt,
                     index = index.ssp,
                     N = N,
@@ -295,16 +309,16 @@ ssp.glm <- function(formula,
                        weights = 1 / n.uni ^ 2,
                        family = family)
     if (sampling.method == 'withReplacement') {
-      var.uni <- solve(ddL.uni) %*% 
+      cov.uni <- solve(ddL.uni) %*% 
         (dL.sq.plt * (1 + n.uni / N)) %*% solve(ddL.uni)
     } else if (sampling.method == 'poisson') {
-      var.uni <- solve(ddL.uni) %*% dL.sq.plt %*% solve(ddL.uni)
+      cov.uni <- solve(ddL.uni) %*% dL.sq.plt %*% solve(ddL.uni)
     }
     names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
-                    beta = beta.uni,
-                    var = var.uni,
+                    coefficients = beta.uni,
+                    cov = cov.uni,
                     N = N,
                     subsample.size.expect = n.uni,
                     terms = mt

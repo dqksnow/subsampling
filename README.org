@@ -5,6 +5,13 @@
 softmax need ... to pass arguments to fitting function
 for quantile, test alpha in example, add alpha to test function.
 - Jul 3:
+- [X] help documents
+  - [ ] description
+  - [X] arguments
+  - [X] details
+  - [X] values
+  - [X] references
+  - [X] examples    
 - [X] there are notes when I run the check. It's about global function.
 - [X] use ... to pass arguments to fitting function, e.g. glm, rq.
 - [X] write arguments in lowercase
@@ -52,7 +59,7 @@ for quantile, test alpha in example, add alpha to test function.
   - [X] sometimes there are warnings when use glm() except uniform.
   - [X] add example for gamma regression
   - [ ] check the estimated var of gamma
-  - [ ] warning message when use family=binomial. no warning when
+  - [X] warning message when use family=binomial. no warning when
     family=quasibinomial
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
@@ -62,6 +69,7 @@ for quantile, test alpha in example, add alpha to test function.
   - [X] Don't compute stand error in summary when boot=F.
   - [ ] threshold b for poisson sampling probability.
   - [X] variable names in the summary function.
+  - [ ] check if tau can be a vector
 - Write vignettes
   (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
 

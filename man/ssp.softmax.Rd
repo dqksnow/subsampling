@@ -2,7 +2,7 @@
 % Please edit documentation in R/softmax_main_function.R
 \name{ssp.softmax}
 \alias{ssp.softmax}
-\title{Optimal Subsampling Method for Softmax Regression Models}
+\title{Optimal Subsampling Method for Softmax(multinomial logistic) Regression Model}
 \usage{
 ssp.softmax(
   formula,
@@ -20,51 +20,64 @@ ssp.softmax(
 )
 }
 \arguments{
-\item{formula}{An object of class "formula" which describes the model to be fitted.}
+\item{formula}{An object of class "formula" which describes the model to be
+fitted.}
 
-\item{data}{A data frame containing the variables in the model. Usually it}
+\item{data}{A data frame containing the variables in the model.}
 
-\item{subset}{An optional vector specifying a subset of rows to be used}
+\item{subset}{An optional vector specifying a subset of observations to be used.}
 
-\item{n.plt}{The pilot subsample size (the first-step subsample size).}
+\item{n.plt}{The pilot subsample size (the first-step subsample size).
+These samples will be used to estimate the pilot estimator as well as to
+estimate the optimal subsampling probability.}
 
-\item{n.ssp}{The expected optimal subsample size (the second-step subsample.}
+\item{n.ssp}{The expectation optimal subsample size (the second-step subsample
+size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities}
+\item{criterion}{The criterion of optimal subsampling probabilities.
+Choices include \code{optA}, \code{optL}, \code{MSPE}(default), \code{LUC} and \code{uniform}.}
 
-\item{sampling.method}{The sampling method for drawing the optimal subsample}
+\item{sampling.method}{The sampling method for drawing the optimal subsample.
+Choices include \code{withReplacement} and \code{poisson}(default).}
 
-\item{likelihood}{The type of the maximum likelihood function used to}
+\item{likelihood}{The type of the maximum likelihood function used to
+calculate the optimal subsampling estimator. Choices include
+\code{weighted} and \code{MSCLE}(default).}
 
-\item{constraint}{tbd}
+\item{constraint}{The constraint for identifiability of softmax model. Choices include
+\code{baseline} and \code{summation}(default).}
 
-\item{control}{a list of parameters for controlling the fitting process.
-alpha is the mixture proportions of optimal subsampling probability and
-uniform sampling probability. b is the parameter controls the upper
-threshold for optimal subsampling probability.}
+\item{control}{A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.}
 
-\item{contrasts}{The type of the maximum likelihood function used to}
+\item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
 
-\item{...}{a list of parameters for controlling the fitting process.}
+\item{...}{A list of parameters which will be passed to \code{nnet::multinom()}.}
 }
 \value{
+ssp.softmax returns an object of class "ssp.softmax" containing the following components (some are optional):
 \describe{
+\item{model.call}{model call}
 \item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator}
-\item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-\item{var.plt}{covariance matrix of \code{beta.ssp}}
-\item{var.ssp}{covariance matrix of \code{beta.cmb}}
-\item{var.cmb}{covariance matrix of \code{beta.cmb}}
-\item{P.cmb}{predicted probability matrix of full observations}
-\item{index.plt}{index of pilot subsample}
-\item{index.ssp}{index of optimal subsample}
+\item{beta.ssp}{optimal subsample estimator.}
+\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{cov}{covariance matrix of \code{beta.cmb}}
+\item{index.plt}{index of pilot subsample in the full sample}
+\item{index.ssp}{index of optimal subsample in the full sample}
+\item{N}{number of observations in the full sample}
+\item{subsample.size.expect}{expected subsample size}
+\item{terms}{model terms}
 }
 }
 \description{
-Optimal Subsampling Method for Softmax Regression Models
+This function fits softmax regression model using ....
 }
 \details{
 details TBD
+
+\code{criterion = MSPE} stands for optimal subsampling probabilities by minimizing the Mean Squared Prediction Error which is immune to the choice of model constraint.
+
+In \code{control}, alpha is the mixture proportions of optimal subsampling probability and uniform sampling probability. b is the parameter controls the upper threshold for optimal subsampling probability.
 }
 \examples{
 # softmax regression
@@ -97,4 +110,11 @@ WithRep.MSPE <- ssp.softmax(formula = formula,
  likelihood = 'weighted',
  constraint = 'baseline')
 summary(WithRep.MSPE)
+}
+\references{
+Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{Statistical Papers}, \strong{60}, 585-599. \url{https://link.springer.com/article/10.1007/s00362-018-01068-6}
+
+Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625. \url{https://link.springer.com/article/10.1007/s11424-023-1179-z}
+
+Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201. \url{https://doi.org/10.1016/j.jspi.2022.12.004}
 }

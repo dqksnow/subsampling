@@ -181,7 +181,7 @@ rare.subsample.estimate <- function(inputs,
     beta.ssp <- results.ssp$beta
     P.ssp <- results.ssp$pbeta
     # P.ssp <- pbeta(x.ssp, beta.ssp) # as same as results.ssp$pbeta
-    var.ssp <- results.ssp$cov
+    cov.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = w.ssp * n.ssp / N)
     dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = w.ssp^2 * n.ssp^2 / N^2)
   } else if (likelihood == 'logOddsCorrection'){
@@ -193,14 +193,14 @@ rare.subsample.estimate <- function(inputs,
     beta.ssp <- results.ssp$beta
     P.ssp <- results.ssp$pbeta
     # P.ssp <- pbeta(x.ssp, beta.ssp, offset)
-    var.ssp <- results.ssp$cov
+    cov.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = 1 / n.ssp)
     dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = 1 / n.ssp ^ 2)
   }
   return (list(beta.ssp = beta.ssp,
                ddL.ssp = ddL.ssp,
                dL.sq.ssp = dL.sq.ssp,
-               var.ssp = var.ssp
+               cov.ssp = cov.ssp
                )
           )
 }
@@ -219,9 +219,9 @@ rare.combining <- function(ddL.plt,
   dL.sq.ssp <- n.ssp ^ 2 * dL.sq.ssp
   MNsolve <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- c(MNsolve %*% (ddL.plt %*% beta.plt + ddL.ssp %*% beta.ssp))
-  var.cmb <- MNsolve %*% (dL.sq.plt + dL.sq.ssp) %*% MNsolve
+  cov.cmb <- MNsolve %*% (dL.sq.plt + dL.sq.ssp) %*% MNsolve
   return(list(beta.cmb = beta.cmb,
-              var.cmb = var.cmb
+              cov.cmb = cov.cmb
               )
   )
 }
@@ -237,8 +237,8 @@ relogit.control <- function(alpha = 0, b = 2, ...)
 ###############################################################################
 #' @export
 summary.ssp.relogit <- function(object, ...) {
-  coef <- object$beta
-  se <- sqrt(diag(object$var))
+  coef <- object$coefficients
+  se <- sqrt(diag(object$cov))
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
   n.ssp.actual <- length(object$index)

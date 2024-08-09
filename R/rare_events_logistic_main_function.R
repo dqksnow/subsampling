@@ -1,41 +1,47 @@
 #' Optimal Subsampling for Logistic Regression Model with Rare Events Data
-#' @details
-#' Additional details... briefly introduce the idea of this method.
+#' @description
+#' This function fits generalized linear models using ....
 #'
 #' @param formula An object of class "formula" which describes the model to be
-#' fitted.
-#' @param data A data frame containing the variables in the model. Usually it
-#' contains a response vector and a design matrix. The binary response vector
-#' that takes the value of 0 or 1, where 1 means the event occurred. The
-#' design matrix contains predictor variables. A column representing the
-#' intercept term with all 1's will be automatically added.
-#' @param subset An optional vector specifying a subset of rows to be used
+#'  fitted.
+#' @param data A data frame containing the variables in the model.
+#' @param subset An optional vector specifying a subset of observations to be used.
 #' @param n.plt The pilot subsample size (the first-step subsample size).
+#' These samples will be used to estimate the pilot estimator as well as to
+#' estimate the optimal subsampling probability.
 #' @param n.ssp The expected optimal subsample size (the second-step subsample
-#' size) drawn from those samples with \code{Y=0}.
-#' @param criterion The criterion of optimal subsampling probabilities,
-#' currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.
+#' size) drawn from those samples with \code{Y=0}. All rare events (\code{Y=1}) are included in the optimal subsample automatically.
+#' @param criterion The criterion of optimal subsampling probabilities.
+#' Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}. 
 #' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator, currently there are two choices
-#'  \code{weighted} and \code{logOddsCorrection}.
-#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
-#' @param control a list of parameters for controlling the fitting process. 
-#' @param ... a list of parameters for controlling the fitting process. 
+#' calculate the optimal subsampling estimator. Choices include 
+#'  \code{weighted} and \code{logOddsCorrection}(default). 
+#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
+#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param ... A list of parameters which will be passed to \code{svyglm()}. 
 #'
 #' @return
+#' ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
 #' \describe{
+#'   \item{model.call}{model call}
 #'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator}
-#'   \item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-#'   \item{var.ssp}{covariance matrix of \code{beta.ssp}}
-#'   \item{var.cmb}{covariance matrix of \code{beta.cmb}}
-#'   \item{index.plt}{index of pilot subsample}
-#'   \item{index.ssp}{index of optimal subsample. The expectation of
-#'   \code{length(index.ssp)} is n.ssp plus the number of rare event data.}
+#'   \item{beta.ssp}{optimal subsample estimator.}
+#'   \item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+#'   \item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+#'   \item{cov}{covariance matrix of \code{beta.cmb}}
+#'   \item{index.plt}{index of pilot subsample in the full sample}
+#'   \item{index.ssp}{index of optimal subsample in the full sample}
+#'   \item{N}{number of observations in the full sample}
+#'   \item{subsample.size.expect}{expected subsample size}
+#'   \item{terms}{model terms}
 #' }
 #'
-#' @export
-#'
+#' @details
+#' Rare event stands for the number of Y=1 is rare compare to the number of Y=0 in the full sample. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. When \code{criterion = optA, optL or LCC}, observations with Y=1 are preserved and it draw n.ssp subsmples from observations with Y=0.
+#' 
+#' @references
+#' Wang, H., Zhang, A., & Wang, C. (2021). Nonuniform negative sampling and log odds correction with rare events data. \emph{Advances in Neural Information Processing Systems}, \strong{34}, 19847-19859. \url{https://proceedings.neurips.cc/paper_files/paper/2021/hash/a51c896c9cb81ecb5a199d51ac9fc3c5-Abstract.html}
+#' 
 #' @examples
 #' set.seed(1)
 #' N <- 2 * 1e4
@@ -61,7 +67,7 @@
 #'                                      criterion = 'optA',
 #'                                      likelihood = 'logOddsCorrection')
 #' summary(subsampling.results)
-
+#' @export
 ssp.relogit <-  function(formula,
                          data,
                          subset = NULL,
@@ -107,12 +113,10 @@ ssp.relogit <-  function(formula,
                  control = control
                  )
   
-  
   if (criterion %in% c('optL', 'optA', 'LCC')){
 
     ## pilot step
     plt.estimate.results <- rare.pilot.estimate(inputs, ...)
-    # plt.estimate.results <- rare.pilot.estimate(X = X, Y = Y, n.plt = n.plt)
     p.plt <- plt.estimate.results$p.plt
     beta.plt <- plt.estimate.results$beta.plt
     ddL.plt <- plt.estimate.results$ddL.plt
@@ -127,17 +131,6 @@ ssp.relogit <-  function(formula,
                                     ddL.plt.correction = ddL.plt.correction,
                                     P.plt = P.plt,
                                     index.plt = index.plt)
-    # ssp.results <- rare.subsampling(X = X,
-    #                                 Y = Y,
-    #                                 n.ssp = n.ssp,
-    #                                 alpha = alpha,
-    #                                 b = b,
-    #                                 criterion = criterion,
-    #                                 likelihood = likelihood,
-    #                                 p.plt = p.plt,
-    #                                 ddL.plt.correction = ddL.plt.correction,
-    #                                 P.plt = P.plt,
-    #                                 index.plt = index.plt)
     index.ssp <- ssp.results$index.ssp
     w.ssp <- ssp.results$w.ssp
     offset <- ssp.results$offset
@@ -149,18 +142,10 @@ ssp.relogit <-  function(formula,
                                                     beta.plt = beta.plt,
                                                     index.ssp = index.ssp,
                                                     ...)
-    # ssp.estimate.results <- rare.subsample.estimate(X[index.ssp, ],
-    #                                          Y[index.ssp],
-    #                                          n.ssp = n.ssp,
-    #                                          N = N,
-    #                                          w.ssp = w.ssp,
-    #                                          offset = offset,
-    #                                          beta.plt = beta.plt,
-    #                                          likelihood = likelihood)
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
-    var.ssp <- ssp.estimate.results$var.ssp
+    cov.ssp <- ssp.estimate.results$cov.ssp
 
     ## combine step
     combining.results <- rare.combining(ddL.plt = ddL.plt,
@@ -172,18 +157,19 @@ ssp.relogit <-  function(formula,
                                         beta.plt = beta.plt,
                                         beta.ssp = beta.ssp)
     beta.cmb <- combining.results$beta.cmb
-    var.cmb <- combining.results$var.cmb
+    cov.cmb <- combining.results$cov.cmb
     names(beta.plt) <- names(beta.ssp) <- names(beta.cmb) <- colnames(X)
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta.ssp = beta.ssp,
-                    beta = beta.cmb,
-                    var.ssp = var.ssp,
-                    var = var.cmb,
+                    coefficients = beta.cmb,
+                    cov.ssp = cov.ssp,
+                    cov = cov.cmb,
                     index.plt = index.plt,
                     index = index.ssp,
                     N = N,
-                    subsample.size.expect = N1 + n.ssp
+                    subsample.size.expect = N1 + n.ssp,
+                    terms = mt
                     )
     
     class(results) <- c("ssp.relogit", "list")
@@ -198,15 +184,16 @@ ssp.relogit <-  function(formula,
                                       Y = Y[index.uni],
                                       ...)
     beta.uni <- results.uni$beta
-    var.uni <- results.uni$cov
+    cov.uni <- results.uni$cov
     beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept
     names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
-                    beta = beta.uni,
-                    var = var.uni,
+                    coefficients = beta.uni,
+                    cov = cov.uni,
                     N = N,
-                    subsample.size.expect = n.uni
+                    subsample.size.expect = n.uni,
+                    terms = mt
                     )
     class(results) <- c("ssp.relogit", "list")
     return(results)

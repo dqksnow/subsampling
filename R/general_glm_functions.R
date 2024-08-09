@@ -375,12 +375,12 @@ subsample.estimate <- function(  inputs,
                        family = family)
     Lambda.ssp <- 0 # placeholder
   }
-  var.ssp <- solve(ddL.ssp) %*% (dL.sq.ssp + Lambda.ssp) %*% solve(ddL.ssp)
+  cov.ssp <- solve(ddL.ssp) %*% (dL.sq.ssp + Lambda.ssp) %*% solve(ddL.ssp)
 
   return(list(beta.ssp = beta.ssp,
               ddL.ssp = ddL.ssp,
               dL.sq.ssp = dL.sq.ssp,
-              var.ssp = var.ssp,
+              cov.ssp = cov.ssp,
               Lambda.ssp = Lambda.ssp
               )
          )
@@ -404,10 +404,10 @@ combining <- function(ddL.plt,
   Lambda.ssp <- n.ssp ^ 2 * Lambda.ssp
   MNsolve <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- c(MNsolve %*% (ddL.plt %*% beta.plt + ddL.ssp %*% beta.ssp))
-  var.cmb <- MNsolve %*% 
+  cov.cmb <- MNsolve %*% 
     (dL.sq.plt + Lambda.plt + dL.sq.ssp + Lambda.ssp) %*% MNsolve
   return(list(beta.cmb = beta.cmb,
-              var.cmb = var.cmb
+              cov.cmb = cov.cmb
               )
          )
 }
@@ -435,8 +435,8 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 
 #' @export
 summary.ssp.glm <- function(object, ...) {
-  coef <- object$beta
-  se <- sqrt(diag(object$var))
+  coef <- object$coefficients
+  se <- sqrt(diag(object$cov))
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
   n.ssp.actual <- length(object$index)

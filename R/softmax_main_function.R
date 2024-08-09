@@ -1,37 +1,57 @@
-#' Optimal Subsampling Method for Softmax Regression Models
-#'
+#' Optimal Subsampling Method for Softmax(multinomial logistic) Regression Model
+#' @description
+#' This function fits softmax regression model using ....
 #' @details details TBD
-#' @param formula An object of class "formula" which describes the model to be fitted.
-#' @param data A data frame containing the variables in the model. Usually it 
-#' @param subset An optional vector specifying a subset of rows to be used
+#' @param formula An object of class "formula" which describes the model to be
+#'  fitted.
+#' @param data A data frame containing the variables in the model.
+#' @param subset An optional vector specifying a subset of observations to be used.
 #' @param n.plt The pilot subsample size (the first-step subsample size).
-#' @param n.ssp The expected optimal subsample size (the second-step subsample.
-#' @param criterion The criterion of optimal subsampling probabilities
-#' @param sampling.method The sampling method for drawing the optimal subsample
-#' @param likelihood The type of the maximum likelihood function used to 
-#' @param constraint tbd
-#' @param contrasts The type of the maximum likelihood function used to
-#' @param control a list of parameters for controlling the fitting process. 
-#' alpha is the mixture proportions of optimal subsampling probability and 
-#' uniform sampling probability. b is the parameter controls the upper 
-#' threshold for optimal subsampling probability. 
-#' @param ... a list of parameters for controlling the fitting process. 
+#' These samples will be used to estimate the pilot estimator as well as to
+#' estimate the optimal subsampling probability.
+#' @param n.ssp The expectation optimal subsample size (the second-step subsample
+#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
+#' @param criterion The criterion of optimal subsampling probabilities.
+#' Choices include \code{optA}, \code{optL}, \code{MSPE}(default), \code{LUC} and \code{uniform}. 
+#' @param sampling.method The sampling method for drawing the optimal subsample. 
+#' Choices include \code{withReplacement} and \code{poisson}(default).
+#' @param likelihood The type of the maximum likelihood function used to
+#' calculate the optimal subsampling estimator. Choices include 
+#'  \code{weighted} and \code{MSCLE}(default). 
+#' @param constraint The constraint for identifiability of softmax model. Choices include 
+#'  \code{baseline} and \code{summation}(default). 
+#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
+#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param ... A list of parameters which will be passed to \code{nnet::multinom()}. 
 #'
 #' @return
+#' ssp.softmax returns an object of class "ssp.softmax" containing the following components (some are optional):
 #' \describe{
+#'   \item{model.call}{model call}
 #'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator}
-#'   \item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-#'   \item{var.plt}{covariance matrix of \code{beta.ssp}}
-#'   \item{var.ssp}{covariance matrix of \code{beta.cmb}}
-#'   \item{var.cmb}{covariance matrix of \code{beta.cmb}}
-#'   \item{P.cmb}{predicted probability matrix of full observations}
-#'   \item{index.plt}{index of pilot subsample}
-#'   \item{index.ssp}{index of optimal subsample}
+#'   \item{beta.ssp}{optimal subsample estimator.}
+#'   \item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+#'   \item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+#'   \item{cov}{covariance matrix of \code{beta.cmb}}
+#'   \item{index.plt}{index of pilot subsample in the full sample}
+#'   \item{index.ssp}{index of optimal subsample in the full sample}
+#'   \item{N}{number of observations in the full sample}
+#'   \item{subsample.size.expect}{expected subsample size}
+#'   \item{terms}{model terms}
 #' }
-
-#' @export
+#' @details
+#' 
+#' \code{criterion = MSPE} stands for optimal subsampling probabilities by minimizing the Mean Squared Prediction Error which is immune to the choice of model constraint.
 #'
+#' In \code{control}, alpha is the mixture proportions of optimal subsampling probability and uniform sampling probability. b is the parameter controls the upper threshold for optimal subsampling probability. 
+#'
+#' @references
+#' Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{Statistical Papers}, \strong{60}, 585-599. \url{https://link.springer.com/article/10.1007/s00362-018-01068-6}
+#' 
+#' Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625. \url{https://link.springer.com/article/10.1007/s11424-023-1179-z}
+#' 
+#' Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201. \url{https://doi.org/10.1016/j.jspi.2022.12.004}
+#' 
 #' @examples
 #' # softmax regression
 #' d <- 3 # dim of covariates
@@ -63,7 +83,7 @@
 #'  likelihood = 'weighted',
 #'  constraint = 'baseline')
 #' summary(WithRep.MSPE)
-
+#' @export
 ssp.softmax <- function(formula, 
                         data,
                         subset,
@@ -182,13 +202,13 @@ ssp.softmax <- function(formula,
     
     beta.plt <- matrix(beta.plt.b, nrow = d)
     beta.ssp = matrix(beta.ssp.b, nrow = d)
-    beta = matrix(beta.cmb.b, nrow = d)
+    beta <- matrix(beta.cmb.b, nrow = d)
     rownames(beta.plt) <- rownames(beta.ssp) <- rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
                     beta.ssp = beta.ssp,
-                    beta = beta,
-                    cov.plt = cov.plt.b,
+                    coefficients = beta,
+                    # cov.plt = cov.plt.b,
                     cov.ssp = cov.ssp.b,
                     cov = cov.cmb.b,
                     index.plt = index.plt,
@@ -235,8 +255,8 @@ ssp.softmax <- function(formula,
     beta <- matrix(beta.uni.b, nrow = d)
     rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
-                    index.ssp = index.uni,
-                    beta = beta,
+                    index = index.uni,
+                    coefficients = beta,
                     cov = cov.uni.b,
                     # P = P.uni,
                     N = N,

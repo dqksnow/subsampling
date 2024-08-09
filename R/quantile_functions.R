@@ -139,23 +139,23 @@ quantile.ssp.estimation <- function(inputs,
     Beta.ssp.centered <- Betas.ssp - beta.ssp.mean
     mean.outer.prod <- Beta.ssp.centered %*% t(Beta.ssp.centered)
     if(sampling.method == "poisson"){
-      est.cov.ssp <- mean.outer.prod / (B*(B-1))
+      cov.ssp <- mean.outer.prod / (B*(B-1))
     } else {
       r.ef <- ifelse(criterion == "uniform",
                      1 - (n.ssp*B-1)/N/2,
                      1 - (sum(p.ssp^2) / n.ssp^2) * (n.ssp*B - 1) / 2)
-      est.cov.ssp <- mean.outer.prod / (r.ef * B*(B-1))
+      cov.ssp <- mean.outer.prod / (r.ef * B*(B-1))
     }
     return(list(Betas.ssp = Betas.ssp,
                 beta.ssp = beta.ssp.mean,
-                est.cov.ssp = est.cov.ssp,
+                cov.ssp = cov.ssp,
                 index.ssp = Index.ssp
                 )
            )
   } else if (boot == FALSE) {
     return(list(Betas.ssp = NA,
                 beta.ssp = beta.ssp,
-                est.cov.ssp = NA,
+                cov.ssp = NA,
                 index.ssp = index.ssp
                 )
            )
@@ -173,12 +173,12 @@ quantreg.control <- function(alpha = 0, b = 2, ...)
 ###############################################################################
 #' @export
 summary.ssp.quantreg <- function(object, ...) {
-  coef <- object$beta
+  coef <- object$coefficients
   N <- object$N
   n.ssp <- object$subsample.size.expect[1]
   B <- object$subsample.size.expect[2]
-  if (!all(is.na(object$est.cov))) {
-    se <- sqrt(diag(object$est.cov))
+  if (!all(is.na(object$cov))) {
+    se <- sqrt(diag(object$cov))
     cat("Model Summary\n\n")
     cat("\nCall:\n")
     cat("\n")

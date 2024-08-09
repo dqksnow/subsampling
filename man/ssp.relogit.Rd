@@ -21,49 +21,51 @@ ssp.relogit(
 \item{formula}{An object of class "formula" which describes the model to be
 fitted.}
 
-\item{data}{A data frame containing the variables in the model. Usually it
-contains a response vector and a design matrix. The binary response vector
-that takes the value of 0 or 1, where 1 means the event occurred. The
-design matrix contains predictor variables. A column representing the
-intercept term with all 1's will be automatically added.}
+\item{data}{A data frame containing the variables in the model.}
 
-\item{subset}{An optional vector specifying a subset of rows to be used}
+\item{subset}{An optional vector specifying a subset of observations to be used.}
 
-\item{n.plt}{The pilot subsample size (the first-step subsample size).}
+\item{n.plt}{The pilot subsample size (the first-step subsample size).
+These samples will be used to estimate the pilot estimator as well as to
+estimate the optimal subsampling probability.}
 
 \item{n.ssp}{The expected optimal subsample size (the second-step subsample
-size) drawn from those samples with \code{Y=0}.}
+size) drawn from those samples with \code{Y=0}. All rare events (\code{Y=1}) are included in the optimal subsample automatically.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities,
-currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.}
+\item{criterion}{The criterion of optimal subsampling probabilities.
+Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}.}
 
 \item{likelihood}{The type of the maximum likelihood function used to
-calculate the optimal subsampling estimator, currently there are two choices
-\code{weighted} and \code{logOddsCorrection}.}
+calculate the optimal subsampling estimator. Choices include
+\code{weighted} and \code{logOddsCorrection}(default).}
 
-\item{control}{a list of parameters for controlling the fitting process.}
+\item{control}{A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.}
 
-\item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
+\item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
 
-\item{...}{a list of parameters for controlling the fitting process.}
+\item{...}{A list of parameters which will be passed to \code{svyglm()}.}
 }
 \value{
+ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
 \describe{
+\item{model.call}{model call}
 \item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator}
-\item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-\item{var.ssp}{covariance matrix of \code{beta.ssp}}
-\item{var.cmb}{covariance matrix of \code{beta.cmb}}
-\item{index.plt}{index of pilot subsample}
-\item{index.ssp}{index of optimal subsample. The expectation of
-\code{length(index.ssp)} is n.ssp plus the number of rare event data.}
+\item{beta.ssp}{optimal subsample estimator.}
+\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{cov}{covariance matrix of \code{beta.cmb}}
+\item{index.plt}{index of pilot subsample in the full sample}
+\item{index.ssp}{index of optimal subsample in the full sample}
+\item{N}{number of observations in the full sample}
+\item{subsample.size.expect}{expected subsample size}
+\item{terms}{model terms}
 }
 }
 \description{
-Optimal Subsampling for Logistic Regression Model with Rare Events Data
+This function fits generalized linear models using ....
 }
 \details{
-Additional details... briefly introduce the idea of this method.
+Rare event stands for the number of Y=1 is rare compare to the number of Y=0 in the full sample. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. When \code{criterion = optA, optL or LCC}, observations with Y=1 are preserved and it draw n.ssp subsmples from observations with Y=0.
 }
 \examples{
 set.seed(1)
@@ -90,4 +92,7 @@ subsampling.results <- ssp.relogit(formula = formula,
                                      criterion = 'optA',
                                      likelihood = 'logOddsCorrection')
 summary(subsampling.results)
+}
+\references{
+Wang, H., Zhang, A., & Wang, C. (2021). Nonuniform negative sampling and log odds correction with rare events data. \emph{Advances in Neural Information Processing Systems}, \strong{34}, 19847-19859. \url{https://proceedings.neurips.cc/paper_files/paper/2021/hash/a51c896c9cb81ecb5a199d51ac9fc3c5-Abstract.html}
 }

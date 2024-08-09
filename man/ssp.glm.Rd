@@ -23,57 +23,63 @@ ssp.glm(
 \item{formula}{An object of class "formula" which describes the model to be
 fitted.}
 
-\item{data}{A data frame containing the variables in the model. Usually it
-contains a response vector and a design matrix.
-The binary response vector that takes the value of 0 or 1, where 1 means
-the event occurred.
-The design matrix contains predictor variables. A column representing
-the intercept term with all 1's will be automatically added.}
+\item{data}{A data frame containing the variables in the model.}
 
-\item{subset}{An optional vector specifying a subset of rows to be used}
+\item{subset}{An optional vector specifying a subset of observations to be used.}
 
 \item{n.plt}{The pilot subsample size (the first-step subsample size).
 These samples will be used to estimate the pilot estimator as well as to
-estimate the optimal sampling probability.}
+estimate the optimal subsampling probability.}
 
-\item{n.ssp}{The expected optimal subsample size (the second-step subsample
-size).}
+\item{n.ssp}{The expectation optimal subsample size (the second-step subsample
+size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size.}
 
-\item{family}{defalut = 'binomial'.}
+\item{family}{\code{family} can be a character string naming a family function, a family function or the result of a call to a family function. Currently \code{'binomial'}, \code{'poisson'} and \code{'Gamma'} are implemented.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities,
-currently there are three choices \code{optA}, \code{optL}, and \code{LCC}.}
+\item{criterion}{The criterion of optimal subsampling probabilities.
+Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}.}
 
-\item{sampling.method}{The sampling method for drawing the optimal subsample,
-currently there are two choices \code{withReplacement} and \code{poisson}.}
+\item{sampling.method}{The sampling method for drawing the optimal subsample.
+Choices include \code{withReplacement} and \code{poisson}(default).}
 
 \item{likelihood}{The type of the maximum likelihood function used to
-calculate the optimal subsampling estimator, currently there are two choices
+calculate the optimal subsampling estimator. Choices include
 \code{weighted} and \code{logOddsCorrection}.}
 
-\item{control}{a list of parameters for controlling the sampling process.}
+\item{control}{A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.}
 
-\item{contrasts}{an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}
+\item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
 
-\item{...}{a list of parameters for controlling the fitting process which
-will be passed to glm().}
+\item{...}{A list of parameters which will be passed to \code{svyglm()}.}
 }
 \value{
+ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
+
 \describe{
+\item{model.call}{model call}
 \item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator}
-\item{beta.cmb}{combined estimator of \code{beta.plt} and \code{beta.ssp}}
-\item{var.ssp}{covariance matrix of \code{beta.ssp}}
-\item{var.cmb}{covariance matrix of \code{beta.cmb}}
-\item{index.plt}{index of pilot subsample}
-\item{index.ssp}{index of optimal subsample}
+\item{beta.ssp}{optimal subsample estimator.}
+\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{cov}{covariance matrix of \code{beta.cmb}}
+\item{index.plt}{index of pilot subsample in the full sample}
+\item{index.ssp}{index of optimal subsample in the full sample}
+\item{N}{number of observations in the full sample}
+\item{subsample.size.expect}{expected subsample size}
+\item{terms}{model terms}
 }
 }
 \description{
-Optimal Subsampling Methods for Generalized Linear Models
+This function fits generalized linear models using ....
 }
 \details{
-Additional details... briefly introduce the idea.
+As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems. For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
+
+\code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
+
+In \code{control}, alpha is the mixture proportions of optimal subsampling probability and
+uniform sampling probability. b is the parameter controls the upper
+threshold for optimal subsampling probability.
 }
 \examples{
 # logistic regression
@@ -105,8 +111,7 @@ n.ssp = n.ssp,
 family = 'binomial', 
 criterion = "optL",
 sampling.method = 'withReplacement', 
-likelihood = "weighted",
-contrasts = list(F1 = 'contr.sum'))
+likelihood = "weighted")
 summary(subsampling.results)
 Uni.subsampling.results <- ssp.glm(formula = formula, 
 data = data, 
@@ -179,4 +184,11 @@ criterion = "optL",
 sampling.method = 'poisson',
 likelihood = "weighted")
 summary(subsampling.results)
+}
+\references{
+Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59. \url{https://www.jmlr.org/papers/v20/18-596.html}
+
+Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772. \url{https://www.jstor.org/stable/27008061}
+
+Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50. \url{https://www.jmlr.org/papers/v23/21-0506.html}
 }

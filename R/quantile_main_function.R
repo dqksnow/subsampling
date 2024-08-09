@@ -1,43 +1,50 @@
-#' Optimal Subsampling Methods for Quantile Models
-#' @export
-#' @details
-#' Additional details... briefly introduce the idea.
+#' Optimal Subsampling Methods for Quantile Regression Model
+#' @description
+#' This function fits generalized linear models using ....
+#'
 #'
 #' @param formula An object of class "formula" which describes the model to be
 #'  fitted.
-#' @param data A data frame containing the variables in the model. Usually it
-#' contains a response vector and a design matrix.
-#'     The binary response vector that takes the value of 0 or 1, where 1 means
-#'      the event occurred.
-#'     The design matrix contains predictor variables. A column representing
-#'     the intercept term with all 1's will be automatically added.
-#' @param subset An optional vector specifying a subset of rows to be used
-#' @param tau The quantile.
+#' @param data A data frame containing the variables in the model.
+#' @param subset An optional vector specifying a subset of observations to be used.
+#' @param tau The quantile to be estimated,
 #' @param n.plt The pilot subsample size (the first-step subsample size).
-#' These samples will be used to estimate the pilot estimator.
-#' @param n.ssp The expected optimal subsample size (the second-step subsample
-#' size).
-#' @param B TBD
-#' @param boot TBD
+#' These samples will be used to estimate the pilot estimator as well as to
+#' estimate the optimal subsampling probability.
+#' @param n.ssp The expectation optimal subsample size (the second-step subsample
+#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
+#' @param B The number of subsamples for the iterative sampling algorithm. Each subsample contains \code{n.ssp} observations. This allows us to estimate the covariance matrix.
+#' @param boot If TRUE then perform iterative sampling algorithm and estimate the covariance matrix. If FALSE then only one subsample is returned which contains n.ssp observations.
 #' @param criterion The criterion of optimal subsampling probabilities.
-#' @param sampling.method The sampling method for drawing the optimal subsample.
+#' Choices include \code{optL}(default) and \code{uniform}. 
+#' @param sampling.method The sampling method for drawing the optimal subsample. 
+#' Choices include \code{withReplacement} and \code{poisson}(default).
 #' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator.
-#' @param contrasts an optional list. It specifies how categorical variables are represented in the design matrix. For example, contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')
-#' @param control a list of parameters for controlling the computing process. 
-#' @param ... an optional list of parameters which will be passed to 
-#' quantreg::rq().
+#' calculate the optimal subsampling estimator. Currently it uses \code{weighted}. 
+#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
+#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param ... A list of parameters which will be passed to \code{quantreg::rq()}. 
 #' 
 #' @return
+#' ssp.quantreg returns an object of class "ssp.quantreg" containing the following components (some are optional):
+#' 
 #' \describe{
-#'   \item{model.call}{the model}
+#'   \item{model.call}{model call}
 #'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator}
-#'   \item{est.cov.ssp}{covariance matrix of \code{beta.ssp}}
-#'   \item{index.plt}{index of pilot subsample}
-#'   \item{index.ssp}{index of optimal subsample}
+#'   \item{coefficients}{optimal subsample estimator.}
+#'   \item{cov}{covariance matrix of \code{coefficients}}
+#'   \item{index.plt}{index of pilot subsample in the full sample}
+#'   \item{index.ssp}{index of optimal subsample in the full sample}
+#'   \item{N}{number of observations in the full sample}
+#'   \item{subsample.size.expect}{expected subsample size}
+#'   \item{terms}{model terms}
 #' }
-#'
+#' @details
+#' Additional details... briefly introduce the idea.
+#' 
+#' @references
+#' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \url{https://doi.org/10.1093/biomet/asaa043}
+#' 
 #' @examples
 #' #quantile regression
 #' set.seed(1)
@@ -66,7 +73,7 @@
 #' n.ssp = n.ssp,B = B,boot = TRUE,criterion = 'uniform',
 #' sampling.method = 'withReplacement', likelihood = 'weighted')
 #' summary(uni.results)
-
+#' @export
 ssp.quantreg <- function(formula,
                          data,
                          subset = NULL,
@@ -83,35 +90,18 @@ ssp.quantreg <- function(formula,
                          ...
                          ) {
   
-  ## mf represents the model frame that contains all the necessary variables 
-  ## for model fitting, including the response and predictors.
-  ## Initially, mf is the match.all() object containing all the arguments 
-  ## passed to the main function
-  ## After match() matching the relevant arguments, mf is subsetted to include
-  ## only those relevant arguments.
-  ## It is then converted to a model frame using stats::model.frame
-  
   model.call <- match.call()
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data", "subset"),
              names(mf),
              0L)
-  mf <- mf[c(1L, m)] # mf[[1]]) contains the original function call
+  mf <- mf[c(1L, m)] 
   mf$drop.unused.levels <- TRUE 
-  # Sometimes, not all levels are present in the subset of data being analyzed.
-  # drop.unused.levels drops any unused levels of factor variables.
-  
-  ## when mf is evaluated, it will execute stats::model.frame(...)
-  ## instead of mf[[1L]].
+
   mf[[1L]] <- quote(stats::model.frame)
-  ## mf is just an expression before running eval(). eval() evaluate the
-  ## expression within a specific environment. parent.frame() is the 
-  ## environment of the caller function.
   mf <- eval(mf, parent.frame())
-  ## mt extracts the terms object from the model frame mf. This object is
-  ## essential for understanding the structure of the model, such as which
-  ## variables are used and how they are transformed.
-  mt <- attr(mf, "terms") # allow model.frame to have updated it
+
+  mt <- attr(mf, "terms") 
   Y <- model.response(mf, "any")
   ## avoid problems with 1D arrays, but keep names
   if(length(dim(Y)) == 1L) {
@@ -165,17 +155,17 @@ ssp.quantreg <- function(formula,
                                            )
     Betas.ssp <- ssp.results$Betas.ssp
     beta.ssp <- ssp.results$beta.ssp
-    est.cov.ssp <- ssp.results$est.cov.ssp
+    est.cov.ssp <- ssp.results$cov.ssp
     index.ssp <- ssp.results$index.ssp
     
     names(beta.ssp) <- names(beta.plt) <- colnames(X)
 
     results <- list(model.call = model.call,
                     beta.plt = beta.plt,
-                    beta = beta.ssp,
-                    est.cov = est.cov.ssp,
+                    coefficients = beta.ssp,
+                    cov = est.cov.ssp,
                     index.plt = index.plt,
-                    index = index.ssp,
+                    index.ssp = index.ssp,
                     N = N,
                     subsample.size.expect = c(n.ssp, B),
                     terms = mt
@@ -187,13 +177,13 @@ ssp.quantreg <- function(formula,
     uni.results <- quantile.ssp.estimation(inputs, ...)
     Betas.uni <- uni.results$Betas.ssp
     beta.uni <- uni.results$beta.ssp
-    est.cov.uni <- uni.results$est.cov.ssp
+    est.cov.uni <- uni.results$cov.ssp
     index.uni <- uni.results$index.ssp
     names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     beta.plt = NA,
-                    beta = beta.uni,
-                    est.cov = est.cov.uni,
+                    coefficients = beta.uni,
+                    cov = est.cov.uni,
                     index = index.uni,
                     N = N,
                     subsample.size.expect = c(n.ssp, B),

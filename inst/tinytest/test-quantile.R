@@ -32,7 +32,7 @@ expect_true(inherits(optL.results, "list"), info = "Output should be a list.")
 expect_true(inherits(optL.results, "ssp.quantreg"), 
             info = "Output should be of class 'ssp.quantreg'")
 
-expect_equivalent(length(optL.results$index), 
+expect_equivalent(length(optL.results$index.ssp), 
                   B, 
                   info = "Subsamples should be divided into B lists.")
 
@@ -60,7 +60,7 @@ expect_silent(optL.results <-
                              likelihood = 'weighted'), 
               info = "It should run without errors on valid input.")
 
-expect_equivalent(length(optL.results$index), 
+expect_equivalent(length(optL.results$index.ssp), 
                   n.ssp*B, 
                   info = "When boot=F, Subsamples should not be divided into 
                   groups.")
