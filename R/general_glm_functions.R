@@ -13,7 +13,7 @@ glm.coef.estimate <- function(X,
   design <- survey::svydesign(ids =  ~ 1,
                               weights =  ~ weights,
                               data = data)
-  ifelse(is.null(offset),
+  ifelse(all(is.null(offset)),
          results <- survey::svyglm(as.formula(formula),
                                    design = design,
                                    # start = start,
@@ -117,9 +117,30 @@ calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   return(nm)
 }
 ###############################################################################
-## second derivative of log likelihood function
+############## family version
+# ddL <- function (eta, X, weights = 1, offset = NULL, family) {
+#   if (all(is.null(offset))) {
+#     dd.psi <- exp(eta) / (1 + exp(eta)) ^ 2
+#   } else {
+#     dd.psi <- exp(eta + offset) / (1 + exp(eta + offset)) ^ 2
+#   }
+#     ddL <- t(X) %*% (X * (dd.psi * weights))
+#   return(ddL)
+# }
+# dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
+#   if (all(is.null(offset))) {
+#       p <- 1 - 1 / (1 + exp(eta))
+#     } else {
+#       p <- 1 - 1 / (1 + exp(eta + offset))
+#     }
+#     temp <- (Y - p)^2
+#   dL.sq <- t(X) %*% (X * (temp * weights))
+#   return(dL.sq)
+# }
+#############################################################################
+# second derivative of log likelihood function
 ddL <- function (eta, X, weights = 1, offset = NULL, family) {
-  # linkinv(eta): 
+  # linkinv(eta):
   # (eta is linear predictor plus offset(if have))
   # for binomial = exp(eta)/(1+exp(eta))
   # poisson() = exp(eta)
@@ -130,32 +151,25 @@ ddL <- function (eta, X, weights = 1, offset = NULL, family) {
   # for Gamma(link = "inverse") = mu^2
   variance <- family$variance
   linkinv  <- family$linkinv
-
-  dd.psi <- ifelse(is.null(offset),
-                   variance(linkinv(eta)),
-                   variance(linkinv(eta + offset))
-  )
-  ddL <- t(X) %*% (X * (dd.psi * weights))
   
+  if (all(is.null(offset))) {
+    dd.psi <- variance(linkinv(eta))
+  } else {
+    dd.psi <- variance(linkinv(eta + offset))
+  }
+  ddL <- t(X) %*% (X * (dd.psi * weights))
+
   return(ddL)
 }
-## square of first derivative of log likelihood function
+## square of the first derivative of log likelihood function
 dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
-  # linkinv(eta): 
-  # (eta is linear predictor plus offset(if have))
-  # for binomial = exp(eta)/(1+exp(eta))
-  # poisson() = exp(eta)
-  # Gamma(link = "inverse") = 1/eta
-  # variance(mu):
-  # for logit = mu(1 - mu)
-  # for poisson() = mu
-  # for Gamma(link = "inverse") = mu^2
   variance <- family$variance
   linkinv  <- family$linkinv
-  temp <- ifelse(is.null(offset),
-                 (Y - linkinv(eta))^2,
-                 (Y - linkinv(eta + offset))^2
-                 )
+  if (all(is.null(offset))) {
+    temp <- (Y - linkinv(eta))^2
+  } else {
+    temp <- (Y - linkinv(eta + offset))^2
+  }
   dL.sq <- t(X) %*% (X * (temp * weights))
   return(dL.sq)
 }
@@ -170,7 +184,6 @@ pilot.estimate <- function(inputs, ...){
   variance <- family$variance
   linkinv  <- family$linkinv
 
-  
   # if (family$family.name == 'binomial'){
   if (family[["family"]] %in% c('binomial', 'quasibinomial')){
     N1 <- sum(Y)
@@ -194,6 +207,8 @@ pilot.estimate <- function(inputs, ...){
                                          X = x.plt,
                                          weights = (1 / (p.plt*N*n.plt)),
                                          family = family)
+    
+    
     dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
                        x.plt,
                        y.plt,
@@ -278,7 +293,6 @@ subsampling <- function(inputs,
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, p.ssp)
     if (likelihood == 'logOddsCorrection') {
-
       offset <- calculate.offset(X = X[index.ssp, ],
                                  N = N,
                                  d.psi = d.psi[index.ssp],
@@ -299,12 +313,12 @@ subsampling <- function(inputs,
          )
 }
 ###############################################################################
-subsample.estimate <- function(  inputs,
-                                 w.ssp,
-                                 offset,
-                                 beta.plt,
-                                 index.ssp,
-                                 ...) {
+subsample.estimate <- function(inputs,
+                               w.ssp,
+                               offset,
+                               beta.plt,
+                               index.ssp,
+                               ...) {
   x.ssp <- inputs$X[index.ssp, ]
   y.ssp = inputs$Y[index.ssp]
   n.ssp <- inputs$n.ssp
@@ -331,6 +345,7 @@ subsample.estimate <- function(  inputs,
                          y.ssp,
                          weights = w.ssp ^ 2 / N ^ 2,
                          family = family)
+
       Lambda.ssp <- 0 # placeholder
     } else if (sampling.method == "withReplacement") {
       ddL.ssp <- ddL(linear.predictor.ssp,
@@ -352,7 +367,7 @@ subsample.estimate <- function(  inputs,
   } else if (likelihood == 'logOddsCorrection') {
     if (!(family[["family"]]  %in% c('binomial', 'quasibinomial'))){
       stop("Currently 'logOddsCorrection' likelihood can only work for logistic
-           regression")
+           regression.")
     }
     results.ssp <- glm.coef.estimate(X = x.ssp,
                                      Y = y.ssp,

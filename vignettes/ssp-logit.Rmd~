@@ -1,0 +1,208 @@
+---
+title: "An Introduction to `subsampling`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ssp-logit}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(knitr)
+library(subsampling)
+```
+
+# Introduction
+
+A major challenge in big data statistical analysis is the demand for computing resources. For example, when fitting a logistic regression model to binary response variable with $d$ dimensional covariates, the computational complexity of estimating the coefficients using Newton's method or the IRLS algorithm is $O(\zeta N d^2)$. When $N$ is large, the time cost can be unaffordable, especially if high performance computing resource are unavailable. To address this issue, subsampling has become a widely used technique to reduce computational burden by performing the necessary calculations on a subsample drawn from the full dataset.
+
+The R package `subsampling` provides several subsampling methods and applies them to commonly used statistical models. This vignette takes logistic regression model as an example of glm to describe the usage of function `ssp.glm()`. The statistical theory and algorithms in this implementation are described in references papers. We are working on an software paper to introduce algorithms used in this package.
+
+The log likelihood function of glm is
+
+$$
+\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left\{y_i u(\beta^{\top} x_i) - \psi \left[ u(\beta^{\top} x_i) \right] \right\}.
+$$
+where $u$ and $\psi$ are known functions depend on the exponential family. For binomial family, the log likelihood function becomes
+
+$$
+\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left[y_i \beta^{\top} x_i - \log\left(1 + e^{\beta^\top x_i}\right) \right].
+$$
+
+The idea of subsampling methods is as follows: instead of fitting it to the size $N$ full dataset, we first assign a subsampling probability to each observation in the full dataset. Then we draw a relative small subsample and fit the model to this subsample. The sampling probabilities are assigned based on the goal of making the subsample more informative.
+
+# Basic Usage
+
+We introduce the basic usage by using `ssp.glm` on a simulated exmaple data. $X$ contains $d=6$ covariates which follow multinormal distribution and $Y$ is the binary response variable. The full data size is $N = 1 \times 10^4$.
+
+```{r}
+set.seed(6)
+N <- 1e4
+beta0 <- rep(-0.5, 7)
+d <- length(beta0) - 1
+corr <- 0.5
+sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
+X <- MASS::mvrnorm(N, rep(0, d), sigmax)
+colnames(X) <- paste("V", 1:ncol(X), sep = "")
+P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
+Y <- rbinom(N, 1, P)
+data <- as.data.frame(cbind(Y, X))
+formula <- Y ~ .
+head(data)
+```
+
+The function usage is
+
+```{r, eval = FALSE}
+ssp.glm(
+  formula,
+  data,
+  subset = NULL,
+  n.plt,
+  n.ssp,
+  family = "quasibinomial",
+  criterion = "optL",
+  sampling.method = "poisson",
+  likelihood = "weighted",
+  control = list(...),
+  contrasts = NULL,
+  ...
+  )
+```
+
+For clarity, we define the terms used in this vignette. The entire dataset we have on hand is referred to as the "full dataset" and the estimator derived from this dataset is called the "full data estimator". The sample we draw from the full dataset is called the "subsample" and the corresponding estimator is the "subsample estimator".
+
+Arguments `criterion`, `sampling.method` and `likelihood` correspond to three questions: How should sampling probabilities be assigned to each observation? How do subsamples be drawn? How should the likelihood function be modified to account for the bias introduced by the subsampling process?
+
+### `criterion`
+
+The choices of `criterion` include `optA`, `optL`(default), `LCC` and `uniform.` 
+- optA and optL subsampling criterion were first proposed by Wang et al. (2018). optA subsampling probabilities are derived by minimizing the trace of the asymptotic covariance of subsample estimator. optL subsampling probabilities are derived by minimizing the trace of a transportation of the asymptotic covariance of subsample estimator. The computational complexity of optA subsampling probabilities is $O(N d^2)$ while that of optL is $O(N d)$.
+
+- `LCC` stands for the subsampling probability proposed by Fithian and Hastie (2014), serving as a baseline criterion.
+
+- `uniform` assigns each observation with equal subsampling probabilities $\frac{1}{N}$, serving as a baseline criterion.
+
+A pilot estimator for the unknown parameter $\beta$ is required since optA and optL subsampling probabilities depend on it. Yes, no free lunch for the optimal subsampling probabilities. Fortunately that it won't impact the results as long as the pilot estimator meets some mild conditions. For logistic regression, this is done by taking `n.plt` subsamples with replacement from full dataset. The case control subsample probability is used, that is, $\pi_i = \frac{1}{2N_1}$ for $Y_i=1$ and $\pi_i = \frac{1}{2N_0}$ for $Y_i=0$. For other families in glm, uniform subsample probability is used. Typically `n.plt` is relatively small compare to `n.ssp`.
+
+### `sampling.method`
+
+The options for the `sampling.method` argument include include `withReplacement` and `poisson`(default). `withReplacement.` stands for drawing $n_{ssp}$ subsamples from full dataset of size $N$ with replacement, using the specified subsampling probability. `poisson` stands for drawing subsamples one by one by comparing the subsampling probability with a realization of uniform random variable $U(0,1)$. The expected number of drawed samples are $n_{ssp}$. 
+
+The main differences are:
+
+- `withReplacement` draws exactly $n_{ssp}$ subsamples while `poisson` draws subsamples with expectation $n_{ssp}$ meaning the actual number may vary slightly.
+
+- `withReplacement` requires loading the full dataset at once while `poisson` allows for scanning the dataset one observation at a time. 
+
+- Many theoretical results suggest that the `poisson` method tends to get a subsample estimator with smaller asymptotic variance compared to the `withReplacement` method.
+
+### `likelihood`
+
+The choices of `likelihood` include `weighted`(default) and `logOddsCorrection`. The reason we can't use the likelihood function of subsample directly is that it is biased due to the different subsampling probabilities. Therefore, we need to apply methods to correct this bias.
+
+- `weighted` refers to the weighted likelihood function for subsample, where each observation is weighted by the inverse of its subsampling probability.
+
+- `logOddsCorrection` stands for the conditional likelihood function for the subsample. "Conditional" means that each elements in the likelihood function is the probability of $Y=1$ given that these subsample are drawn. 
+
+Both of these two type of likelihood functions can derive an unbiased optimal subsample estimator. Theoretical results indicate that `logOddsCorrection` is more efficient than `weighted` in the context of logistic regression. Intuitively we can think about that subsamples with higher subsample probabilities are typically more informative but receive smaller weights in the `weighted` likelihood function. That's the price for `weighted` likelihood function to correct the bias.
+
+### `control`
+
+The argument `control` contains two tuning parameters `alpha` and `b`. 
+
+- `alpha`$\in [0,1]$ is the mixture weights of the user assigned subsampling probability and uniform subsampling probability. That is, the actual subsample probability is $(1-\alpha)\pi^{opt} + \alpha \pi^{uni}$. The aim is to protect the subsample estimator from those subsamples with extrme small subsample probability. The default value of `alpha` is 0. 
+
+- `b` is also used to constaint the subsample probability. It can be viewed as the threshold to compress too large subsample probability. It take values between $(0,\frac{N}{n})$. `b` close to 0 means subsample probabilities are compressed to uniform probability $\frac{1}{N}$. `b=2` is the default value and for most cases it works well. 
+
+## section name
+
+After drawing the subsamples, `ssp.glm` utilize `survey::svyglm` to fit the model on the subsample, which eventually use `glm`.
+
+```{r}
+n.plt <- 200
+n.ssp <- 800
+ssp.results <- ssp.glm(formula = formula,
+                       data = data,
+                       n.plt = n.plt,
+                       n.ssp = n.ssp,
+                       family = 'quasibinomial')
+summary(ssp.results)
+```
+
+```{r}
+MSE.ssp <- sum((ssp.results$coefficients - beta0)^2)
+MSE.ssp
+```
+
+
+As suggested by `survey::svyglm`, for binomial family use `family=quasibinomial()` to avoid a warning throwed by `glm`. See [svyglm() help documentation Details ](https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm). The 'quasi' versions of the family objects give the same point estimates. 
+
+Arguments used in `svyglm` can be added in `ssp.glm` and will be passed to `svyglm`.
+
+```{r}
+names(ssp.results)
+```
+
+`ssp.results` is an object contains estimation results and index of drawn subsamples in the full dataset. `index.plt` and `index` are the row index of drawn pilot subsamples and optimal subsamples in the full data. Although pilot subsamples might not be as informative as optimal subsamples, they have been drawn anyway, so we better utilize them rather than discarding them. `beta.ssp` is the optimal subsample estimator for $\beta$ and `coefficients` is the combined estimator of `beta.plt` and `beta.ssp`. The combine weights depend on the relative size of `n.plt` and `n.ssp` as well as the estimated covariance matrix of `beta.plt` and `beta.ssp`. Again, we blend the pilot subsample information into optimal subsample estimator since the pilot subsample has been drawn. `cov.ssp` and `cov` are estimated covariance matrix of `beta.ssp` and `coefficients`. `subsample.size.expect` is the expected subsample size which is equals to `n.ssp` when we use `ssp.glm`. It will be different from `n.ssp` in `ssp.relogit`.
+
+As for the speed, we generate a larger full dataset for comparison.
+
+```{r, , eval=FALSE}
+set.seed(6)
+N <- 1e6
+beta0 <- rep(-0.5, 7)
+d <- length(beta0) - 1
+corr <- 0.5
+sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
+X <- MASS::mvrnorm(N, rep(0, d), sigmax)
+colnames(X) <- paste("V", 1:ncol(X), sep = "")
+P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
+Y <- rbinom(N, 1, P)
+data <- as.data.frame(cbind(Y, X))
+formula <- Y ~ .
+n.plt <- 200
+n.ssp <- 0.01 * N
+benchmark_results <- microbenchmark::microbenchmark(
+  method1 = glm(formula = formula, 
+                family=binomial, 
+                data = data),
+  method2 = ssp.glm(formula = formula,
+                       data = data,
+                       n.plt = n.plt,
+                       n.ssp = n.ssp,
+                       family = 'quasibinomial'),
+    method3 = ssp.glm(formula = formula,
+                       data = data,
+                       n.plt = n.plt,
+                       n.ssp = n.ssp,
+                       family = 'quasibinomial',
+                      criterion = "uniform"),
+  times = 100
+)
+benchmark_results
+```
+
+```{r echo=FALSE, message=FALSE}
+benchmark_results_table <- data.frame(
+  expr = c("method1", "method2", "method3"),
+  min = c(1616.9564, 394.9121, 106.5479),
+  lq = c(1711.7812, 429.3244, 131.5475),
+  mean = c(1804.1415, 526.5950, 158.9776),
+  median = c(1782.0165, 557.1033, 143.5303),
+  uq = c(1881.6165, 605.4753, 160.0647),
+  max = c(2552.8414, 972.5234, 331.6736),
+  neval = c(100, 100, 100),
+  cld = c("a", "b", "c")
+)
+
+kable(benchmark_results_table, format = "markdown", 
+      caption = 'Unit: milliseconds')
+```

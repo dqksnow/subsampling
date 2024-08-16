@@ -2,6 +2,13 @@
 
 
 *** To do list
+- [ ] output names, beta.plt to coef.plt
+- [ ] check whether covarites names would be changed.
+- Aug 9 Meeting
+  - build inputs list
+  - use r base family functions
+  - now can pass arguments to external fitting function
+  - control list
 - Aug 8:
 - [ ] submit to [here](https://cran.r-project.org/submit.html)
 - [ ] Write vignettes [example](https://wwenjie.org/splines2/articles/splines2-intro)

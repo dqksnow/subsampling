@@ -6,7 +6,7 @@
 \alias{subsampling-package}
 \title{Title: Add later}
 \description{
-When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency. It implements various optimal subsampling methods for statistical analysis, providing tools for efficient and accurate estimation in massive datasets.
+For common statistical models such as glm and quantile regression model, draw subsamples from full dataset by different optimal subsampling criterion and estimate coefficients and covariance matrix based on the subsample. When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency.
 }
 \seealso{
 Useful links:
