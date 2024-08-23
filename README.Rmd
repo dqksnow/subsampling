@@ -44,7 +44,7 @@ This is a basic example which shows you how to solve a common problem:
 ```{r example}
 library(subsampling)
 set.seed(1)
-N <- 5e3
+N <- 1e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
 corr <- 0.5
@@ -55,8 +55,8 @@ P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
 Y <- rbinom(N, 1, P)
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ .
-n.plt <- 100
-n.ssp <- 500
+n.plt <- 200
+n.ssp <- 600
 ssp.results <- ssp.glm(formula = formula,
                        data = data,
                        n.plt = n.plt,

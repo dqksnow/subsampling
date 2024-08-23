@@ -2,7 +2,7 @@
 
 
 *** To do list
-- [ ] output names, beta.plt to coef.plt
+- [X] output names, beta.plt to coef.plt
 - [ ] check whether covarites names would be changed.
 - Aug 9 Meeting
   - build inputs list
@@ -11,11 +11,11 @@
   - control list
 - Aug 8:
 - [ ] submit to [here](https://cran.r-project.org/submit.html)
-- [ ] Write vignettes [example](https://wwenjie.org/splines2/articles/splines2-intro)
-- [ ] DESCRIPTION file
-  - [ ] description paragraph
-  - [ ] reference
-- [ ] license
+- [X] Write vignettes [example](https://wwenjie.org/splines2/articles/splines2-intro)
+- [X] DESCRIPTION file
+  - [X] description paragraph
+  - [X] reference
+- [X] license
 - [X] check_win_devel() to check package on windows platform. One note:
   potential misspell: subsampling.
 - [X] usethis::use_cran_comments() to create cran-comments.md file to
@@ -23,7 +23,7 @@
 - [X] usethis::use_news_md() to create NEWS.md file and maintain it.
 - [X] urlchecker::url_check() to check links in the package.
 - [X] devtools::check() to check it locally.
-- [ ] update makefile
+- [X] update makefile
 - [X] help documents
   - [ ] description for each export function
   - [X] arguments
@@ -121,7 +121,8 @@
   
   > model <- lm(Y~XX)
   
-  > tracemem(XX)[1] "<0x119f18000>"
+  > tracemem(XX)
+[1] "<0x119f18000>"
   
   > XX[1] <- 1
   

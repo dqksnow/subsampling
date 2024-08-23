@@ -37,7 +37,7 @@ This is a basic example which shows you how to solve a common problem:
 ``` r
 library(subsampling)
 set.seed(1)
-N <- 5e3
+N <- 1e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
 corr <- 0.5
@@ -48,8 +48,8 @@ P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
 Y <- rbinom(N, 1, P)
 data <- as.data.frame(cbind(Y, X))
 formula <- Y ~ .
-n.plt <- 100
-n.ssp <- 500
+n.plt <- 200
+n.ssp <- 600
 ssp.results <- ssp.glm(formula = formula,
                        data = data,
                        n.plt = n.plt,
@@ -62,7 +62,6 @@ ssp.results <- ssp.glm(formula = formula,
 summary(ssp.results)
 #> Model Summary
 #> 
-#> 
 #> Call:
 #> 
 #> ssp.glm(formula = formula, data = data, n.plt = n.plt, n.ssp = n.ssp, 
@@ -71,22 +70,22 @@ summary(ssp.results)
 #> 
 #> Subsample Size:
 #>                                
-#> 1       Total Sample Size  5000
-#> 2 Expected Subsample Size   500
-#> 3   Actual Subsample Size   499
-#> 4   Unique Subsample Size   499
-#> 5  Expected Subample Rate   10%
-#> 6    Actual Subample Rate 9.98%
-#> 7    Unique Subample Rate 9.98%
+#> 1       Total Sample Size 10000
+#> 2 Expected Subsample Size   600
+#> 3   Actual Subsample Size   651
+#> 4   Unique Subsample Size   651
+#> 5  Expected Subample Rate    6%
+#> 6    Actual Subample Rate 6.51%
+#> 7    Unique Subample Rate 6.51%
 #> 
 #> Coefficients:
 #> 
 #>           Estimate Std. Error z value Pr(>|z|)
-#> Intercept  -0.6193     0.3142 -1.9712   0.0487
-#> V1         -0.4909     0.3331 -1.4739   0.1405
-#> V2         -0.6077     0.4277 -1.4209   0.1554
-#> V3         -0.5586     0.3963 -1.4095   0.1587
-#> V4         -0.4988     0.3496 -1.4266   0.1537
-#> V5         -0.4414     0.3743 -1.1792   0.2383
-#> V6         -0.4866     0.3683 -1.3212   0.1864
+#> Intercept  -0.4092     0.0795 -5.1486  <0.0001
+#> V1         -0.5861     0.0949 -6.1791  <0.0001
+#> V2         -0.4514     0.1066 -4.2343  <0.0001
+#> V3         -0.5557     0.1005 -5.5283  <0.0001
+#> V4         -0.3915     0.1006 -3.8898   0.0001
+#> V5         -0.3732     0.1046 -3.5697   0.0004
+#> V6         -0.6454     0.0969 -6.6589  <0.0001
 ```
