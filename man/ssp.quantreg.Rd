@@ -76,7 +76,10 @@ ssp.quantreg returns an object of class "ssp.quantreg" containing the following 
 Draw subsample from full dataset and fit quantile regression model on subsample.
 }
 \details{
-Additional details... briefly introduce the idea.
+Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
+
+If \code{boot}=TRUE, the returned value \code{subsample.size.expect} equals to \code{B}*\code{n.ssp}, and the covariance matrix for \code{coef} would be calculated.
+If \code{boot}=FALSE, the returned value \code{subsample.size.expect} equals to \code{n.ssp}, and the covariance matrix won't be estimated.
 }
 \examples{
 #quantile regression
@@ -108,5 +111,5 @@ sampling.method = 'withReplacement', likelihood = 'weighted')
 summary(uni.results)
 }
 \references{
-Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \doi{https://doi.org/10.1093/biomet/asaa043}
+Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112.
 }

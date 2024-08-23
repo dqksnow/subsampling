@@ -3,7 +3,7 @@
 
 *** To do list
 - [X] output names, beta.plt to coef.plt
-- [ ] check whether covarites names would be changed.
+- [X] check whether covarites names would be changed.
 - Aug 9 Meeting
   - build inputs list
   - use r base family functions
@@ -25,9 +25,9 @@
 - [X] devtools::check() to check it locally.
 - [X] update makefile
 - [X] help documents
-  - [ ] description for each export function
+  - [X] description for each export function
   - [X] arguments
-  - [X] details
+  - [ ] details
   - [X] values
   - [X] references
   - [X] examples    
@@ -79,18 +79,18 @@
   - [X] uniform + Poisson has not been implemented.
   - [X] sometimes there are warnings when use glm() except uniform.
   - [X] add example for gamma regression
-  - [ ] check the estimated var of gamma
+  - [X] check the estimated var of gamma
   - [X] warning message when use family=binomial. no warning when
     family=quasibinomial
 - For softmax:
   - [X] input data should be in the form of (formula, data) rather than (Y, X).
   - [X] a message when use MSPE: it is free from constraint.
-  - [ ] the example doesn't use intercept
+  - [X] the example doesn't use intercept
 - For quantile:
   - [X] Don't compute stand error in summary when boot=F.
   - [ ] threshold b for poisson sampling probability.
   - [X] variable names in the summary function.
-  - [ ] check if tau can be a vector
+  - [ ] our tau can't be a vector but rq() allows vector.
 - Write vignettes
   (introduction). [example](https://wwenjie.org/splines2/articles/splines2-intro)
 

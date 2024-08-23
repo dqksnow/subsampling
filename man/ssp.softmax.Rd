@@ -73,11 +73,13 @@ ssp.softmax returns an object of class "ssp.softmax" containing the following co
 Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on subsample.
 }
 \details{
-details TBD
+The returned coefficients are under baseline constraints, that is, the first category is baseline with zero coefficient.
 
-\code{criterion = MSPE} stands for optimal subsampling probabilities by minimizing the Mean Squared Prediction Error which is immune to the choice of model constraint.
+\code{criterion = MSPE} stands for optimal subsampling probabilities by minimizing the Mean Squared Prediction Error which is immune to the choice of model constraint. \code{criterion = LUC} stands for local uncertainty sampling. Refer to Yao, Zou and Wang (2023B).
 
 In \code{control}, alpha is the mixture proportions of optimal subsampling probability and uniform sampling probability. b is the parameter controls the upper threshold for optimal subsampling probability.
+
+Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
 }
 \examples{
 # softmax regression
@@ -112,9 +114,11 @@ WithRep.MSPE <- ssp.softmax(formula = formula,
 summary(WithRep.MSPE)
 }
 \references{
-Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{Statistical Papers}, \strong{60}, 585-599. \url{https://link.springer.com/article/10.1007/s00362-018-01068-6}
+Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{Statistical Papers}, \strong{60}, 585-599.
 
-Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625. \url{https://link.springer.com/article/10.1007/s11424-023-1179-z}
+Han, L., Tan, K. M., Yang, T., & Zhang, T. (2020). Local uncertainty sampling for large-scale multiclass logistic regression. \emph{Annals of Statistics}, \strong{48}(3), 1770-1788.
 
-Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201. \doi{https://doi.org/10.1016/j.jspi.2022.12.004}
+Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625.
+
+Yao, Y., Zou, J., & Wang, H. (2023). Model constraints independent optimal subsampling probabilities for softmax regression. \emph{Journal of Statistical Planning and Inference}, \strong{225}, 188-201.
 }

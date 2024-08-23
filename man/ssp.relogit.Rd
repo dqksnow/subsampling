@@ -66,6 +66,8 @@ Draw subsample from full dataset and fit logistic regression model on subsample.
 }
 \details{
 Rare event stands for the number of Y=1 is rare compare to the number of Y=0 in the full sample. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. When \code{criterion = optA, optL or LCC}, observations with Y=1 are preserved and it draw n.ssp subsmples from observations with Y=0.
+
+Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
 }
 \examples{
 set.seed(1)
@@ -94,5 +96,5 @@ subsampling.results <- ssp.relogit(formula = formula,
 summary(subsampling.results)
 }
 \references{
-Wang, H., Zhang, A., & Wang, C. (2021). Nonuniform negative sampling and log odds correction with rare events data. \emph{Advances in Neural Information Processing Systems}, \strong{34}, 19847-19859. \url{https://proceedings.neurips.cc/paper_files/paper/2021/hash/a51c896c9cb81ecb5a199d51ac9fc3c5-Abstract.html}
+Wang, H., Zhang, A., & Wang, C. (2021). Nonuniform negative sampling and log odds correction with rare events data. \emph{Advances in Neural Information Processing Systems}, \strong{34}, 19847-19859.
 }

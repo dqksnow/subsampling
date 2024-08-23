@@ -52,11 +52,11 @@
 #' threshold for optimal subsampling probability. 
 #'
 #' @references
-#' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59. \url{https://www.jmlr.org/papers/v20/18-596.html}
+#' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59.
 #' 
-#' Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772. \doi{https://doi.org/10.5705/ss.202018.0439}
+#' Ai, M., Yu, J., Zhang, H., & Wang, H. (2021). Optimal subsampling algorithms for big data regressions. \emph{Statistica Sinica}, \strong{31}(2), 749-772.
 #' 
-#' Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50. \url{https://www.jmlr.org/papers/v23/21-0506.html}
+#' Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50.
 #' 
 #' @examples
 #' # logistic regression
@@ -194,7 +194,9 @@ ssp.glm <- function(formula,
     if(!is.null(nm)) names(Y) <- nm
   }
   X <- model.matrix(mt, mf, contrasts)
-  colnames(X)[1] <- "Intercept"
+  if (attr(mt, "intercept") == 1) {
+    colnames(X)[1] <- "Intercept"
+  }
   family <- match.arg(family, c('binomial', 'poisson', 'Gamma',
                                 'quasibinomial', 'quasipoisson'))
   criterion <- match.arg(criterion, c('optL', 'optA', 'LCC', 'uniform'))

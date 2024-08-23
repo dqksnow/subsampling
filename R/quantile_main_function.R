@@ -17,7 +17,7 @@
 #' @param boot If TRUE then perform iterative sampling algorithm and estimate the covariance matrix. If FALSE then only one subsample is returned which contains n.ssp observations.
 #' @param criterion The criterion of optimal subsampling probabilities.
 #' Choices include \code{optL}(default) and \code{uniform}. 
-#' @param sampling.method The sampling method for drawing the optimal subsample. 
+#' @param sampling.method The sampling method for drawing the optimal subsample.
 #' Choices include \code{withReplacement} and \code{poisson}(default).
 #' @param likelihood The type of the maximum likelihood function used to
 #' calculate the optimal subsampling estimator. Currently it uses \code{weighted}. 
@@ -39,11 +39,15 @@
 #'   \item{subsample.size.expect}{expected subsample size}
 #'   \item{terms}{model terms}
 #' }
+#' 
 #' @details
-#' Additional details... briefly introduce the idea.
+#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
+#' 
+#' If `boot`=TRUE, the returned value `subsample.size.expect` equals to `B`*`n.ssp`, and the covariance matrix for `coef` would be calculated. 
+#' If `boot`=FALSE, the returned value `subsample.size.expect` equals to `n.ssp`, and the covariance matrix won't be estimated. 
 #' 
 #' @references
-#' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112. \doi{https://doi.org/10.1093/biomet/asaa043}
+#' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112.
 #' 
 #' @examples
 #' #quantile regression
@@ -110,7 +114,9 @@ ssp.quantreg <- function(formula,
     if(!is.null(nm)) names(Y) <- nm
   }
   X <- model.matrix(mt, mf, contrasts)
-  colnames(X)[1] <- "Intercept"
+  if (attr(mt, "intercept") == 1) {
+    colnames(X)[1] <- "Intercept"
+  }
   N <- nrow(X)
   d <- ncol(X)
   criterion <- match.arg(criterion, c('optL', 'uniform'))
