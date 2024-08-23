@@ -1,6 +1,6 @@
 #' Optimal Subsampling Methods for Quantile Regression Model
 #' @description
-#' This function fits generalized linear models using ....
+#' Draw subsample from full dataset and fit quantile regression model on subsample.
 #'
 #'
 #' @param formula An object of class "formula" which describes the model to be
@@ -30,9 +30,9 @@
 #' 
 #' \describe{
 #'   \item{model.call}{model call}
-#'   \item{beta.plt}{pilot estimator}
-#'   \item{coefficients}{optimal subsample estimator.}
-#'   \item{cov}{covariance matrix of \code{coefficients}}
+#'   \item{coef.plt}{pilot estimator}
+#'   \item{coef}{optimal subsample estimator.}
+#'   \item{cov}{covariance matrix of \code{coef}}
 #'   \item{index.plt}{index of pilot subsample in the full sample}
 #'   \item{index.ssp}{index of optimal subsample in the full sample}
 #'   \item{N}{number of observations in the full sample}
@@ -161,8 +161,8 @@ ssp.quantreg <- function(formula,
     names(beta.ssp) <- names(beta.plt) <- colnames(X)
 
     results <- list(model.call = model.call,
-                    beta.plt = beta.plt,
-                    coefficients = beta.ssp,
+                    coef.plt = beta.plt,
+                    coef = beta.ssp,
                     cov = est.cov.ssp,
                     index.plt = index.plt,
                     index.ssp = index.ssp,
@@ -181,8 +181,8 @@ ssp.quantreg <- function(formula,
     index.uni <- uni.results$index.ssp
     names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
-                    beta.plt = NA,
-                    coefficients = beta.uni,
+                    coef.plt = NA,
+                    coef = beta.uni,
                     cov = est.cov.uni,
                     index = index.uni,
                     N = N,

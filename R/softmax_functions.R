@@ -394,10 +394,10 @@ softmax.control <- function(alpha = 0, b = 2, ...){
 ###############################################################################
 #' @export
 summary.ssp.softmax <- function(object, ...) {
-  dimension <- dim(object$coefficients)
+  dimension <- dim(object$coef)
   d <- dimension[1]
   K <- dimension[2]
-  coef <- object$coefficients
+  coef <- object$coef
   se <- matrix(sqrt(diag(object$cov)), nrow = d, ncol=K)
   rownames(se) <- rownames(coef) 
   N <- object$N

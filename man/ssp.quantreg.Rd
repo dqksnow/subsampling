@@ -62,9 +62,9 @@ ssp.quantreg returns an object of class "ssp.quantreg" containing the following 
 
 \describe{
 \item{model.call}{model call}
-\item{beta.plt}{pilot estimator}
-\item{coefficients}{optimal subsample estimator.}
-\item{cov}{covariance matrix of \code{coefficients}}
+\item{coef.plt}{pilot estimator}
+\item{coef}{optimal subsample estimator.}
+\item{cov}{covariance matrix of \code{coef}}
 \item{index.plt}{index of pilot subsample in the full sample}
 \item{index.ssp}{index of optimal subsample in the full sample}
 \item{N}{number of observations in the full sample}
@@ -73,7 +73,7 @@ ssp.quantreg returns an object of class "ssp.quantreg" containing the following 
 }
 }
 \description{
-This function fits generalized linear models using ....
+Draw subsample from full dataset and fit quantile regression model on subsample.
 }
 \details{
 Additional details... briefly introduce the idea.

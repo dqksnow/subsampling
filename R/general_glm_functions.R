@@ -117,28 +117,7 @@ calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   return(nm)
 }
 ###############################################################################
-############## family version
-# ddL <- function (eta, X, weights = 1, offset = NULL, family) {
-#   if (all(is.null(offset))) {
-#     dd.psi <- exp(eta) / (1 + exp(eta)) ^ 2
-#   } else {
-#     dd.psi <- exp(eta + offset) / (1 + exp(eta + offset)) ^ 2
-#   }
-#     ddL <- t(X) %*% (X * (dd.psi * weights))
-#   return(ddL)
-# }
-# dL.sq <- function (eta, X, Y, weights = 1, offset = NULL, family) {
-#   if (all(is.null(offset))) {
-#       p <- 1 - 1 / (1 + exp(eta))
-#     } else {
-#       p <- 1 - 1 / (1 + exp(eta + offset))
-#     }
-#     temp <- (Y - p)^2
-#   dL.sq <- t(X) %*% (X * (temp * weights))
-#   return(dL.sq)
-# }
-#############################################################################
-# second derivative of log likelihood function
+## second derivative of log likelihood function
 ddL <- function (eta, X, weights = 1, offset = NULL, family) {
   # linkinv(eta):
   # (eta is linear predictor plus offset(if have))
@@ -184,13 +163,11 @@ pilot.estimate <- function(inputs, ...){
   variance <- family$variance
   linkinv  <- family$linkinv
 
-  # if (family$family.name == 'binomial'){
   if (family[["family"]] %in% c('binomial', 'quasibinomial')){
     N1 <- sum(Y)
     N0 <- N - N1
     ## This is case control sampling with replacement for binary Y logistic
     ## regression.
-    ## 
     ## We can also use uniform sampling with rep, half half sampling 
     ## or poisson sampling.
     p.plt <- ifelse(Y == 1, 1/(2*N1), 1/(2*N0))
@@ -450,7 +427,7 @@ format.p.values <- function(p.values, threshold = 0.0001) {
 
 #' @export
 summary.ssp.glm <- function(object, ...) {
-  coef <- object$coefficients
+  coef <- object$coef
   se <- sqrt(diag(object$cov))
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
@@ -459,7 +436,7 @@ summary.ssp.glm <- function(object, ...) {
   subsample.rate.expect <- (n.ssp.expect / N) * 100
   subsample.rate.actual <- (n.ssp.actual / N) * 100
   subsample.rate.unique <- (n.ssp.unique / N) * 100
-  cat("Model Summary\n\n")
+  cat("Model Summary\n")
   cat("\nCall:\n")
   cat("\n")
   print(object$model.call)

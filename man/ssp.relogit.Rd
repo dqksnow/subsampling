@@ -49,10 +49,10 @@ calculate the optimal subsampling estimator. Choices include
 ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
 \describe{
 \item{model.call}{model call}
-\item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator.}
-\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
-\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{coef.plt}{pilot estimator}
+\item{coef.ssp}{optimal subsample estimator.}
+\item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{coef.ssp}}
 \item{cov}{covariance matrix of \code{beta.cmb}}
 \item{index.plt}{index of pilot subsample in the full sample}
 \item{index.ssp}{index of optimal subsample in the full sample}
@@ -62,7 +62,7 @@ ssp.glm returns an object of class "ssp.glm" containing the following components
 }
 }
 \description{
-This function fits generalized linear models using ....
+Draw subsample from full dataset and fit logistic regression model on subsample.
 }
 \details{
 Rare event stands for the number of Y=1 is rare compare to the number of Y=0 in the full sample. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. When \code{criterion = optA, optL or LCC}, observations with Y=1 are preserved and it draw n.ssp subsmples from observations with Y=0.

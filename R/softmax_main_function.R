@@ -1,6 +1,7 @@
 #' Optimal Subsampling Method for Softmax(multinomial logistic) Regression Model
 #' @description
-#' This function fits softmax regression model using ....
+#' Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on subsample.
+#' 
 #' @details details TBD
 #' @param formula An object of class "formula" which describes the model to be
 #'  fitted.
@@ -28,10 +29,10 @@
 #' ssp.softmax returns an object of class "ssp.softmax" containing the following components (some are optional):
 #' \describe{
 #'   \item{model.call}{model call}
-#'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator.}
-#'   \item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
-#'   \item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+#'   \item{coef.plt}{pilot estimator}
+#'   \item{coef.ssp}{optimal subsample estimator.}
+#'   \item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+#'   \item{cov.ssp}{covariance matrix of \code{coef.ssp}}
 #'   \item{cov}{covariance matrix of \code{beta.cmb}}
 #'   \item{index.plt}{index of pilot subsample in the full sample}
 #'   \item{index.ssp}{index of optimal subsample in the full sample}
@@ -205,9 +206,9 @@ ssp.softmax <- function(formula,
     beta <- matrix(beta.cmb.b, nrow = d)
     rownames(beta.plt) <- rownames(beta.ssp) <- rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
-                    beta.plt = beta.plt,
-                    beta.ssp = beta.ssp,
-                    coefficients = beta,
+                    coef.plt = beta.plt,
+                    coef.ssp = beta.ssp,
+                    coef = beta,
                     # cov.plt = cov.plt.b,
                     cov.ssp = cov.ssp.b,
                     cov = cov.cmb.b,
@@ -256,7 +257,7 @@ ssp.softmax <- function(formula,
     rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
-                    coefficients = beta,
+                    coef = beta,
                     cov = cov.uni.b,
                     # P = P.uni,
                     N = N,

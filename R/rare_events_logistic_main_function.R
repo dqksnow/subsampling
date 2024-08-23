@@ -1,6 +1,6 @@
 #' Optimal Subsampling for Logistic Regression Model with Rare Events Data
 #' @description
-#' This function fits generalized linear models using ....
+#' Draw subsample from full dataset and fit logistic regression model on subsample.
 #'
 #' @param formula An object of class "formula" which describes the model to be
 #'  fitted.
@@ -24,10 +24,10 @@
 #' ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
 #' \describe{
 #'   \item{model.call}{model call}
-#'   \item{beta.plt}{pilot estimator}
-#'   \item{beta.ssp}{optimal subsample estimator.}
-#'   \item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
-#'   \item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+#'   \item{coef.plt}{pilot estimator}
+#'   \item{coef.ssp}{optimal subsample estimator.}
+#'   \item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+#'   \item{cov.ssp}{covariance matrix of \code{coef.ssp}}
 #'   \item{cov}{covariance matrix of \code{beta.cmb}}
 #'   \item{index.plt}{index of pilot subsample in the full sample}
 #'   \item{index.ssp}{index of optimal subsample in the full sample}
@@ -141,7 +141,8 @@ ssp.relogit <-  function(formula,
                                                     offset = offset,
                                                     beta.plt = beta.plt,
                                                     index.ssp = index.ssp,
-                                                    ...)
+                                                    ...
+                                                    )
     beta.ssp <- ssp.estimate.results$beta.ssp
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
@@ -160,9 +161,9 @@ ssp.relogit <-  function(formula,
     cov.cmb <- combining.results$cov.cmb
     names(beta.plt) <- names(beta.ssp) <- names(beta.cmb) <- colnames(X)
     results <- list(model.call = model.call,
-                    beta.plt = beta.plt,
-                    beta.ssp = beta.ssp,
-                    coefficients = beta.cmb,
+                    coef.plt = beta.plt,
+                    coef.ssp = beta.ssp,
+                    coef = beta.cmb,
                     cov.ssp = cov.ssp,
                     cov = cov.cmb,
                     index.plt = index.plt,
@@ -182,14 +183,15 @@ ssp.relogit <-  function(formula,
     index.uni <- poisson.index(N, pi.uni)
     results.uni <- rare.coef.estimate(X = X[index.uni, ],
                                       Y = Y[index.uni],
-                                      ...)
+                                      ...
+                                      )
     beta.uni <- results.uni$beta
     cov.uni <- results.uni$cov
     beta.uni[1] <- beta.uni[1] + log(n.ssp / N0) # correct intercept
     names(beta.uni) <- colnames(X)
     results <- list(model.call = model.call,
                     index = index.uni,
-                    coefficients = beta.uni,
+                    coef = beta.uni,
                     cov = cov.uni,
                     N = N,
                     subsample.size.expect = n.uni,

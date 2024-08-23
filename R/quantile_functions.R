@@ -173,7 +173,7 @@ quantreg.control <- function(alpha = 0, b = 2, ...)
 ###############################################################################
 #' @export
 summary.ssp.quantreg <- function(object, ...) {
-  coef <- object$coefficients
+  coef <- object$coef
   N <- object$N
   n.ssp <- object$subsample.size.expect[1]
   B <- object$subsample.size.expect[2]
@@ -217,5 +217,4 @@ summary.ssp.quantreg <- function(object, ...) {
   rownames(coef_table) <- names(coef)
 
   print(coef_table)
-  # Add more summary information as needed
 }

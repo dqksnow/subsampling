@@ -27,6 +27,9 @@ devtools::install_github("dqksnow/Subsampling")
 The [Online document](https://dqksnow.github.io/Subsampling/) provides a
 guidance for quick start.
 
+- [Generalized Linear
+  Model](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+
 ## Example
 
 This is a basic example which shows you how to solve a common problem:

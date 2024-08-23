@@ -57,10 +57,10 @@ calculate the optimal subsampling estimator. Choices include
 ssp.softmax returns an object of class "ssp.softmax" containing the following components (some are optional):
 \describe{
 \item{model.call}{model call}
-\item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator.}
-\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
-\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{coef.plt}{pilot estimator}
+\item{coef.ssp}{optimal subsample estimator.}
+\item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{coef.ssp}}
 \item{cov}{covariance matrix of \code{beta.cmb}}
 \item{index.plt}{index of pilot subsample in the full sample}
 \item{index.ssp}{index of optimal subsample in the full sample}
@@ -70,7 +70,7 @@ ssp.softmax returns an object of class "ssp.softmax" containing the following co
 }
 }
 \description{
-This function fits softmax regression model using ....
+Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on subsample.
 }
 \details{
 details TBD

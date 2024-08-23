@@ -57,10 +57,10 @@ ssp.glm returns an object of class "ssp.glm" containing the following components
 
 \describe{
 \item{model.call}{model call}
-\item{beta.plt}{pilot estimator}
-\item{beta.ssp}{optimal subsample estimator.}
-\item{coefficients}{weighted combination of \code{beta.plt} and \code{beta.ssp}.}
-\item{cov.ssp}{covariance matrix of \code{beta.ssp}}
+\item{coef.plt}{pilot estimator}
+\item{coef.ssp}{optimal subsample estimator.}
+\item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+\item{cov.ssp}{covariance matrix of \code{coef.ssp}}
 \item{cov}{covariance matrix of \code{beta.cmb}}
 \item{index.plt}{index of pilot subsample in the full sample}
 \item{index.ssp}{index of optimal subsample in the full sample}
@@ -70,15 +70,17 @@ ssp.glm returns an object of class "ssp.glm" containing the following components
 }
 }
 \description{
-Draw subsample ...
+Draw subsample from full dataset and fit glm on subsample. Refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette} for a quick start.
 }
 \details{
-As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems. For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
+As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems.
+
+For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
 
 \code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
 
-In \code{control}, alpha is the mixture proportions of optimal subsampling probability and
-uniform sampling probability. b is the parameter controls the upper
+In \code{control}, \code{alpha} is the mixture proportions of optimal subsampling probability and
+uniform sampling probability. \code{b} is the parameter controls the upper
 threshold for optimal subsampling probability.
 }
 \examples{

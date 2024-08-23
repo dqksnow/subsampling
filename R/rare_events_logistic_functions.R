@@ -237,7 +237,7 @@ relogit.control <- function(alpha = 0, b = 2, ...)
 ###############################################################################
 #' @export
 summary.ssp.relogit <- function(object, ...) {
-  coef <- object$coefficients
+  coef <- object$coef
   se <- sqrt(diag(object$cov))
   N <- object$N
   n.ssp.expect <- object$subsample.size.expect
