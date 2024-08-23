@@ -24,7 +24,8 @@ devtools::install_github("dqksnow/Subsampling")
 
 ## Getting Started
 
-The [Online document]() provides a guidance for quick start.
+The [Online document](https://dqksnow.github.io/Subsampling/) provides a
+guidance for quick start.
 
 ## Example
 
