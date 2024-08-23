@@ -8,7 +8,9 @@
 [![R-CMD-check](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of subsampling is to …
+The R package `subsampling` provides optimal subsampling methods for
+common statistical models such as glm, softmax(multinomial) regression,
+rare event logistic regression and quantile regression model.
 
 ## Installation
 
@@ -20,35 +22,67 @@ You can install the development version of subsampling from
 devtools::install_github("dqksnow/Subsampling")
 ```
 
+## Getting Started
+
+The [Online document]() provides a guidance for quick start.
+
 ## Example
 
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(subsampling)
-## basic example code
+set.seed(1)
+N <- 5e3
+beta0 <- rep(-0.5, 7)
+d <- length(beta0) - 1
+corr <- 0.5
+sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
+X <- MASS::mvrnorm(N, rep(0, d), sigmax)
+colnames(X) <- paste("V", 1:ncol(X), sep = "")
+P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
+Y <- rbinom(N, 1, P)
+data <- as.data.frame(cbind(Y, X))
+formula <- Y ~ .
+n.plt <- 100
+n.ssp <- 500
+ssp.results <- ssp.glm(formula = formula,
+                       data = data,
+                       n.plt = n.plt,
+                       n.ssp = n.ssp,
+                       family = "quasibinomial",
+                       criterion = "optL",
+                       sampling.method = "poisson",
+                       likelihood = "weighted"
+                       )
+summary(ssp.results)
+#> Model Summary
+#> 
+#> 
+#> Call:
+#> 
+#> ssp.glm(formula = formula, data = data, n.plt = n.plt, n.ssp = n.ssp, 
+#>     family = "quasibinomial", criterion = "optL", sampling.method = "poisson", 
+#>     likelihood = "weighted")
+#> 
+#> Subsample Size:
+#>                                
+#> 1       Total Sample Size  5000
+#> 2 Expected Subsample Size   500
+#> 3   Actual Subsample Size   499
+#> 4   Unique Subsample Size   499
+#> 5  Expected Subample Rate   10%
+#> 6    Actual Subample Rate 9.98%
+#> 7    Unique Subample Rate 9.98%
+#> 
+#> Coefficients:
+#> 
+#>           Estimate Std. Error z value Pr(>|z|)
+#> Intercept  -0.6193     0.3142 -1.9712   0.0487
+#> V1         -0.4909     0.3331 -1.4739   0.1405
+#> V2         -0.6077     0.4277 -1.4209   0.1554
+#> V3         -0.5586     0.3963 -1.4095   0.1587
+#> V4         -0.4988     0.3496 -1.4266   0.1537
+#> V5         -0.4414     0.3743 -1.1792   0.2383
+#> V6         -0.4866     0.3683 -1.3212   0.1864
 ```
-
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
-
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
-
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.

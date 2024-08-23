@@ -24,6 +24,9 @@ $(tar): $(objects)
 $(checkLog): $(tar)
 	R CMD check --as-cran $(tar)
 
+vignettes/%.html: vignettes/%.Rmd
+	Rscript -e "library(methods); rmarkdown::render('$?')"
+
 .PHONY: readme
 readme: README.md
 README.md: README.Rmd

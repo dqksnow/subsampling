@@ -1,0 +1,7 @@
+pandoc: '3.3'
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  ssp-logit: ssp-logit.html
+last_built: 2024-08-23T01:21Z
+

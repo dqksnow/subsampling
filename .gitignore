@@ -9,3 +9,5 @@ src/*.dll
 *.Rcheck/
 *.tar.gz
 *.Rproj
+inst/doc
+auto/references.el
