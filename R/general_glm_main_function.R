@@ -10,46 +10,104 @@
 #' These samples will be used to estimate the pilot estimator as well as to
 #' estimate the optimal subsampling probability.
 #' @param n.ssp The expectation optimal subsample size (the second-step subsample
-#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
-#' @param family \code{family} can be a character string naming a family function, a family function or the result of a call to a family function. Currently \code{'binomial'}, \code{'poisson'} and \code{'Gamma'} are implemented. 
-#' @param criterion The criterion of optimal subsampling probabilities.
-#' Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}. 
-#' @param sampling.method The sampling method for drawing the optimal subsample. 
-#' Choices include \code{withReplacement} and \code{poisson}(default).
-#' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator. Choices include 
-#'  \code{weighted} and \code{logOddsCorrection}. 
-#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
-#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
-#' @param ... A list of parameters which will be passed to \code{svyglm()}. 
+#' size). For `sampling.method = 'withReplacement'`, `n.ssp` is exactly the subsample size. For `sampling.method = 'poisson'`, `n.ssp` is the expectation of subsample size. 
+#' @param family `family` can be a character string naming a family function, a family function or the result of a call to a family function. 
+#' 
+#' @param criterion The choices of `criterion` include `optA`, `optL`(default), `LCC` and `uniform.`
+#' 
+#' - `optA` subsampling probabilities are derived by minimizing the
+#' trace of the asymptotic covariance of subsample estimator. `optL` subsampling
+#' probabilities are derived by minimizing the trace of a transportation of the
+#' asymptotic covariance of subsample estimator. The computational complexity of
+#' optA subsampling probabilities is \eqn{O(N d^2)} while that of optL is \eqn{O(N d)}.
+#' 
+#' - `LCC` stands for the Local Case-Control subsampling probability, serving as a baseline criterion.
+#' 
+#' - `uniform` assigns each observation with equal subsampling probability
+#' \eqn{\frac{1}{N}}, serving as a baseline criterion.
+#' 
+#' @param sampling.method The options for the `sampling.method` argument include `withReplacement`
+#' and `poisson` (default). `withReplacement` stands for drawing `n.ssp`
+#'   subsamples from full dataset of size \eqn{N} with replacement, using the specified
+#' subsampling probability. `poisson` stands for drawing subsamples one by one by
+#' comparing the subsampling probability with a realization of uniform random
+#' variable  \eqn{U(0,1)}. The expected number of drawed samples are \eqn{n.ssp}.
+#' The main differences are:
+#' 
+#' - `withReplacement` draws exactly  `n.ssp` subsamples while `poisson` draws
+#' subsamples with expectation `n.ssp` meaning the actual number may vary
+#' slightly.
+#' 
+#' - `withReplacement` requires loading the full dataset at once while `poisson`
+#' allows for scanning the dataset one observation at a time.
+#' 
+#' - Theoretical results showed that the `poisson` method tends to get a
+#' subsample estimator with smaller asymptotic variance compared to the
+#' `withReplacement` method.
+#' 
+#' @param likelihood The available choices for `likelihood` include `weighted` (default) and
+#' `logOddsCorrection`. The reason we can not use an equally weighted likelihood
+#' function for the subsample is that it introduces bias due to the different
+#' subsampling probabilities. Therefore, we need to apply methods to correct the
+#' bias.
+#' 
+#' - `weighted` refers to the weighted likelihood function for subsample, where
+#'   each observation is weighted by the inverse of its subsampling probability.
+#' 
+#' - `logOddsCorrection` stands for the conditional likelihood function for the
+#'   subsample. "conditional" means that each element in the likelihood function
+#'   is the probability of \eqn{Y=1} given that this subsample was drawn. `likelihood = logOddsCorrection` is implemented only for logistic regression (family = binomial or quasibonomial).
+#'   
+#' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, `contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')`.
+#' @param control The argument `control` contains two tuning parameters `alpha` and `b`. 
+#' 
+#' - `alpha` \eqn{\in [0,1]} is the mixture weights of the user assigned subsampling
+#' probability and uniform subsampling probability. That is, the actual subsample
+#' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. The aim is to
+#' protect the subsample estimator from those subsamples with extreme small
+#' subsampling probability. The default value of `alpha` is 0.
+#' 
+#' - `b` is also used to constaint the subsample probability. It can be viewed as
+#' the threshold for too large subsample probability. It take values
+#' between \eqn{(0,\frac{N}{n})}. `b` close to 0 means subsample probabilities are
+#' compressed to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value
+#' and it works well for many cases.
+#' 
+#' @param ... A list of parameters which will be passed to `svyglm()`. 
 #'
 #' @return
-#' ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
+#' `ssp.glm` returns an object of class "ssp.glm" containing the following components (some are optional):
 #' 
 #' \describe{
 #'   \item{model.call}{model call}
 #'   \item{coef.plt}{pilot estimator}
-#'   \item{coef.ssp}{optimal subsample estimator.}
-#'   \item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
-#'   \item{cov.ssp}{covariance matrix of \code{coef.ssp}}
-#'   \item{cov}{covariance matrix of \code{beta.cmb}}
-#'   \item{index.plt}{index of pilot subsample in the full sample}
-#'   \item{index.ssp}{index of optimal subsample in the full sample}
+#'   \item{coef.ssp}{optimal subsample estimator}
+#'   \item{coef}{the linear combination of `coef.plt` and `coef.ssp.` The combine weights depend on the relative size of `n.plt` and `n.ssp` as well as the estimated covariance matrix of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has been drawn. The coefficients and standard errors printed by summary are `coef` and the square root of `diag(cov)`}
+#'   \item{cov.ssp}{covariance matrix of `coef.ssp`}
+#'   \item{cov}{covariance matrix of `coef`}
+#'   \item{index.plt}{the row index of drawn pilot subsamples in the full data}
+#'   \item{index.ssp}{the row index of drawn optimal subsamples in the full data}
 #'   \item{N}{number of observations in the full sample}
-#'   \item{subsample.size.expect}{expected subsample size}
+#'   \item{subsample.size.expect}{`subsample.size.expect` is the expected subsample size which is equals to `n.ssp` when we use `ssp.glm.` In some other models like `ssp.relogit` it might be different.}
 #'   \item{terms}{model terms}
 #' }
 #'
 #' @details
-#' As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems. 
+#' 
+#' A pilot estimator for the unknown parameter  \eqn{\beta} is required because optA and
+#' optL subsampling probabilities depend on  \eqn{\beta}. Yes, no free lunch when it
+#' comes to the optimal subsampling probabilities. Fortunately we only need the
+#' pilot estimator to satisfy some mild conditions. For logistic regression, this
+#' is achieved by drawing a size `n.plt` subsample with replacement from full
+#' dataset. The case-control subsample probability is applied, that is, \eqn{\pi_i =
+#'   \frac{1}{2N_1}} for  \eqn{Y_i=1} and  \eqn{\pi_i = \frac{1}{2N_0}} for  \eqn{Y_i=0},
+#'  \eqn{i=1,...,N}, where  \eqn{N_0} is the count of  \eqn{Y=0} and  \eqn{N_1 = N - N_0}. For other
+#' families in glm, uniform subsampling probability is used. Typically, `n.plt` is
+#' relatively small compared to `n.ssp`.
+#' 
+#' As suggested by `survey::svyglm()`, for binomial and poisson families use `family=quasibinomial()` and `family=quasipoisson()` to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from `svyglm()` for further computation so that would not bring problems. 
 #' 
 #' For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
-#' 
-#' \code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
-#'
-#' In \code{control}, `alpha` is the mixture proportions of optimal subsampling probability and 
-#' uniform sampling probability. `b` is the parameter controls the upper 
-#' threshold for optimal subsampling probability. 
 #'
 #' @references
 #' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59.

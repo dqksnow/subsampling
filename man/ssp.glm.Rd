@@ -34,38 +34,83 @@ estimate the optimal subsampling probability.}
 \item{n.ssp}{The expectation optimal subsample size (the second-step subsample
 size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size.}
 
-\item{family}{\code{family} can be a character string naming a family function, a family function or the result of a call to a family function. Currently \code{'binomial'}, \code{'poisson'} and \code{'Gamma'} are implemented.}
+\item{family}{\code{family} can be a character string naming a family function, a family function or the result of a call to a family function.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities.
-Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}.}
+\item{criterion}{The choices of \code{criterion} include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform.}
+\itemize{
+\item \code{optA} subsampling probabilities are derived by minimizing the
+trace of the asymptotic covariance of subsample estimator. \code{optL} subsampling
+probabilities are derived by minimizing the trace of a transportation of the
+asymptotic covariance of subsample estimator. The computational complexity of
+optA subsampling probabilities is \eqn{O(N d^2)} while that of optL is \eqn{O(N d)}.
+\item \code{LCC} stands for the Local Case-Control subsampling probability, serving as a baseline criterion.
+\item \code{uniform} assigns each observation with equal subsampling probability
+\eqn{\frac{1}{N}}, serving as a baseline criterion.
+}}
 
-\item{sampling.method}{The sampling method for drawing the optimal subsample.
-Choices include \code{withReplacement} and \code{poisson}(default).}
+\item{sampling.method}{The options for the \code{sampling.method} argument include \code{withReplacement}
+and \code{poisson} (default). \code{withReplacement} stands for drawing \code{n.ssp}
+subsamples from full dataset of size \eqn{N} with replacement, using the specified
+subsampling probability. \code{poisson} stands for drawing subsamples one by one by
+comparing the subsampling probability with a realization of uniform random
+variable  \eqn{U(0,1)}. The expected number of drawed samples are \eqn{n.ssp}.
+The main differences are:
+\itemize{
+\item \code{withReplacement} draws exactly  \code{n.ssp} subsamples while \code{poisson} draws
+subsamples with expectation \code{n.ssp} meaning the actual number may vary
+slightly.
+\item \code{withReplacement} requires loading the full dataset at once while \code{poisson}
+allows for scanning the dataset one observation at a time.
+\item Theoretical results showed that the \code{poisson} method tends to get a
+subsample estimator with smaller asymptotic variance compared to the
+\code{withReplacement} method.
+}}
 
-\item{likelihood}{The type of the maximum likelihood function used to
-calculate the optimal subsampling estimator. Choices include
-\code{weighted} and \code{logOddsCorrection}.}
+\item{likelihood}{The available choices for \code{likelihood} include \code{weighted} (default) and
+\code{logOddsCorrection}. The reason we can not use an equally weighted likelihood
+function for the subsample is that it introduces bias due to the different
+subsampling probabilities. Therefore, we need to apply methods to correct the
+bias.
+\itemize{
+\item \code{weighted} refers to the weighted likelihood function for subsample, where
+each observation is weighted by the inverse of its subsampling probability.
+\item \code{logOddsCorrection} stands for the conditional likelihood function for the
+subsample. "conditional" means that each element in the likelihood function
+is the probability of \eqn{Y=1} given that this subsample was drawn. \code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
+}}
 
-\item{control}{A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.}
+\item{control}{The argument \code{control} contains two tuning parameters \code{alpha} and \code{b}.
+\itemize{
+\item \code{alpha} \eqn{\in [0,1]} is the mixture weights of the user assigned subsampling
+probability and uniform subsampling probability. That is, the actual subsample
+probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. The aim is to
+protect the subsample estimator from those subsamples with extreme small
+subsampling probability. The default value of \code{alpha} is 0.
+\item \code{b} is also used to constaint the subsample probability. It can be viewed as
+the threshold for too large subsample probability. It take values
+between \eqn{(0,\frac{N}{n})}. \code{b} close to 0 means subsample probabilities are
+compressed to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value
+and it works well for many cases.
+}}
 
 \item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
 
 \item{...}{A list of parameters which will be passed to \code{svyglm()}.}
 }
 \value{
-ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
+\code{ssp.glm} returns an object of class "ssp.glm" containing the following components (some are optional):
 
 \describe{
 \item{model.call}{model call}
 \item{coef.plt}{pilot estimator}
-\item{coef.ssp}{optimal subsample estimator.}
-\item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
+\item{coef.ssp}{optimal subsample estimator}
+\item{coef}{the linear combination of \code{coef.plt} and \code{coef.ssp.} The combine weights depend on the relative size of \code{n.plt} and \code{n.ssp} as well as the estimated covariance matrix of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has been drawn. The coefficients and standard errors printed by summary are \code{coef} and the square root of \code{diag(cov)}}
 \item{cov.ssp}{covariance matrix of \code{coef.ssp}}
-\item{cov}{covariance matrix of \code{beta.cmb}}
-\item{index.plt}{index of pilot subsample in the full sample}
-\item{index.ssp}{index of optimal subsample in the full sample}
+\item{cov}{covariance matrix of \code{coef}}
+\item{index.plt}{the row index of drawn pilot subsamples in the full data}
+\item{index.ssp}{the row index of drawn optimal subsamples in the full data}
 \item{N}{number of observations in the full sample}
-\item{subsample.size.expect}{expected subsample size}
+\item{subsample.size.expect}{\code{subsample.size.expect} is the expected subsample size which is equals to \code{n.ssp} when we use \code{ssp.glm.} In some other models like \code{ssp.relogit} it might be different.}
 \item{terms}{model terms}
 }
 }
@@ -73,15 +118,20 @@ ssp.glm returns an object of class "ssp.glm" containing the following components
 Draw subsample from full dataset and fit glm on subsample. Refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette} for a quick start.
 }
 \details{
+A pilot estimator for the unknown parameter  \eqn{\beta} is required because optA and
+optL subsampling probabilities depend on  \eqn{\beta}. Yes, no free lunch when it
+comes to the optimal subsampling probabilities. Fortunately we only need the
+pilot estimator to satisfy some mild conditions. For logistic regression, this
+is achieved by drawing a size \code{n.plt} subsample with replacement from full
+dataset. The case-control subsample probability is applied, that is, \eqn{\pi_i =
+  \frac{1}{2N_1}} for  \eqn{Y_i=1} and  \eqn{\pi_i = \frac{1}{2N_0}} for  \eqn{Y_i=0},
+\eqn{i=1,...,N}, where  \eqn{N_0} is the count of  \eqn{Y=0} and  \eqn{N_1 = N - N_0}. For other
+families in glm, uniform subsampling probability is used. Typically, \code{n.plt} is
+relatively small compared to \code{n.ssp}.
+
 As suggested by \code{survey::svyglm()}, for binomial and poisson families use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The warning is due to the non-integer survey weights. The ‘quasi’ versions of the family objects give the same point estimates and do not give the warning. Subsampling methods only use point estimates from \code{svyglm()} for further computation so that would not bring problems.
 
 For Gamma family, it will only return the estimation of coefficients, not dispersion parameter.
-
-\code{likelihood = logOddsCorrection} is implemented only for logistic regression (family = binomial or quasibonomial).
-
-In \code{control}, \code{alpha} is the mixture proportions of optimal subsampling probability and
-uniform sampling probability. \code{b} is the parameter controls the upper
-threshold for optimal subsampling probability.
 }
 \examples{
 # logistic regression

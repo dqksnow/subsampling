@@ -19,7 +19,18 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The R package `subsampling` provides optimal subsampling methods for common statistical models such as glm, softmax(multinomial) regression, rare event logistic regression and quantile regression model.
+A major challenge in big data statistical analysis is the demand for computing
+resources. For example, when fitting a logistic regression model to binary
+response variable with $N \times d$ dimensional covariates, the computational
+complexity of estimating the coefficients using the IRLS
+algorithm is $O(\zeta N d^2)$, where $\zeta$ is the number of iteriation. When $N$ is large, the time cost can be
+unaffordable, especially if high performance computing resource are
+unavailable. To address this issue, subsampling has become a widely used
+technique to perform the necessary calculations on a subsample drawn from the
+full dataset. The computational burden is reduced while having the efficiency of
+parameter estimation.
+
+The R package `subsampling` provides optimal subsampling methods for common statistical models such as GLM(Generalized Linear Models), softmax(multinomial) regression, rare event logistic regression and quantile regression model.
 
 ## Installation
 
@@ -34,12 +45,14 @@ devtools::install_github("dqksnow/Subsampling")
 
 The [Online document](https://dqksnow.github.io/Subsampling/) provides a guidance for quick start.
 
-- [Generalized Linear Model](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
-  
+- [Generalized linear model](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+- [Rare event logistic regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+- [Softmax(multinomial) regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+- [Quantile regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
   
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+This is a basic example of subsampling method on logistic regression:
 
 ```{r example}
 library(subsampling)

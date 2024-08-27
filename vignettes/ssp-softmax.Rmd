@@ -1,9 +1,9 @@
 ---
-title: "An Introduction to `ssp.glm`"
+title: "An Introduction to `ssp.softmax`"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{ssp-logit}
+  %\VignetteIndexEntry{ssp-softmax}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
