@@ -1,0 +1,197 @@
+---
+title: "Introduction to `ssp.quantreg`: Subsampling for Quantile Regression"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{ssp-quantreg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(subsampling)
+```
+
+This vignette introduces the usage of 
+`ssp.quantreg`. It provides a subsampling method for quantile regression model on massive datasets. The statistical theory and algorithms behind this implementation can be found in the relevant reference papers.
+
+Quantile regression aims to estimate conditional quantiles by minimizing the following loss function:
+
+$$
+\min_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \rho_\tau \left( y_i - \beta^\top x_i \right) = 
+\frac{1}{N} \sum_{i=1}^{N} \left( y_i - \beta^\top x_i \right) \left\{ \tau - I \left( y_i < \beta^\top x_i \right) \right\},
+$$
+where $\tau$ is the quantile of interest, $N$ is full data size.
+
+The idea of subsampling methods is as follows: instead of fitting the model on
+the size $N$ full dataset, a subsampling probability is assigned to each observation  and a smaller, informative subsample is drawn. The model is then fitted on the subsample to obtain an estimator with reduced computational cost.
+
+## Terminology
+
+- Full dataset: The whole dataset used as input.
+
+- Full data estimator: The estimator obtained by fitting the model on the full dataset.
+
+- Subsample: A subset of observations drawn from the full dataset.
+
+- Subsample estimator: The estimator obtained by fitting the model on the subsample.
+
+- Subsampling probability ($\pi$): The probability assigned to each observation for inclusion in the subsample.
+
+## Example
+
+We introduce `ssp.quantreg` with simulated data. $X$
+contains $d=6$ covariates drawn from  multinormal distribution and $Y$ is the response variable. The full data size is $N = 1 \times 10^4$. The interested quantile is 0.75.
+
+```{r}
+set.seed(1)
+N <- 1e4
+tau <- 0.75
+beta.true <- rep(1, 7)
+d <- length(beta.true) - 1
+corr  <- 0.5
+sigmax  <- matrix(0, d, d)
+for (i in 1:d) for (j in 1:d) sigmax[i, j] <- corr^(abs(i-j))
+X <- MASS::mvrnorm(N, rep(0, d), sigmax)
+err <- rnorm(N, 0, 1) - qnorm(tau)
+Y <- beta.true[1] + X %*% beta.true[-1] + err * rowMeans(abs(X))
+data <- as.data.frame(cbind(Y, X))
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
+formula <- Y ~ .
+head(data)
+```
+
+The function usage is
+
+```{r, eval = FALSE}
+ssp.quantreg(
+  formula,
+  data,
+  subset = NULL,
+  tau = 0.5,
+  n.plt,
+  n.ssp,
+  B = 5,
+  boot = TRUE,
+  criterion = "optL",
+  sampling.method = "withReplacement",
+  likelihood = c("weighted"),
+  control = list(...),
+  contrasts = NULL,
+  ...
+)
+```
+
+## Key Arguments
+
+The core functionality of `ssp.quantreg` revolves around three key questions:
+
+- How are subsampling probabilities computed? (Controlled by the `criterion` argument)
+
+- How is the subsample drawn? (Controlled by the `sampling.method` argument)
+
+- How is the likelihood adjusted to correct for bias? (Controlled by the `likelihood` argument)
+
+### `criterion`
+
+`criterion` stands for the criterion we choose to compute the sampling probability for each observation. The choices of `criterion` include `optL`(default) and `uniform`. In `optL`, the optimal subsampling probability is by minimizing a transformation of the asymptotic covariance of subsample estimator. `uniform` is a baseline method.
+
+### `sampling.method`
+
+The options for the `sampling.method` argument include `withReplacement` (default)
+and `poisson`. `withReplacement` stands for drawing $n.ssp$
+subsamples from full dataset with replacement, using the specified
+subsampling probability. `poisson` stands for drawing subsamples one by one by
+comparing the subsampling probability with a realization of uniform random
+variable $U(0,1)$. The expected number of drawn samples are $n.ssp$.
+
+### `likelihood`
+
+The available choice for `likelihood` in `ssp.quantreg` is `weighted`. It takes the inverse of sampling probabblity as the weights in likelihood function to correct the bias introduced by unequal subsampling probabilities.
+
+### `boot` and `B`
+
+An option for drawing $B$ subsamples (each with size `n.ssp`) and deriving subsample estimator and asymptotic covariance matrix based on them. After getting $\hat{\beta}_{b}$ on the $b$-th subsample, $b=1,\dots B$, it calculates
+
+$$
+\hat{\beta}_I = \frac{1}{B} \sum_{b=1}^{B} \hat{\beta}_{b}
+$$
+as the final estimator and 
+$$
+\hat{V}(\hat{\beta}_I) = \frac{1}{r_{ef} B (B - 1)} 
+\sum_{b=1}^{B} \left( \hat{\beta}_{b} - \hat{\beta}_I  \right)^{\otimes 2},
+$$
+where $r_{ef}$ is a correction term for effective subsample size since the observations in each subsample can be replicated.  For more details, see @wang2021optimal.
+
+## Results
+
+After drawing subsample(s), `ssp.quantreg` utilizes `quantreg::rq` to fit the model
+on the subsample(s). Arguments accepted by `quantreg::rq` can be passed through `...` in `ssp.quantreg`.
+
+Below are two examples demonstrating the use of `ssp.quantreg` with different configurations.
+
+```{r}
+B <- 5
+n.plt <- 200
+n.ssp <- 200
+ssp.results1 <- ssp.quantreg(formula, 
+                             data, 
+                             tau = tau, 
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B, 
+                             boot = TRUE, 
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement', 
+                             likelihood = 'weighted'
+                             )
+
+ssp.results2 <- ssp.quantreg(formula, 
+                             data, 
+                             tau = tau, 
+                             n.plt = n.plt,
+                             n.ssp = n.ssp,
+                             B = B, 
+                             boot = FALSE, 
+                             criterion = 'optL',
+                             sampling.method = 'withReplacement', 
+                             likelihood = 'weighted'
+                             )
+```
+
+### Returned object 
+
+The returned object contains estimation results and index of drawn
+subsample in the full dataset. 
+
+```{r}
+names(ssp.results1)
+```
+
+```{r}
+summary(ssp.results1)
+```
+
+```{r}
+summary(ssp.results2)
+```
+Some key returned variables:
+
+- `index.plt` and `index` are the row indices of
+drawn pilot subsamples and optimal subsamples in the full data. They are ready
+to be used for further analysis or downstream tasks.
+
+- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
+combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
+
+- `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
+`coef`. If `boot=FALSE`, covariance matrix would not be estimated and a size `n.ssp * B` subsample would be drawn.
+
+### References

@@ -1,57 +1,97 @@
-#' Optimal Subsampling Method for Softmax(multinomial logistic) Regression Model
+#' Optimal Subsampling Method for Softmax (multinomial logistic) Regression Model
 #' @description
-#' Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on subsample.
+#' Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html) for a quick start.
 #' 
-#' @param formula An object of class "formula" which describes the model to be
-#'  fitted.
-#' @param data A data frame containing the variables in the model.
-#' @param subset An optional vector specifying a subset of observations to be used.
-#' @param n.plt The pilot subsample size (the first-step subsample size).
-#' These samples will be used to estimate the pilot estimator as well as to
-#' estimate the optimal subsampling probability.
-#' @param n.ssp The expectation optimal subsample size (the second-step subsample
-#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
+#' @param formula A model formula object of class "formula" that describes the model to be fitted.
+#' @param data A data frame containing the variables in the model. Denote \eqn{N} as the number of observations in `data`.
+#' @param subset An optional vector specifying a subset of observations from `data` to use for the analysis. This subset will be viewed as the full data.
+#' @param n.plt The pilot subsample size (first-step subsample size).
+#' This subsample is used to compute the pilot estimator and estimate the optimal subsampling probabilities.
+#' @param n.ssp The expected size of the optimal subsample (second-step subsample). For `sampling.method = 'withReplacement'`, The exact subsample size is `n.ssp`. For `sampling.method = 'poisson'`, `n.ssp` is the expected subsample size. 
 #' @param criterion The criterion of optimal subsampling probabilities.
-#' Choices include \code{optA}, \code{optL}, \code{MSPE}(default), \code{LUC} and \code{uniform}. 
-#' @param sampling.method The sampling method for drawing the optimal subsample. 
-#' Choices include \code{withReplacement} and \code{poisson}(default).
-#' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator. Choices include 
+#' Choices include \code{optA}, \code{optL}, \code{MSPE}(default), \code{LUC} and \code{uniform}.
+#' 
+#' - `MSPE` Minimizes the mean squared prediction error between subsample estimator and full data estimator.
+#' 
+#' - `optA` Minimizes the trace of the asymptotic covariance matrix of the subsample estimator. 
+#' 
+#' - `optL` Minimizes the trace of a transformation of the asymptotic covariance matrix, which reduces computational costs than `optA`.
+#' 
+#' - `LUC` Local uncertainty sampling method, serving as a baseline subsampling strategy. See Wang and Kim (2022).
+#' 
+#' - `uniform` Assigns equal subsampling probability
+#' \eqn{\frac{1}{N}} to each observation, serving as a baseline subsampling strategy.
+#' 
+#' @param sampling.method The sampling method to use. 
+#' Choices include \code{withReplacement} and \code{poisson}(default). `withReplacement` draws exactly `n.ssp`
+#'   subsamples from size \eqn{N} full dataset with replacement, using the specified
+#' subsampling probabilities. `poisson` draws observations independently by
+#' comparing each subsampling probability with a realization of uniform random
+#' variable  \eqn{U(0,1)}.
+#' Differences between methods:
+#' 
+#' - Sample size: `withReplacement` draws exactly  `n.ssp` subsamples while `poisson` draws
+#' subsamples with expected size `n.ssp`, meaning the actual size may vary.
+#' 
+#' - Memory usage: `withReplacement` requires the entire dataset to be loaded at once, while `poisson`
+#' allows for processing observations sequentially (will be implemented in future version). 
+#' 
+#' - Estimator performance: Theoretical results show that the `poisson` tends to get a
+#' subsample estimator with lower asymptotic variance compared to the
+#' `withReplacement`
+#' 
+#' @param likelihood A bias-correction likelihood function is required for subsample since unequal subsampling probabilities introduce bias. Choices include 
 #'  \code{weighted} and \code{MSCLE}(default). 
+#'  
+#' - `weighted` Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
+#' 
+#' - `MSCLE` It uses a conditional likelihood, where each element of the likelihood represents the density of \eqn{Y_i} given that this observation was drawn.
+#' 
 #' @param constraint The constraint for identifiability of softmax model. Choices include 
-#'  \code{baseline} and \code{summation}(default). 
+#'  \code{baseline} and \code{summation}(default). The baseline constraint assumes the coefficient for the baseline category are \eqn{0}. Without loss of generality, we set the category \eqn{Y=0} as the baseline category so that \eqn{\boldsymbol{\beta}_0=0}. The summation constraint \eqn{\sum_{k=0}^{K} \boldsymbol{\beta}_k} is also used in the subsampling method for the purpose of calculating subsampling probability. These two constraints lead to different interpretation of coefficients but are equal for computing \eqn{P(Y_{i,k} = 1 \mid \mathbf{x}_i)}. The estimation of coefficients returned by `ssp.softmax()` is under baseline constraint.
+#'  
 #' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
-#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param control A list of parameters for controlling the sampling process. There are two tuning parameters `alpha` and `b`. Default is \code{list(alpha=0, b=2)}.
+#' 
+#' - `alpha` \eqn{\in [0,1]} is the mixture weight of the user-assigned subsampling
+#' probability and uniform subsampling probability. The actual subsample
+#' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
+#' subsampling probability. The default value is 0.
+#' 
+#' - `b` is a positive number which is used to constaint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value. See relevant references for further details.
+#' 
 #' @param ... A list of parameters which will be passed to \code{nnet::multinom()}. 
 #'
 #' @return
 #' ssp.softmax returns an object of class "ssp.softmax" containing the following components (some are optional):
 #' \describe{
-#'   \item{model.call}{model call}
-#'   \item{coef.plt}{pilot estimator}
-#'   \item{coef.ssp}{optimal subsample estimator.}
-#'   \item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
-#'   \item{cov.ssp}{covariance matrix of \code{coef.ssp}}
-#'   \item{cov}{covariance matrix of \code{beta.cmb}}
-#'   \item{index.plt}{index of pilot subsample in the full sample}
-#'   \item{index.ssp}{index of optimal subsample in the full sample}
-#'   \item{N}{number of observations in the full sample}
-#'   \item{subsample.size.expect}{expected subsample size}
-#'   \item{terms}{model terms}
+#'   \item{model.call}{The original function call.}
+#'   \item{coef.plt}{The pilot estimator. See Details for more information.}
+#'   \item{coef.ssp}{The estimator obtained from the optimal subsample.}
+#'   \item{coef}{The weighted linear combination of `coef.plt` and `coef.ssp`. The combination weights depend on the relative size of `n.plt` and `n.ssp` and the estimated covariance matrices of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are `coef` and the square root of `diag(cov)`.}
+#'   \item{cov.ssp}{The covariance matrix of \code{coef.ssp}}
+#'   \item{cov}{The covariance matrix of \code{beta.cmb}}
+#'   \item{index.plt}{Row indices of pilot subsample in the full dataset.}
+#'   \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
+#'   \item{N}{The number of observations in the full dataset.}
+#'   \item{subsample.size.expect}{The expected subsample size}
+#'   \item{terms}{The terms object for the fitted model.}
 #' }
-#' @details
-#' The returned coefficients are under baseline constraints, that is, the first category is baseline with zero coefficient.
 #' 
-#' \code{criterion = MSPE} stands for optimal subsampling probabilities by minimizing the Mean Squared Prediction Error which is immune to the choice of model constraint. \code{criterion = LUC} stands for local uncertainty sampling. Refer to Yao, Zou and Wang (2023B).
-#'
-#' In \code{control}, alpha is the mixture proportions of optimal subsampling probability and uniform sampling probability. b is the parameter controls the upper threshold for optimal subsampling probability. 
-#'
-#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
+#' @details
+#' 
+#' A pilot estimator for the unknown parameter  \eqn{\beta} is required because MSPE, optA and
+#' optL subsampling probabilities depend on \eqn{\beta}. There is no "free lunch" when determining optimal subsampling probabilities. For softmax regression, this
+#' is achieved by drawing a size `n.plt` subsample with replacement from full
+#' dataset with uniform sampling probability.
+#' 
 #'
 #' @references
 #' Yao, Y., & Wang, H. (2019). Optimal subsampling for softmax regression. \emph{Statistical Papers}, \strong{60}, 585-599.
 #' 
 #' Han, L., Tan, K. M., Yang, T., & Zhang, T. (2020). Local uncertainty sampling for large-scale multiclass logistic regression. \emph{Annals of Statistics}, \strong{48}(3), 1770-1788.
+#' 
+#' Wang, H., & Kim, J. K. (2022). Maximum sampled conditional likelihood for informative subsampling. \emph{Journal of machine learning research}, \strong{23}(332), 1-50.
 #' 
 #' Yao, Y., Zou, J., & Wang, H. (2023). Optimal poisson subsampling for softmax regression. \emph{Journal of Systems Science and Complexity}, \strong{36}(4), 1609-1625.
 #' 
@@ -70,7 +110,7 @@
 #' sigma <- matrix(0.5, nrow = d, ncol = d)
 #' diag(sigma) <- rep(1, d)
 #' X <- MASS::mvrnorm(N, mu, sigma)
-#' prob <- exp( X %*% beta.true.summation)
+#' prob <- exp(X %*% beta.true.summation)
 #' prob <- prob / rowSums(prob)
 #' Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 #' n.plt <- 500

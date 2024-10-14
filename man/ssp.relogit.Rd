@@ -18,56 +18,76 @@ ssp.relogit(
 )
 }
 \arguments{
-\item{formula}{An object of class "formula" which describes the model to be
-fitted.}
+\item{formula}{A model formula object of class "formula" that describes the model to be fitted.}
 
-\item{data}{A data frame containing the variables in the model.}
+\item{data}{A data frame containing the variables in the model. Denote \eqn{N} as the number of observations in \code{data}.}
 
-\item{subset}{An optional vector specifying a subset of observations to be used.}
+\item{subset}{An optional vector specifying a subset of observations from \code{data} to use for the analysis. This subset will be viewed as the full data.}
 
-\item{n.plt}{The pilot subsample size (the first-step subsample size).
-These samples will be used to estimate the pilot estimator as well as to
-estimate the optimal subsampling probability.}
+\item{n.plt}{The pilot subsample size (first-step subsample size).
+This subsample is used to compute the pilot estimator and estimate the optimal subsampling probabilities.}
 
-\item{n.ssp}{The expected optimal subsample size (the second-step subsample
+\item{n.ssp}{The expected subsample size (the second-step subsample
 size) drawn from those samples with \code{Y=0}. All rare events (\code{Y=1}) are included in the optimal subsample automatically.}
 
-\item{criterion}{The criterion of optimal subsampling probabilities.
-Choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform}.}
+\item{criterion}{The choices include \code{optA}, \code{optL}(default), \code{LCC} and \code{uniform.}
+\itemize{
+\item \code{optA} Minimizes the trace of the asymptotic covariance matrix of the subsample estimator.
+\item \code{optL} Minimizes the trace of a transformation of the asymptotic covariance matrix. The computational complexity of
+optA is \eqn{O(N d^2)} while that of optL is \eqn{O(N d)}.
+\item \code{LCC} Local Case-Control sampling probability, used as a baseline subsampling strategy.
+\item \code{uniform} Assigns equal subsampling probability
+\eqn{\frac{1}{N}} to each observation, serving as a baseline subsampling strategy.
+}}
 
-\item{likelihood}{The type of the maximum likelihood function used to
-calculate the optimal subsampling estimator. Choices include
-\code{weighted} and \code{logOddsCorrection}(default).}
+\item{likelihood}{The likelihood function to use. Options include \code{weighted} and
+\code{logOddsCorrection} (default). A bias-correction likelihood function is required for subsample since unequal subsampling probabilities introduce bias.
+\itemize{
+\item \code{weighted} Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
+\item \code{logOddsCorrection} This lieklihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+}}
 
-\item{control}{A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.}
+\item{control}{The argument \code{control} contains two tuning parameters \code{alpha} and \code{b}.
+\itemize{
+\item \code{alpha} \eqn{\in [0,1]} is the mixture weight of the user-assigned subsampling
+probability and uniform subsampling probability. The actual subsample
+probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
+subsampling probability. The default value is 0.
+\item \code{b} is a positive number which is used to constaint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
+}}
 
 \item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
 
 \item{...}{A list of parameters which will be passed to \code{svyglm()}.}
 }
 \value{
-ssp.glm returns an object of class "ssp.glm" containing the following components (some are optional):
+ssp.relogit returns an object of class "ssp.relogit" containing the following components (some are optional):
+
 \describe{
-\item{model.call}{model call}
-\item{coef.plt}{pilot estimator}
-\item{coef.ssp}{optimal subsample estimator.}
-\item{coef}{weighted combination of \code{coef.plt} and \code{coef.ssp}.}
-\item{cov.ssp}{covariance matrix of \code{coef.ssp}}
-\item{cov}{covariance matrix of \code{beta.cmb}}
-\item{index.plt}{index of pilot subsample in the full sample}
-\item{index.ssp}{index of optimal subsample in the full sample}
-\item{N}{number of observations in the full sample}
-\item{subsample.size.expect}{expected subsample size}
-\item{terms}{model terms}
+\item{model.call}{The original function call.}
+\item{coef.plt}{The pilot estimator. See Details for more information.}
+\item{coef.ssp}{The estimator obtained from the optimal subsample.}
+\item{coef}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp.} The combination weights depend on the relative size of \code{n.plt} and \code{n.ssp} and the estimated covariance matrices of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are \code{coef} and the square root of \code{diag(cov)}.}
+\item{cov.ssp}{The covariance matrix of \code{coef.ssp}}
+\item{cov}{The covariance matrix of \code{beta.cmb}}
+\item{index.plt}{Row indices of pilot subsample in the full dataset.}
+\item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
+\item{N}{The number of observations in the full dataset.}
+\item{subsample.size.expect}{The expected subsample size.}
+\item{terms}{The terms object for the fitted model.}
 }
 }
 \description{
-Draw subsample from full dataset and fit logistic regression model on subsample.
+Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the \href{https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html}{vignette}.
 }
 \details{
-Rare event stands for the number of Y=1 is rare compare to the number of Y=0 in the full sample. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. When \code{criterion = optA, optL or LCC}, observations with Y=1 are preserved and it draw n.ssp subsmples from observations with Y=0.
+'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw \code{n.ssp} subsmples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability.
 
-Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
+A pilot estimator for the unknown parameter  \eqn{\beta} is required because both optA and
+optL subsampling probabilities depend on \eqn{\beta}. This
+is achieved by drawing half size subsample from rare observations and half from non-rare observations.
+
+Most of the arguments and returned variables have similar meaning with \link{ssp.glm}. Refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
 }
 \examples{
 set.seed(1)

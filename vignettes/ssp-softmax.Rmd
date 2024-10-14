@@ -1,5 +1,5 @@
 ---
-title: "An Introduction to `ssp.softmax`"
+title: "Introduction to `ssp.softmax`: Subsampling for Softmax (Multinomial) Regression Model"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -17,188 +17,177 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette takes logistic
-regression model as an example of glm to describe the usage of function
-`ssp.glm`. The statistical theory and algorithms in this implementation are
-described in references papers.
+This vignette introduces the usage of
+`ssp.softmax`, which draws optimal subsample from full data and fit softmax (multinomial) regression on the subsample. The statistical theory and algorithms in this implementation can be found in the relevant reference papers.
 
-The log likelihood function of glm is
+Denote $Y$ as multi-category response variable and $K+1$ is the number of categories. $N$ is the number of observations in the full dataset. $X$ is the $N \times d$ covariates matrix. Softmax regression model assumes that 
+$$
+P(Y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_k)}{\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l)},
+$$
+for $i = 1, \ldots, N$ and $k = 0, 1, \ldots, K$, where $\boldsymbol{\beta}_k$'s are $d$-dimensional unknown coefficients. We define $\boldsymbol{\beta} = (\boldsymbol{\beta}_0^\top, \boldsymbol{\beta}_1^\top, \ldots, \boldsymbol{\beta}_K^\top)^\top$ as a $(K+1)d$-dimensional vector.
+
+The log-likelihood function of softmax regression is
 
 $$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left\{y_i u(\beta^{\top} x_i)
-- \psi \left[ u(\beta^{\top} x_i) \right] \right\}.
-$$
-where $u$ and $\psi$ are known functions depend on the exponential family. For
-binomial family, the log likelihood function becomes
-
-$$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left[y_i \beta^{\top} x_i -
-\log\left(1 + e^{\beta^\top x_i}\right) \right].
+\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \left[ \sum_{k=0}^{K} y_{i,k} \mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{ \sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right]
 $$
 
-The idea of subsampling methods is as follows: instead of fitting the model to
-the size $N$ full dataset, we first assign a subsampling probability to each
-observation in the full dataset. Then we draw a relative small subsample and fit
-the model to this subsample. The sampling probabilities are assigned based on
-the goal of making the subsample more informative.
+The idea of subsampling methods is as follows: instead of fitting the model on
+the size $N$ full dataset, a subsampling probability is assigned to each observation  and a smaller, informative subsample is drawn. The model is then fitted on the subsample to obtain an estimator with reduced computational cost.
 
-# Basic Usage of `ssp.glm`
+## Terminology
 
-You can install the development version of subsampling from [GitHub](https://github.com/) with:
+- Full dataset: The whole dataset used as input.
 
-``` r
-# install.packages("devtools")
-devtools::install_github("dqksnow/Subsampling")
-```
+- Full data estimator: The estimator obtained by fitting the model on the full dataset.
+
+- Subsample: A subset of observations drawn from the full dataset.
+
+- Subsample estimator: The estimator obtained by fitting the model on the subsample.
+
+- Subsampling probability ($\pi$): The probability assigned to each observation for inclusion in the subsample.
+
+# Example
 
 ```{r setup}
-library(knitr)
 library(subsampling)
 ```
 
-We introduce the basic usage by using `ssp.glm` on a simulated example data. $X$
-contains $d=6$ covariates which follow multinormal distribution and $Y$ is the
-binary response variable. The full data size is $N = 1 \times 10^4$.
+We introduce the usage of `ssp.glm` with simulated data. $X$
+contains $d=3$ covariates drawn from multinormal distribution and $Y$ is the
+multicategory response variable with $K+1=3$ categories. The full data size is $N = 1 \times 10^4$.
 
 ```{r}
 set.seed(1)
+d <- 3
+K <- 2
+G <- rbind(rep(-1/(K+1), K), diag(K) - 1/(K+1)) %x% diag(d)
 N <- 1e4
-beta0 <- rep(-0.5, 7)
-d <- length(beta0) - 1
-corr <- 0.5
-sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
-X <- MASS::mvrnorm(N, rep(0, d), sigmax)
-colnames(X) <- paste("V", 1:ncol(X), sep = "")
-P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
-Y <- rbinom(N, 1, P)
+beta.true.baseline <- cbind(rep(0, d), matrix(-1.5, d, K))
+beta.true.summation <- cbind(rep(1, d), 0.5 * matrix(-1, d, K))
+mu <- rep(0, d)
+sigma <- matrix(0.5, nrow = d, ncol = d)
+diag(sigma) <- rep(1, d)
+X <- MASS::mvrnorm(N, mu, sigma)
+prob <- exp(X %*% beta.true.summation)
+prob <- prob / rowSums(prob)
+Y <- apply(prob, 1, function(row) sample(0:K, size = 1, prob = row))
 data <- as.data.frame(cbind(Y, X))
-formula <- Y ~ .
+colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 head(data)
 ```
 
 The function usage is
 
 ```{r, eval = FALSE}
-ssp.glm(
+ssp.softmax(
   formula,
   data,
-  subset = NULL,
+  subset,
   n.plt,
   n.ssp,
-  family = "quasibinomial",
-  criterion = "optL",
+  criterion = "MSPE",
   sampling.method = "poisson",
-  likelihood = "weighted",
+  likelihood = "MSCLE",
+  constraint = "summation",
   control = list(...),
   contrasts = NULL,
   ...
-  )
+)
 ```
 
-For clarity, we define the terms used in this vignette. The entire dataset we
-have on hand is referred to as the "full dataset" and the estimator derived from
-this dataset is called the "full data estimator". The sample we draw from the
-full dataset is called the "subsample" and the corresponding estimator is the
-"subsample estimator". The subsampling probability is denoted as $\pi$.
 
-## Arguments
+## Key Arguments
 
-Arguments `criterion`, `sampling.method` and `likelihood` correspond to three
-questions: 
+The core functionality of `ssp.glm` revolves around three key questions:
 
-- How to compute the sampling probability for each observation?
+- How are subsampling probabilities computed? (Controlled by the `criterion` argument)
 
-- How do subsamples be drawn? 
+- How is the subsample drawn? (Controlled by the `sampling.method` argument)
 
-- How should the likelihood function be modified to
-account for the bias introduced by the subsampling process?
+- How is the likelihood adjusted to correct for bias? (Controlled by the `likelihood` argument)
 
 ### `criterion`
 
-The choices of `criterion` include `optA`, `optL`(default), `LCC` and `uniform`. The optimal subsampling criterion `optA` and `optL` are derived by minimizing the asymptotic covariance of subsample estimator, proposed by @wang2018optimal. `LCC` and `uniform` are baseline methods.
+The choices of `criterion` include `optA`, `optL`, ,`MSPE`(default), `LUC` and `uniform`. The default criterion `MSPE` minimizes the mean squared prediction error between subsample estimator and full data estimator. Criterion `optA` and `optL` are derived by minimizing the asymptotic covariance of subsample estimator. `LUC` and `uniform` are baseline methods. See @yao2023model for details.
 
 ### `sampling.method`
 
-The options for the `sampling.method` argument include `withReplacement`
+The options for `sampling.method` include `withReplacement`
 and `poisson` (default). `withReplacement.` stands for drawing $n.ssp$
-subsamples from full dataset of size $N$ with replacement, using the specified
+subsamples from full dataset with replacement, using the specified
 subsampling probability. `poisson` stands for drawing subsamples one by one by
 comparing the subsampling probability with a realization of uniform random
-variable $U(0,1)$. The expected number of drawed samples are $n.ssp$. More details see @wang2019more.
+variable $U(0,1)$. The expected number of drawed samples are $n.ssp$.
 
 ### `likelihood`
 
-The available choices for `likelihood` include `weighted` (default) and
-`logOddsCorrection`. Both of these likelihood functions can derive an unbiased optimal subsample
-estimator. Theoretical results indicate that `logOddsCorrection` is more
-efficient than `weighted` in the context of logistic regression. See
-@wang2022maximum.
+The available choices for `likelihood` include `weighted` and
+`MSCLE`(default).  `MSCLE` stands for maximum sampled conditional likelihood. Both of these likelihood functions can derive an unbiased optimal subsample
+estimator. See @wang2022maximum for details about `MSCLE`. 
+
+### `constraint`
+
+Softmax model needs constraint on unknown coefficients for identifiability. The options for `constraint` include `summation`
+and `baseline` (default). The baseline constraint assumes the coefficient for the baseline category are $0$. Without loss of generality, we set the category $Y=0$ as the baseline category so that $\boldsymbol{\beta}_0=0$. The summation constraint $\sum_{k=0}^{K} \boldsymbol{\beta}_k$ is also used in the subsampling method for the purpose of calculating subsampling probability. These two constraints lead to different interpretation of coefficients but are equal for computing $P(Y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by `ssp.softmax()` is under baseline constraint.
 
 ## Results
 
-After drawing subsamples, `ssp.glm` utilizes `survey::svyglm` to fit the model
-on the subsample, which eventually uses `glm`. Arguments used in `svyglm` can be
-added in `ssp.glm` through `...` and will be passed to `svyglm`.
+After drawing subsample, `ssp.softmax` utilizes `nnet::multinom` to fit the model
+on the subsample. Arguments accepted by `nnet::multinom` can be passed through `...` in `ssp.softmax`.
+
+Below are two examples demonstrating the use of `ssp.softmax` with different configurations.
 
 ```{r}
 n.plt <- 200
 n.ssp <- 600
-ssp.results <- ssp.glm(formula = formula,
-                       data = data,
-                       n.plt = n.plt,
-                       n.ssp = n.ssp,
-                       family = "quasibinomial",
-                       criterion = "optL",
-                       sampling.method = "poisson",
-                       likelihood = "weighted"
-                       )
-summary(ssp.results)
+formula <- Y ~ . -1
+ssp.results1 <- ssp.softmax(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'MSPE',
+                            sampling.method = 'withReplacement',
+                            likelihood = 'weighted',
+                            constraint = 'baseline'
+                            )
+summary(ssp.results1)
 ```
+
+`summary(ssp.results1)` shows that it draws 600 observations out of 10000, where the number of unique indices is smaller since we use `sampling.method = 'withReplacement'`. After fitting softmax model on subsample using the choosen `weighted` likelihood function, we get coefficients estimation and standard errors as above.
 
 ```{r}
-ssp.results <- ssp.glm(formula = formula,
-                       data = data,
-                       n.plt = n.plt,
-                       n.ssp = n.ssp,
-                       family = "quasibinomial",
-                       criterion = "optA",
-                       sampling.method = "poisson",
-                       likelihood = "logOddsCorrection"
-                       )
-summary(ssp.results)
+ssp.results2 <- ssp.softmax(formula = formula,
+                            data = data,
+                            n.plt = n.plt,
+                            n.ssp = n.ssp,
+                            criterion = 'MSPE',
+                            sampling.method = 'poisson',
+                            likelihood = 'MSCLE',
+                            constraint = 'baseline'
+                            )
+summary(ssp.results2)
 ```
-
-As recommended by `survey::svyglm`, for binomial family, please use
-`family=quasibinomial()` to avoid a warning issued by `glm`. Refer to [svyglm() help
-documentation Details
-](https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm). The
-'quasi' version of the family objects provide the same point estimates.
 
 ### Returned object 
 
-`ssp.results` is an object contains estimation results and index of drawn
+The returned object contains estimation results and index of drawn
 subsamples in the full dataset. 
 
 ```{r}
-names(ssp.results)
+names(ssp.results1)
 ```
 
-- `index.plt` and `index` are the row index of
+Some key returned variables:
+
+- `index.plt` and `index` are the row indices of
 drawn pilot subsamples and optimal subsamples in the full data. They are ready
 to be used for further analysis or downstream tasks.
 
-- `coef.ssp`
-is the optimal subsample estimator for $\beta$ and `coef` is the linear 
-combination of `coef.plt` and `coef.ssp`. The coefficients and standard errors printed by summary are `coef` and the square root of `diag(cov)`.
+- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
+combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
 
-- `cov.ssp` and `cov` are estimated covariance matrix of `coef.ssp` and
+- `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
 `coef`. 
-
-- `subsample.size.expect` is the expected subsample size which is equals to
-`n.ssp` when we use `ssp.glm`.
-
-## Other Families
-
-We also provide examples for poisson regression and gamma regression in the help documentation of `ssp.glm`. Note that currently `likelihood = logOddsCorrection` is implemented only for logistic regression (family = binomial or quasibonomial).
 
 ### References

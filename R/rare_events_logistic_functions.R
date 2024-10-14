@@ -125,17 +125,21 @@ rare.subsampling <- function(inputs,
   nm <- rare.calculate.nm(X, Y, ddL.plt.correction, P.plt, criterion)
   ## Currently only Poisson sampling method has been implemented.
   if(criterion %in% c('optL', 'optA')){
-    H <- quantile(nm, 1 - n.ssp / (b * N)) # if consider threshold
+    H <- quantile(nm[index.plt], 1 - n.ssp / (b * N))
+    # threshold H is estimated by pilot sample
     nm[nm > H] <- H
     NPhi <- (N0 / N) * sum(nm[index.plt] / p.plt) / n.plt
+    # denominator NPhi is estimated by pilot sample
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
-    index.ssp <- poisson.index(N, Y + (1 - Y) * p.ssp)
+    index.ssp <- poisson.index(N, Y + (1 - Y) * p.ssp) # negative sampling
     p.ssp <- pmin(p.ssp[index.ssp], 1)
     ## calculate offset or weights:
     if (likelihood == 'logOddsCorrection') {
+      # only compute offsets for subsample, not for full data.
       offset <- -log(p.ssp)
     } else if (likelihood == 'weighted') {
       w.ssp <- 1 / (Y[index.ssp] + (1 - Y[index.ssp]) * p.ssp)
+      # inverse of actual sampling probability for each observation
     }
   } else if (criterion == 'LCC'){
     dm <- sum(nm[index.plt] / p.plt) / n.plt
@@ -144,6 +148,7 @@ rare.subsampling <- function(inputs,
     p.ssp <- pmin(p.ssp[index.ssp], 1)
     ## calculate offset or weights:
     if (likelihood == 'logOddsCorrection') {
+      # only compute offsets for subsample, not for full data.
       nm.1 <- abs(1 - P.plt[index.ssp])
       nm.0 <- abs(P.plt[index.ssp])
       pi.1 <- pmin((n.ssp + N1) * nm.1 / dm, 1)

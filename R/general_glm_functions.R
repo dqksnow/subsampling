@@ -79,7 +79,7 @@ calculate.offset <- function (X,
                               n.ssp = NULL,
                               criterion,
                               sampling.method) {
-  
+  # only compute offsets for subsample, not for full data.
   if (criterion == "optA") {
     norm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
     nm.1 <- abs(1 - d.psi) * norm
@@ -264,9 +264,11 @@ subsampling <- function(inputs,
       w.ssp <- 1 / p.ssp[index.ssp]
     }
   } else if (sampling.method == "poisson"){
-    H <- quantile(nm, 1 - n.ssp / (b * N)) # threshold
+    H <- quantile(nm[index.plt], 1 - n.ssp / (b * N)) 
+    # threshold H is estimated by pilot sample
     nm[nm > H] <- H
     NPhi <- sum(nm[index.plt] / p.plt) / n.plt
+    # denominator NPhi is estimated by pilot sample
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, p.ssp)
     if (likelihood == 'logOddsCorrection') {

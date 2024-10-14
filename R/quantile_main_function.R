@@ -1,50 +1,73 @@
 #' Optimal Subsampling Methods for Quantile Regression Model
 #' @description
-#' Draw subsample from full dataset and fit quantile regression model on subsample.
+#' Draw subsample from full dataset and fit quantile regression model. For a quick start, refer to the [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-quantreg.html).
 #'
 #'
-#' @param formula An object of class "formula" which describes the model to be
-#'  fitted.
-#' @param data A data frame containing the variables in the model.
-#' @param subset An optional vector specifying a subset of observations to be used.
-#' @param tau The quantile to be estimated,
-#' @param n.plt The pilot subsample size (the first-step subsample size).
-#' These samples will be used to estimate the pilot estimator as well as to
-#' estimate the optimal subsampling probability.
-#' @param n.ssp The expectation optimal subsample size (the second-step subsample
-#' size). For \code{sampling.method = 'withReplacement'}, \code{n.ssp} is exactly the subsample size. For \code{sampling.method = 'poisson'}, \code{n.ssp} is the expectation of subsample size. 
+#' @param formula A model formula object of class "formula" that describes the model to be fitted.
+#' @param data A data frame containing the variables in the model. Denote \eqn{N} as the number of observations in `data`.
+#' @param subset An optional vector specifying a subset of observations from `data` to use for the analysis. This subset will be viewed as the full data.
+#' @param tau The interested quantile.
+#' @param n.plt The pilot subsample size (first-step subsample size).
+#' This subsample is used to compute the pilot estimator and estimate the optimal subsampling probabilities.
+#' @param n.ssp The expected size of the optimal subsample (second-step subsample). For `sampling.method = 'withReplacement'`, The exact subsample size is `n.ssp`. For `sampling.method = 'poisson'`, `n.ssp` is the expected subsample size. 
 #' @param B The number of subsamples for the iterative sampling algorithm. Each subsample contains \code{n.ssp} observations. This allows us to estimate the covariance matrix.
-#' @param boot If TRUE then perform iterative sampling algorithm and estimate the covariance matrix. If FALSE then only one subsample is returned which contains n.ssp observations.
-#' @param criterion The criterion of optimal subsampling probabilities.
+#' @param boot If TRUE then perform iterative sampling algorithm and estimate the covariance matrix. If FALSE then only one subsample with size `B*n.ssp` is returned.
+#' @param criterion It determines how subsampling probabilities are computed.
 #' Choices include \code{optL}(default) and \code{uniform}. 
+#' 
+#' - `optL` Minimizes the trace of a transformation of the asymptotic covariance matrix of the subsample estimator.
+#' 
+#' - `uniform` Assigns equal subsampling probability
+#' \eqn{\frac{1}{N}} to each observation, serving as a baseline subsampling strategy.
+#' 
 #' @param sampling.method The sampling method for drawing the optimal subsample.
-#' Choices include \code{withReplacement} and \code{poisson}(default).
+#' Choices include \code{withReplacement} and \code{poisson}(default). `withReplacement` draws exactly `n.ssp`
+#'   subsamples from size \eqn{N} full dataset with replacement, using the specified
+#' subsampling probabilities. `poisson` draws observations independently by
+#' comparing each subsampling probability with a realization of uniform random
+#' variable  \eqn{U(0,1)}.
+#' 
 #' @param likelihood The type of the maximum likelihood function used to
-#' calculate the optimal subsampling estimator. Currently it uses \code{weighted}. 
+#' calculate the optimal subsampling estimator. Currently \code{weighted} is implemented which applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
+#' 
 #' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
-#' @param control A list of parameters for controlling the sampling process. Default is \code{list(alpha=0, b=2)}.
+#' @param control The argument `control` contains two tuning parameters `alpha` and `b`. 
+#' 
+#' - `alpha` \eqn{\in [0,1]} is the mixture weight of the user-assigned subsampling
+#' probability and uniform subsampling probability. The actual subsample
+#' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
+#' subsampling probability. The default value is 0.
+#' 
+#' - `b` is a positive number which is used to constaint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value.
+#' See relevant references for further details.
+#' 
 #' @param ... A list of parameters which will be passed to \code{quantreg::rq()}. 
 #' 
 #' @return
-#' ssp.quantreg returns an object of class "ssp.quantreg" containing the following components (some are optional):
+#' `ssp.quantreg` returns an object of class "ssp.quantreg" containing the following components (some are optional):
 #' 
 #' \describe{
-#'   \item{model.call}{model call}
-#'   \item{coef.plt}{pilot estimator}
-#'   \item{coef}{optimal subsample estimator.}
-#'   \item{cov}{covariance matrix of \code{coef}}
-#'   \item{index.plt}{index of pilot subsample in the full sample}
-#'   \item{index.ssp}{index of optimal subsample in the full sample}
-#'   \item{N}{number of observations in the full sample}
-#'   \item{subsample.size.expect}{expected subsample size}
-#'   \item{terms}{model terms}
+#'   \item{model.call}{The original function call.}
+#'   \item{coef.plt}{The pilot estimator. See Details for more information.}
+#'   \item{coef}{The estimator obtained from the optimal subsample.}
+#'   \item{cov}{The covariance matrix of \code{coef}}
+#'   \item{index.plt}{Row indices of pilot subsample in the full dataset.}
+#'   \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
+#'   \item{N}{The number of observations in the full dataset.}
+#'   \item{subsample.size.expect}{The expected subsample size}
+#'   \item{terms}{The terms object for the fitted model.}
 #' }
 #' 
 #' @details
-#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Also refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
+#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
 #' 
-#' If `boot`=TRUE, the returned value `subsample.size.expect` equals to `B`*`n.ssp`, and the covariance matrix for `coef` would be calculated. 
-#' If `boot`=FALSE, the returned value `subsample.size.expect` equals to `n.ssp`, and the covariance matrix won't be estimated. 
+#' A pilot estimator for the unknown parameter \eqn{\beta} is required because 
+#' optL subsampling probabilities depend on \eqn{\beta}. There is no "free lunch" when determining optimal subsampling probabilities. For quantile regression, this
+#' is achieved by drawing a size `n.plt` subsample with replacement from full
+#' dataset, using uniform sampling probability.
+#' 
+#' If `boot`=TRUE, the returned value `subsample.size.expect` equals to `B*n.ssp`, and the covariance matrix for `coef` would be calculated. 
+#' If `boot`=FALSE, the returned value `subsample.size.expect` equals to `B*n.ssp`, but the covariance matrix won't be estimated. 
 #' 
 #' @references
 #' Wang, H., & Ma, Y. (2021). Optimal subsampling for quantile regression in big data. \emph{Biometrika}, \strong{108}(1), 99-112.

@@ -13,16 +13,16 @@ computing resources. For example, when fitting a logistic regression
 model to binary response variable with $N \times d$ dimensional
 covariates, the computational complexity of estimating the coefficients
 using the IRLS algorithm is $O(\zeta N d^2)$, where $\zeta$ is the
-number of iteriation. When $N$ is large, the time cost can be
-unaffordable, especially if high performance computing resource are
-unavailable. To address this issue, subsampling has become a widely used
-technique to perform the necessary calculations on a subsample drawn
-from the full dataset. The computational burden is reduced while having
-the efficiency of parameter estimation.
+number of iteriation. When $N$ is large, the cost can be unaffordable,
+especially if high performance computing resource are unavailable. To
+address this issue, subsampling has become a widely used technique to
+perform the necessary calculations on a subsample drawn from the full
+dataset. The computational burden is reduced while having the efficiency
+of parameter estimation.
 
 The R package `subsampling` provides optimal subsampling methods for
-common statistical models such as GLM(Generalized Linear Models),
-softmax(multinomial) regression, rare event logistic regression and
+common statistical models such as generalized linear models (GLM),
+softmax (multinomial) regression, rare event logistic regression and
 quantile regression model.
 
 ## Installation
@@ -43,15 +43,15 @@ guidance for quick start.
 - [Generalized linear
   model](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
 - [Rare event logistic
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
-- [Softmax(multinomial)
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+  regression](https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html).
+- [Softmax (multinomial)
+  regression](https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html).
 - [Quantile
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+  regression](https://dqksnow.github.io/Subsampling/articles/ssp-quantreg.html).
 
 ## Example
 
-This is a basic example of subsampling method on logistic regression:
+This is an example of subsampling method on logistic regression:
 
 ``` r
 library(subsampling)
@@ -91,20 +91,20 @@ summary(ssp.results)
 #>                                
 #> 1       Total Sample Size 10000
 #> 2 Expected Subsample Size   600
-#> 3   Actual Subsample Size   651
-#> 4   Unique Subsample Size   651
+#> 3   Actual Subsample Size   635
+#> 4   Unique Subsample Size   635
 #> 5  Expected Subample Rate    6%
-#> 6    Actual Subample Rate 6.51%
-#> 7    Unique Subample Rate 6.51%
+#> 6    Actual Subample Rate 6.35%
+#> 7    Unique Subample Rate 6.35%
 #> 
 #> Coefficients:
 #> 
 #>           Estimate Std. Error z value Pr(>|z|)
-#> Intercept  -0.4092     0.0795 -5.1486  <0.0001
-#> V1         -0.5861     0.0949 -6.1791  <0.0001
-#> V2         -0.4514     0.1066 -4.2343  <0.0001
-#> V3         -0.5557     0.1005 -5.5283  <0.0001
-#> V4         -0.3915     0.1006 -3.8898   0.0001
-#> V5         -0.3732     0.1046 -3.5697   0.0004
-#> V6         -0.6454     0.0969 -6.6589  <0.0001
+#> Intercept  -0.4149     0.0803 -5.1694  <0.0001
+#> V1         -0.5874     0.0958 -6.1286  <0.0001
+#> V2         -0.4723     0.1086 -4.3499  <0.0001
+#> V3         -0.5492     0.1014 -5.4164  <0.0001
+#> V4         -0.4044     0.1012 -3.9950  <0.0001
+#> V5         -0.3725     0.1045 -3.5649   0.0004
+#> V6         -0.6703     0.0973 -6.8859  <0.0001
 ```

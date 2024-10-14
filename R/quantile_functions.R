@@ -59,6 +59,8 @@ ssp.estimation.quantreg <- function(inputs,
   } else if (criterion %in% c("optL")) {
     p.ssp <- abs(tau - Ie.full) * sqrt(rowSums(inputs$X^2))
     if (sampling.method == "poisson"){
+      H <- quantile(p.ssp[index.plt], 1 - n.ssp / (b * N)) 
+      p.ssp[p.ssp > H] <- H
       dm <- N * sum(p.ssp[index.plt]) / n.plt
       p.ssp <- pmin(n.ssp * ((1 - alpha) * p.ssp / dm + alpha / N), 1)
     } else if (sampling.method == "withReplacement") {

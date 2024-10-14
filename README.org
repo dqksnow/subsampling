@@ -1,5 +1,9 @@
 * Meeting summary
 
+Oct 13
+
+
+  
 
 *** To do list
 - [X] output names, beta.plt to coef.plt
