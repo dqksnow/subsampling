@@ -3,7 +3,7 @@ title: "Introduction to `ssp.glm`: Subsampling for Generalized Linear Models"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{ssp-logit}
+  %\VignetteIndexEntry{Introduction to `ssp.glm`: Subsampling for Generalized Linear Models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

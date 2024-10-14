@@ -3,5 +3,8 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   ssp-logit: ssp-logit.html
-last_built: 2024-08-23T03:01Z
+  ssp-quantreg: ssp-quantreg.html
+  ssp-relogit: ssp-relogit.html
+  ssp-softmax: ssp-softmax.html
+last_built: 2024-10-14T16:59Z
 

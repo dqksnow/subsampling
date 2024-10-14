@@ -3,7 +3,7 @@ title: "Introduction to `ssp.quantreg`: Subsampling for Quantile Regression"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{ssp-quantreg}
+  %\VignetteIndexEntry{Introduction to `ssp.quantreg`: Subsampling for Quantile Regression}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

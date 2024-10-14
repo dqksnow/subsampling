@@ -2,7 +2,7 @@
 
 Oct 13
 
-
+- pkgdown::build_site() to build vignette websites.
   
 
 *** To do list

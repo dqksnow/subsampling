@@ -3,7 +3,7 @@ title: "Introduction to `ssp.relogit`: Subsampling for Logistic Regression Model
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{ssp-relogit}
+  %\VignetteIndexEntry{Introduction to `ssp.relogit`: Subsampling for Logistic Regression Model with Rare Events}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
