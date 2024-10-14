@@ -7,15 +7,19 @@
 ^\.gitignore$
 ^\.github$
 ^Makefile$
-^\.DS_Store$
+^.*\.DS_Store$
+^\.Rcheck/\.DS_Store$
 ^\.Rcheck$
 ^README\.org$
 ^README\.Rmd$
 ^cran-comments\.md$
+
 # auto: bib el file
 ^auto$
 
 # docs: pkgdown file
+^docs/
 ^docs$
 ^_pkgdown\.yml$
 ^LICENSE\.md$
+

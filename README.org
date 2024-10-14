@@ -3,7 +3,16 @@
 Oct 13
 
 - pkgdown::build_site() to build vignette websites.
-  
+
+- test Makefile
+  - make build
+  - make check
+  - cat subsampling.Rcheck/00check.log
+  - make install
+    - R and then library(subsampling)
+    - q() to quit R
+  - make clean
+
 
 *** To do list
 - [X] output names, beta.plt to coef.plt
