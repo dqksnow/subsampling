@@ -19,8 +19,11 @@ knitr::opts_chunk$set(
 library(subsampling)
 ```
 
-This vignette introduces the usage of 
-`ssp.relogit`. It provides a subsampling strategy for handling rare binary observations in logistic regression models. It returns optimal subsample by performing negative sampling on non-rare observations while retaining all rare observations. The statistical theory and algorithms in this implementation can be found in relevant reference papers.
+This vignette introduces the usage of `ssp.relogit`. It provides a subsampling
+strategy for handling rare binary observations in logistic regression models. It
+returns optimal subsample by performing negative sampling on non-rare
+observations while retaining all rare observations. The statistical theory and
+algorithms in this implementation can be found in relevant reference papers.
 
 The logistic regression log-likelihood function is
 
@@ -33,28 +36,39 @@ $$
 
 - Full dataset: The whole dataset used as input.
 
-- Full data estimator: The estimator obtained by fitting the model on the full dataset.
+- Full data estimator: The estimator obtained by fitting the model on the full
+  dataset.
 
 - Subsample: A subset of observations drawn from the full dataset.
 
-- Subsample estimator: The estimator obtained by fitting the model on the subsample.
+- Subsample estimator: The estimator obtained by fitting the model on the
+  subsample.
 
-- Subsampling probability ($\pi$): The probability assigned to each observation for inclusion in the subsample.
+- Subsampling probability ($\pi$): The probability assigned to each observation
+  for inclusion in the subsample.
 
 - Rare events: Observations where $Y=1$ (positive instances).
 
 - Non-rare events: Observations where $Y=0$ (negative instances).
 
 The idea of subsampling methods is as follows: instead of fitting the model on
-the size $N$ full dataset, a subsampling probability is assigned to each observation  and a smaller, informative subsample is drawn. The model is then fitted on the subsample to obtain an estimator with reduced computational cost.
+the size $N$ full dataset, a subsampling probability is assigned to each
+observation and a smaller, informative subsample is drawn. The model is then
+fitted on the subsample to obtain an estimator with reduced computational cost.
 
-In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost.
+In the face of logistic regression with rare events, @wang2021nonuniform shows
+that the available information ties to the number of positive instances instead
+of the full data size. Based on this insight, one can keep all the rare
+instances and perform subsampling on the non-rare instances to reduce the
+computational cost.
 
 ## Example
 
 We introduce the basic usage by using `ssp.relogit` with simulated data. $X$
 contains $d=6$ covariates drawn from multinormal distribution and $Y$ is the
-binary response variable. The full data size is $N = 2 \times 10^4$. Denote $N_{1}=sum(Y)$ as the counts of rare observations and $N_{0} = N - N_{1}$ as the counts of non-rare observations.
+binary response variable. The full data size is $N = 2 \times 10^4$. Denote
+$N_{1}=sum(Y)$ as the counts of rare observations and $N_{0} = N - N_{1}$ as the
+counts of non-rare observations.
 
 ```{r}
 set.seed(2)
@@ -96,35 +110,45 @@ ssp.relogit(
 
 The core functionality of `ssp.glm` revolves around three key questions:
 
-- How are subsampling probabilities computed? (Controlled by the `criterion` argument)
+- How are subsampling probabilities computed? (Controlled by the `criterion`
+  argument)
 
 - How is the subsample drawn? (Controlled by the `sampling.method` argument)
 
-- How is the likelihood adjusted to correct for bias? (Controlled by the `likelihood` argument)
+- How is the likelihood adjusted to correct for bias? (Controlled by the
+  `likelihood` argument)
 
-Different from `ssp.glm` which can choose `withReplacement`
-and `poisson` as the option of `sampling.method`, `ssp.relogit` uses `poisson` as default sampling method. `poisson` stands for drawing subsamples one by one by
-comparing the subsampling probability with a realization of uniform random
-variable $U(0,1)$. The actual size of drawn subsample is random but the expected size is $n.ssp$.
+Different from `ssp.glm` which can choose `withReplacement` and `poisson` as the
+option of `sampling.method`, `ssp.relogit` uses `poisson` as default sampling
+method. `poisson` stands for drawing subsamples one by one by comparing the
+subsampling probability with a realization of uniform random variable
+$U(0,1)$. The actual size of drawn subsample is random but the expected size is
+$n.ssp$.
 
 ### `criterion`
 
-The choices of `criterion` include `optA`, `optL`(default), `LCC` and `uniform`. The optimal subsampling criterion `optA` and `optL` are derived by minimizing the asymptotic covariance of subsample estimator, proposed by @wang2018optimal. `LCC` and `uniform` are baseline methods. 
+The choices of `criterion` include `optA`, `optL`(default), `LCC` and
+`uniform`. The optimal subsampling criterion `optA` and `optL` are derived by
+minimizing the asymptotic covariance of subsample estimator, proposed by
+@wang2018optimal. `LCC` and `uniform` are baseline methods.
 
-Note that for rare observations $Y=1$ in the full data, the sampling probabilities are $1$. For non-rare observations, the sampling probabilities depend on the choice of `criterion`.
+Note that for rare observations $Y=1$ in the full data, the sampling
+probabilities are $1$. For non-rare observations, the sampling probabilities
+depend on the choice of `criterion`.
 
 ### `likelihood`
 
 The available choices for `likelihood` include `weighted` and
-`logOddsCorrection`(default). Both of these likelihood functions can derive an unbiased 
-estimator. Theoretical results indicate that `logOddsCorrection` is more
-efficient than `weighted` in the context of rare events logistic regression. See
-@@wang2021nonuniform.
+`logOddsCorrection`(default). Both of these likelihood functions can derive an
+unbiased estimator. Theoretical results indicate that `logOddsCorrection` is
+more efficient than `weighted` in the context of rare events logistic
+regression. See @@wang2021nonuniform.
 
 ## Results
 
-After drawing subsample, `ssp.relogit` utilizes `survey::svyglm` to fit the model
-on the subsample, which eventually uses `glm`. Arguments accepted by `svyglm` can be passed through `...` in `ssp.glm`.
+After drawing subsample, `ssp.relogit` utilizes `survey::svyglm` to fit the
+model on the subsample, which eventually uses `glm`. Arguments accepted by
+`svyglm` can be passed through `...` in `ssp.glm`.
 
 Below is an example demonstrating the use of `ssp.relogit`.
 
@@ -140,15 +164,16 @@ ssp.results <- ssp.relogit(formula = formula,
                            )
 ```
 
-As recommended by `survey::svyglm`, when working with binomial models, it is advisable to use use `family=quasibinomial()` to avoid a warning issued by `glm`. Refer to [svyglm() help
-documentation Details
+As recommended by `survey::svyglm`, when working with binomial models, it is
+advisable to use use `family=quasibinomial()` to avoid a warning issued by
+`glm`. Refer to [svyglm() help documentation Details
 ](https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm). The
 'quasi' version of the family objects provide the same point estimates.
 
 ### Returned object 
 
-The returned object contains estimation results and indices of drawn
-subsample in the full dataset. 
+The returned object contains estimation results and indices of drawn subsample
+in the full dataset.
 
 ```{r}
 names(ssp.results)
@@ -156,12 +181,12 @@ names(ssp.results)
 
 Some key returned variables:
 
-- `index.plt` and `index` are the row indices of
-drawn pilot subsamples and optimal subsamples in the full data. They are ready
-to be used for further analysis or downstream tasks.
+- `index.plt` and `index` are the row indices of drawn pilot subsamples and
+optimal subsamples in the full data. They are ready to be used for further
+analysis or downstream tasks.
 
-- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
-combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
+- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear
+combination of `coef.plt` (pilot estimator) and `coef.ssp`.
 
 - `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
 `coef`. 
@@ -170,8 +195,13 @@ combination of `coef.plt` (pilot estimator) and `coef.ssp`.
 summary(ssp.results)
 ```
 
-In the printed results, `Expected Subsample Size` is the sum of rare event counts ($N_{1}$) and the expected size of negative subsample drawn from $N_{0}$ non-rare observations. For this example, $866=N_{1} + n_{ssp} = 266+600$ and `Actual Subsample Size` is the sum of $N_{1}$ and the actual size of negative subsample from $N_{0}$ non-rare observations. 
+In the printed results, `Expected Subsample Size` is the sum of rare event
+counts ($N_{1}$) and the expected size of negative subsample drawn from $N_{0}$
+non-rare observations. For this example, $866=N_{1} + n_{ssp} = 266+600$ and
+`Actual Subsample Size` is the sum of $N_{1}$ and the actual size of negative
+subsample from $N_{0}$ non-rare observations.
 
-The coefficients and standard errors printed by summary() are `coef` and the square root of `diag(cov)`.
+The coefficients and standard errors printed by summary() are `coef` and the
+square root of `diag(cov)`.
 
 ### References

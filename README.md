@@ -13,17 +13,17 @@ computing resources. For example, when fitting a logistic regression
 model to binary response variable with $N \times d$ dimensional
 covariates, the computational complexity of estimating the coefficients
 using the IRLS algorithm is $O(\zeta N d^2)$, where $\zeta$ is the
-number of iteriation. When $N$ is large, the cost can be unaffordable,
-especially if high performance computing resource are unavailable. To
-address this issue, subsampling has become a widely used technique to
-perform the necessary calculations on a subsample drawn from the full
-dataset. The computational burden is reduced while having the efficiency
-of parameter estimation.
+number of iteriation. When $N$ is large, the cost can be prohibitive,
+especially if high performance computing resources are unavailable.
+Subsampling has become a widely used technique to balance the trade-off
+between computational efficiency and statistical efficiency.
 
 The R package `subsampling` provides optimal subsampling methods for
-common statistical models such as generalized linear models (GLM),
+various statistical models such as generalized linear models (GLM),
 softmax (multinomial) regression, rare event logistic regression and
-quantile regression model.
+quantile regression model. Specialized subsampling techniques are
+provided to address specific challenges across different models and
+datasets.
 
 ## Installation
 

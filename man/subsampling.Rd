@@ -4,10 +4,28 @@
 \name{subsampling}
 \alias{subsampling}
 \alias{subsampling-package}
-\title{Title: Add later}
+\title{Optimal Subsampling Methods for Statistical Models}
 \description{
-For common statistical models such as glm and quantile regression model, draw subsamples from full dataset by different optimal subsampling criterion and estimate coefficients and covariance matrix based on the subsample. When developing statistical models on massive datasets, subsampling is effective to reduce computational burden and optimal subsampling methods can improve estimation efficiency.
+Subsampling methods are utilized in statistical modeling for
+massive datasets. These methods aim to draw representative subsamples from the
+full dataset based on specific sampling probabilities, with the goal of
+maintaining inference efficiency. The sampling probabilities are tailored to
+particular objectives, such as minimizing the variance of the estimated
+coefficients or reducing prediction error. By using subsampling techniques,
+the package balances the trade-off between computational efficiency and statistical
+efficiency, making it a practical tool for massive data
+analysis.
 }
+\section{Models Supported}{
+
+\itemize{
+\item Generalized Linear Models (GLMs)
+\item Softmax (Multinomial) Regression
+\item Rare Event Logistic Regression
+\item Quantile Regression
+}
+}
+
 \seealso{
 Useful links:
 \itemize{

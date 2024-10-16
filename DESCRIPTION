@@ -11,12 +11,15 @@ Authors@R: c(
     person("Jun", "Yan", role = "aut")
   )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
-Description: For common statistical models such as glm and
-    quantile regression model, draw subsamples from full dataset by different optimal
-    subsampling criterion and estimate coefficients and covariance matrix
-    based on the subsample. When developing statistical models on massive
-    datasets, subsampling is effective to reduce computational burden and
-    optimal subsampling methods can improve estimation efficiency.
+Description: 
+    Subsampling methods are utilized in statistical modeling for
+    massive datasets. These methods aim to draw representative subsamples from the
+    full dataset based on specific sampling probabilities, with the goal of
+    maintaining inference efficiency. The sampling probabilities are tailored to
+    particular objectives, such as minimizing the variance of the estimated
+    coefficients or reducing prediction error. By using subsampling techniques, the
+    package balances the trade-off between computational efficiency and statistical
+    efficiency, making it a practical tool for massive data analysis.
 License: GPL-3
 URL: https://github.com/dqksnow/Subsampling
 BugReports: https://github.com/dqksnow/Subsampling/issues
@@ -24,7 +27,7 @@ Imports:
     expm,
     nnet,
     quantreg,
-    Rcpp(>= 1.0.12),
+    Rcpp (>= 1.0.12),
     stats,
     survey
 Suggests: 

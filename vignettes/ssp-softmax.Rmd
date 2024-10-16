@@ -17,35 +17,49 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette introduces the usage of
-`ssp.softmax`, which draws optimal subsample from full data and fit softmax (multinomial) regression on the subsample. The statistical theory and algorithms in this implementation can be found in the relevant reference papers.
+This vignette introduces the usage of `ssp.softmax`, which draws optimal
+subsample from full data and fit softmax (multinomial) regression on the
+subsample. The statistical theory and algorithms in this implementation can be
+found in the relevant reference papers.
 
-Denote $Y$ as multi-category response variable and $K+1$ is the number of categories. $N$ is the number of observations in the full dataset. $X$ is the $N \times d$ covariates matrix. Softmax regression model assumes that 
+Denote $Y$ as multi-category response variable and $K+1$ is the number of
+categories. $N$ is the number of observations in the full dataset. $X$ is the $N
+\times d$ covariates matrix. Softmax regression model assumes that
 $$
 P(Y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_k)}{\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l)},
 $$
-for $i = 1, \ldots, N$ and $k = 0, 1, \ldots, K$, where $\boldsymbol{\beta}_k$'s are $d$-dimensional unknown coefficients. We define $\boldsymbol{\beta} = (\boldsymbol{\beta}_0^\top, \boldsymbol{\beta}_1^\top, \ldots, \boldsymbol{\beta}_K^\top)^\top$ as a $(K+1)d$-dimensional vector.
+for $i = 1, \ldots, N$ and $k = 0, 1, \ldots, K$, where $\boldsymbol{\beta}_k$'s
+are $d$-dimensional unknown coefficients. We define $\boldsymbol{\beta} =
+(\boldsymbol{\beta}_0^\top, \boldsymbol{\beta}_1^\top, \ldots,
+\boldsymbol{\beta}_K^\top)^\top$ as a $(K+1)d$-dimensional vector.
 
 The log-likelihood function of softmax regression is
 
 $$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \left[ \sum_{k=0}^{K} y_{i,k} \mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{ \sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right]
+\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \left[ \sum_{k=0}^{K} y_{i,k}
+\mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{ \sum_{l=0}^{K}
+\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right]
 $$
 
 The idea of subsampling methods is as follows: instead of fitting the model on
-the size $N$ full dataset, a subsampling probability is assigned to each observation  and a smaller, informative subsample is drawn. The model is then fitted on the subsample to obtain an estimator with reduced computational cost.
+the size $N$ full dataset, a subsampling probability is assigned to each
+observation and a smaller, informative subsample is drawn. The model is then
+fitted on the subsample to obtain an estimator with reduced computational cost.
 
 ## Terminology
 
 - Full dataset: The whole dataset used as input.
 
-- Full data estimator: The estimator obtained by fitting the model on the full dataset.
+- Full data estimator: The estimator obtained by fitting the model on the full
+  dataset.
 
 - Subsample: A subset of observations drawn from the full dataset.
 
-- Subsample estimator: The estimator obtained by fitting the model on the subsample.
+- Subsample estimator: The estimator obtained by fitting the model on the
+  subsample.
 
-- Subsampling probability ($\pi$): The probability assigned to each observation for inclusion in the subsample.
+- Subsampling probability ($\pi$): The probability assigned to each observation
+  for inclusion in the subsample.
 
 # Example
 
@@ -53,9 +67,10 @@ the size $N$ full dataset, a subsampling probability is assigned to each observa
 library(subsampling)
 ```
 
-We introduce the usage of `ssp.glm` with simulated data. $X$
-contains $d=3$ covariates drawn from multinormal distribution and $Y$ is the
-multicategory response variable with $K+1=3$ categories. The full data size is $N = 1 \times 10^4$.
+We introduce the usage of `ssp.glm` with simulated data. $X$ contains $d=3$
+covariates drawn from multinormal distribution and $Y$ is the multicategory
+response variable with $K+1=3$ categories. The full data size is $N = 1 \times
+10^4$.
 
 ```{r}
 set.seed(1)
@@ -101,42 +116,60 @@ ssp.softmax(
 
 The core functionality of `ssp.glm` revolves around three key questions:
 
-- How are subsampling probabilities computed? (Controlled by the `criterion` argument)
+- How are subsampling probabilities computed? (Controlled by the `criterion`
+  argument)
 
 - How is the subsample drawn? (Controlled by the `sampling.method` argument)
 
-- How is the likelihood adjusted to correct for bias? (Controlled by the `likelihood` argument)
+- How is the likelihood adjusted to correct for bias? (Controlled by the
+  `likelihood` argument)
 
 ### `criterion`
 
-The choices of `criterion` include `optA`, `optL`, ,`MSPE`(default), `LUC` and `uniform`. The default criterion `MSPE` minimizes the mean squared prediction error between subsample estimator and full data estimator. Criterion `optA` and `optL` are derived by minimizing the asymptotic covariance of subsample estimator. `LUC` and `uniform` are baseline methods. See @yao2023model for details.
+The choices of `criterion` include `optA`, `optL`, ,`MSPE`(default), `LUC` and
+`uniform`. The default criterion `MSPE` minimizes the mean squared prediction
+error between subsample estimator and full data estimator. Criterion `optA` and
+`optL` are derived by minimizing the asymptotic covariance of subsample
+estimator. `LUC` and `uniform` are baseline methods. See @yao2023model for
+details.
 
 ### `sampling.method`
 
-The options for `sampling.method` include `withReplacement`
-and `poisson` (default). `withReplacement.` stands for drawing $n.ssp$
-subsamples from full dataset with replacement, using the specified
-subsampling probability. `poisson` stands for drawing subsamples one by one by
-comparing the subsampling probability with a realization of uniform random
-variable $U(0,1)$. The expected number of drawed samples are $n.ssp$.
+The options for `sampling.method` include `withReplacement` and `poisson`
+(default). `withReplacement.` stands for drawing $n.ssp$ subsamples from full
+dataset with replacement, using the specified subsampling probability. `poisson`
+stands for drawing subsamples one by one by comparing the subsampling
+probability with a realization of uniform random variable $U(0,1)$. The expected
+number of drawed samples are $n.ssp$.
 
 ### `likelihood`
 
-The available choices for `likelihood` include `weighted` and
-`MSCLE`(default).  `MSCLE` stands for maximum sampled conditional likelihood. Both of these likelihood functions can derive an unbiased optimal subsample
-estimator. See @wang2022maximum for details about `MSCLE`. 
+The available choices for `likelihood` include `weighted` and `MSCLE`(default).
+`MSCLE` stands for maximum sampled conditional likelihood. Both of these
+likelihood functions can derive an unbiased optimal subsample estimator. See
+@wang2022maximum for details about `MSCLE`.
 
 ### `constraint`
 
-Softmax model needs constraint on unknown coefficients for identifiability. The options for `constraint` include `summation`
-and `baseline` (default). The baseline constraint assumes the coefficient for the baseline category are $0$. Without loss of generality, we set the category $Y=0$ as the baseline category so that $\boldsymbol{\beta}_0=0$. The summation constraint $\sum_{k=0}^{K} \boldsymbol{\beta}_k$ is also used in the subsampling method for the purpose of calculating subsampling probability. These two constraints lead to different interpretation of coefficients but are equal for computing $P(Y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by `ssp.softmax()` is under baseline constraint.
+Softmax model needs constraint on unknown coefficients for identifiability. The
+options for `constraint` include `summation` and `baseline` (default). The
+baseline constraint assumes the coefficient for the baseline category are
+$0$. Without loss of generality, we set the category $Y=0$ as the baseline
+category so that $\boldsymbol{\beta}_0=0$. The summation constraint
+$\sum_{k=0}^{K} \boldsymbol{\beta}_k$ is also used in the subsampling method for
+the purpose of calculating subsampling probability. These two constraints lead
+to different interpretation of coefficients but are equal for computing
+$P(Y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by
+`ssp.softmax()` is under baseline constraint.
 
 ## Results
 
-After drawing subsample, `ssp.softmax` utilizes `nnet::multinom` to fit the model
-on the subsample. Arguments accepted by `nnet::multinom` can be passed through `...` in `ssp.softmax`.
+After drawing subsample, `ssp.softmax` utilizes `nnet::multinom` to fit the
+model on the subsample. Arguments accepted by `nnet::multinom` can be passed
+through `...` in `ssp.softmax`.
 
-Below are two examples demonstrating the use of `ssp.softmax` with different configurations.
+Below are two examples demonstrating the use of `ssp.softmax` with different
+configurations.
 
 ```{r}
 n.plt <- 200
@@ -154,7 +187,11 @@ ssp.results1 <- ssp.softmax(formula = formula,
 summary(ssp.results1)
 ```
 
-`summary(ssp.results1)` shows that it draws 600 observations out of 10000, where the number of unique indices is smaller since we use `sampling.method = 'withReplacement'`. After fitting softmax model on subsample using the choosen `weighted` likelihood function, we get coefficients estimation and standard errors as above.
+`summary(ssp.results1)` shows that it draws 600 observations out of 10000, where
+the number of unique indices is smaller since we use `sampling.method =
+'withReplacement'`. After fitting softmax model on subsample using the choosen
+`weighted` likelihood function, we get coefficients estimation and standard
+errors as above.
 
 ```{r}
 ssp.results2 <- ssp.softmax(formula = formula,
@@ -180,9 +217,9 @@ names(ssp.results1)
 
 Some key returned variables:
 
-- `index.plt` and `index` are the row indices of
-drawn pilot subsamples and optimal subsamples in the full data. They are ready
-to be used for further analysis or downstream tasks.
+- `index.plt` and `index` are the row indices of drawn pilot subsamples and
+optimal subsamples in the full data. They are ready to be used for further
+analysis or downstream tasks.
 
 - `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
 combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
