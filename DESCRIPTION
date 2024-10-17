@@ -4,7 +4,7 @@ Title: Optimal Subsampling Methods for Statistical Models
 Version: 0.1
 Date: 2024-10-13
 Authors@R: c(
-    person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre")),
+    person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
     person("Haiying", "Wang", role = "aut"),
     person("Yaqiong", "Yao", role = "aut"),
     person("Qiang", "Zhang", role = "aut"),
