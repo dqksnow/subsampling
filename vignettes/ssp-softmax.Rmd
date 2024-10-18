@@ -15,30 +15,26 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Introduction
-
 This vignette introduces the usage of `ssp.softmax`, which draws optimal
 subsample from full data and fit softmax (multinomial) regression on the
 subsample. The statistical theory and algorithms in this implementation can be
 found in the relevant reference papers.
 
-Denote $Y$ as multi-category response variable and $K+1$ is the number of
+Denote $y$ as multi-category response variable and $K+1$ is the number of
 categories. $N$ is the number of observations in the full dataset. $X$ is the $N
 \times d$ covariates matrix. Softmax regression model assumes that
 $$
-P(Y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_k)}{\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l)},
+P(y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_k)}{\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l)}
 $$
 for $i = 1, \ldots, N$ and $k = 0, 1, \ldots, K$, where $\boldsymbol{\beta}_k$'s
-are $d$-dimensional unknown coefficients. We define $\boldsymbol{\beta} =
-(\boldsymbol{\beta}_0^\top, \boldsymbol{\beta}_1^\top, \ldots,
-\boldsymbol{\beta}_K^\top)^\top$ as a $(K+1)d$-dimensional vector.
+are $d$-dimensional unknown coefficients. 
 
 The log-likelihood function of softmax regression is
 
 $$
 \max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \left[ \sum_{k=0}^{K} y_{i,k}
 \mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{ \sum_{l=0}^{K}
-\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right]
+\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right].
 $$
 
 The idea of subsampling methods is as follows: instead of fitting the model on
@@ -61,16 +57,16 @@ fitted on the subsample to obtain an estimator with reduced computational cost.
 - Subsampling probability ($\pi$): The probability assigned to each observation
   for inclusion in the subsample.
 
-# Example
+## Example
+
+We introduce the usage of `ssp.softmax` with simulated data. $X$ contains $d=3$
+covariates drawn from multinormal distribution and $Y$ is the multicategory
+response variable with $K+1=3$ categories. The full data size is $N = 1 \times
+10^4$.
 
 ```{r setup}
 library(subsampling)
 ```
-
-We introduce the usage of `ssp.glm` with simulated data. $X$ contains $d=3$
-covariates drawn from multinormal distribution and $Y$ is the multicategory
-response variable with $K+1=3$ categories. The full data size is $N = 1 \times
-10^4$.
 
 ```{r}
 set.seed(1)
@@ -92,6 +88,9 @@ colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 head(data)
 ```
 
+## Key Arguments
+
+
 The function usage is
 
 ```{r, eval = FALSE}
@@ -111,10 +110,7 @@ ssp.softmax(
 )
 ```
 
-
-## Key Arguments
-
-The core functionality of `ssp.glm` revolves around three key questions:
+The core functionality of `ssp.softmax` revolves around three key questions:
 
 - How are subsampling probabilities computed? (Controlled by the `criterion`
   argument)
@@ -130,7 +126,7 @@ The choices of `criterion` include `optA`, `optL`, ,`MSPE`(default), `LUC` and
 `uniform`. The default criterion `MSPE` minimizes the mean squared prediction
 error between subsample estimator and full data estimator. Criterion `optA` and
 `optL` are derived by minimizing the asymptotic covariance of subsample
-estimator. `LUC` and `uniform` are baseline methods. See @yao2023model for
+estimator. `LUC` and `uniform` are baseline methods. See @yao2023model and @wang2022maximum for
 details.
 
 ### `sampling.method`
@@ -154,15 +150,15 @@ likelihood functions can derive an unbiased optimal subsample estimator. See
 Softmax model needs constraint on unknown coefficients for identifiability. The
 options for `constraint` include `summation` and `baseline` (default). The
 baseline constraint assumes the coefficient for the baseline category are
-$0$. Without loss of generality, we set the category $Y=0$ as the baseline
+$0$. Without loss of generality, `ssp.softmax` sets the category $Y=0$ as the baseline
 category so that $\boldsymbol{\beta}_0=0$. The summation constraint
-$\sum_{k=0}^{K} \boldsymbol{\beta}_k$ is also used in the subsampling method for
-the purpose of calculating subsampling probability. These two constraints lead
+$\sum_{k=0}^{K} \boldsymbol{\beta}_k$ can also used in the subsampling method for
+the purpose of calculating optimal subsampling probability. These two constraints lead
 to different interpretation of coefficients but are equal for computing
-$P(Y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by
+$P(y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by
 `ssp.softmax()` is under baseline constraint.
 
-## Results
+## Outputs
 
 After drawing subsample, `ssp.softmax` utilizes `nnet::multinom` to fit the
 model on the subsample. Arguments accepted by `nnet::multinom` can be passed
@@ -188,8 +184,7 @@ summary(ssp.results1)
 ```
 
 `summary(ssp.results1)` shows that it draws 600 observations out of 10000, where
-the number of unique indices is smaller since we use `sampling.method =
-'withReplacement'`. After fitting softmax model on subsample using the choosen
+the number of unique indices is less than 600 since we use `sampling.method = 'withReplacement'`. After fitting softmax model on subsample using the choosen
 `weighted` likelihood function, we get coefficients estimation and standard
 errors as above.
 
@@ -206,8 +201,6 @@ ssp.results2 <- ssp.softmax(formula = formula,
 summary(ssp.results2)
 ```
 
-### Returned object 
-
 The returned object contains estimation results and index of drawn
 subsamples in the full dataset. 
 
@@ -218,8 +211,7 @@ names(ssp.results1)
 Some key returned variables:
 
 - `index.plt` and `index` are the row indices of drawn pilot subsamples and
-optimal subsamples in the full data. They are ready to be used for further
-analysis or downstream tasks.
+optimal subsamples in the full data.
 
 - `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
 combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
@@ -227,4 +219,4 @@ combination of `coef.plt` (pilot estimator) and `coef.ssp`.
 - `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
 `coef`. 
 
-### References
+## References

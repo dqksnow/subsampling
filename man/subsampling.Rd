@@ -35,7 +35,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Qingkai Dong \email{qingkai.dong@uconn.edu}
+\strong{Maintainer}: Qingkai Dong \email{qingkai.dong@uconn.edu} [copyright holder]
 
 Authors:
 \itemize{

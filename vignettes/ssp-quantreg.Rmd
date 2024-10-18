@@ -19,8 +19,7 @@ knitr::opts_chunk$set(
 library(subsampling)
 ```
 
-This vignette introduces the usage of `ssp.quantreg`. It provides a subsampling
-method for quantile regression model on massive datasets. The statistical theory
+This vignette introduces the usage of `ssp.quantreg`. The statistical theory
 and algorithms behind this implementation can be found in the relevant reference
 papers.
 
@@ -31,7 +30,7 @@ $$
 \min_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \rho_\tau \left( y_i - \beta^\top x_i \right) = 
 \frac{1}{N} \sum_{i=1}^{N} \left( y_i - \beta^\top x_i \right) \left\{ \tau - I \left( y_i < \beta^\top x_i \right) \right\},
 $$
-where $\tau$ is the quantile of interest, $N$ is full data size.
+where $\tau$ is the quantile of interest, $y$ is the response variable, $x$ is covariates vector and $N$ is the number of observations in full dataset.
 
 The idea of subsampling methods is as follows: instead of fitting the model on
 the size $N$ full dataset, a subsampling probability is assigned to each
@@ -57,7 +56,7 @@ fitted on the subsample to obtain an estimator with reduced computational cost.
 
 We introduce `ssp.quantreg` with simulated data. $X$ contains $d=6$ covariates
 drawn from multinormal distribution and $Y$ is the response variable. The full
-data size is $N = 1 \times 10^4$. The interested quantile is 0.75.
+data size is $N = 1 \times 10^4$. The interested quantile $\tau=0.75$.
 
 ```{r}
 set.seed(1)
@@ -76,6 +75,8 @@ colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
 formula <- Y ~ .
 head(data)
 ```
+
+## Key Arguments
 
 The function usage is
 
@@ -98,8 +99,6 @@ ssp.quantreg(
 )
 ```
 
-## Key Arguments
-
 The core functionality of `ssp.quantreg` revolves around three key questions:
 
 - How are subsampling probabilities computed? (Controlled by the `criterion`
@@ -115,7 +114,7 @@ The core functionality of `ssp.quantreg` revolves around three key questions:
 `criterion` stands for the criterion we choose to compute the sampling
 probability for each observation. The choices of `criterion` include
 `optL`(default) and `uniform`. In `optL`, the optimal subsampling probability is
-by minimizing a transformation of the asymptotic covariance of subsample
+by minimizing a transformation of the asymptotic variance of subsample
 estimator. `uniform` is a baseline method.
 
 ### `sampling.method`
@@ -123,7 +122,7 @@ estimator. `uniform` is a baseline method.
 The options for the `sampling.method` argument include `withReplacement`
 (default) and `poisson`. `withReplacement` stands for drawing $n.ssp$ subsamples
 from full dataset with replacement, using the specified subsampling
-probability. `poisson` stands for drawing subsamples one by one by comparing the
+probabilities. `poisson` stands for drawing subsamples one by one by comparing the
 subsampling probability with a realization of uniform random variable
 $U(0,1)$. The expected number of drawn samples are $n.ssp$.
 
@@ -135,14 +134,14 @@ correct the bias introduced by unequal subsampling probabilities.
 
 ### `boot` and `B`
 
-An option for drawing $B$ subsamples (each with size `n.ssp`) and deriving
+An option for drawing $B$ subsamples (each with expected size `n.ssp`) and deriving
 subsample estimator and asymptotic covariance matrix based on them. After
 getting $\hat{\beta}_{b}$ on the $b$-th subsample, $b=1,\dots B$, it calculates
 
 $$
 \hat{\beta}_I = \frac{1}{B} \sum_{b=1}^{B} \hat{\beta}_{b}
 $$
-as the final estimator and 
+as the final subsample estimator and 
 $$
 \hat{V}(\hat{\beta}_I) = \frac{1}{r_{ef} B (B - 1)} 
 \sum_{b=1}^{B} \left( \hat{\beta}_{b} - \hat{\beta}_I  \right)^{\otimes 2},
@@ -151,7 +150,7 @@ where $r_{ef}$ is a correction term for effective subsample size since the
 observations in each subsample can be replicated.  For more details, see
 @wang2021optimal.
 
-## Results
+## Outputs
 
 After drawing subsample(s), `ssp.quantreg` utilizes `quantreg::rq` to fit the
 model on the subsample(s). Arguments accepted by `quantreg::rq` can be passed
@@ -208,8 +207,7 @@ summary(ssp.results2)
 Some key returned variables:
 
 - `index.plt` and `index` are the row indices of drawn pilot subsamples and
-optimal subsamples in the full data. They are ready to be used for further
-analysis or downstream tasks.
+optimal subsamples in the full data.
 
 - `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
 combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
@@ -218,4 +216,6 @@ combination of `coef.plt` (pilot estimator) and `coef.ssp`.
 `coef`. If `boot=FALSE`, covariance matrix would not be estimated and a size
 `n.ssp * B` subsample would be drawn.
 
-### References
+See the help documentation of `ssp.quantreg` for details.
+
+## References

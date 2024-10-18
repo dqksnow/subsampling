@@ -89,6 +89,9 @@ formula <- Y ~ .
 head(data)
 ```
 
+
+## Key Arguments
+
 The function usage is
 
 ```{r, eval = FALSE}
@@ -107,8 +110,6 @@ ssp.glm(
   ...
   )
 ```
-
-## Key Arguments
 
 The core functionality of `ssp.glm` revolves around three key questions:
 
@@ -132,7 +133,7 @@ minimizing the asymptotic covariance of subsample estimator, proposed by
 The options for the `sampling.method` argument include `withReplacement` and
 `poisson` (default). `withReplacement` stands for drawing `n.ssp` subsamples
 from full dataset with replacement, using the specified subsampling
-probability. `poisson` stands for drawing subsamples one by one by comparing the
+probabilities. `poisson` stands for drawing subsamples one by one by comparing the
 subsampling probability with a realization of uniform random variable
 $U(0,1)$. The expected number of drawn samples are `n.ssp`. More details see
 @wang2019more.
@@ -145,7 +146,7 @@ estimator. Theoretical results indicate that `logOddsCorrection` is more
 efficient than `weighted` in the context of logistic regression. See
 @wang2022maximum.
 
-## Results
+## Outputs
 
 After drawing subsample, `ssp.glm` utilizes `survey::svyglm` to fit the model on
 the subsample, which eventually uses `glm`. Arguments accepted by `svyglm` can
@@ -200,8 +201,7 @@ names(ssp.results)
 Some key returned variables:
 
 - `index.plt` and `index` are the row indices of drawn pilot subsamples and
-optimal subsamples in the full data. They are ready to be used for further
-analysis or downstream tasks.
+optimal subsamples in the full data.
 
 - `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
 combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
@@ -216,7 +216,7 @@ square root of `diag(cov)`. See the help documentation of `ssp.glm` for details.
 
 We also provide examples for poisson regression and gamma regression in the help
 documentation of `ssp.glm`. Note that `likelihood = logOddsCorrection` is
-currently implemented only for logistic regression (family = binomial or
-quasibonomial).
+currently implemented only for logistic regression (family = `binomial` or
+`quasibonomial`).
 
-### References
+## References
