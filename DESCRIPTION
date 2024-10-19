@@ -1,14 +1,14 @@
 Type: Package
 Package: subsampling
 Title: Optimal Subsampling Methods for Statistical Models
-Version: 0.1
-Date: 2024-10-13
+Version: 0.1.0
+Date: 2024-10-18
 Authors@R: c(
     person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
-    person("Haiying", "Wang", role = "aut"),
     person("Yaqiong", "Yao", role = "aut"),
-    person("Qiang", "Zhang", role = "aut"),
-    person("Jun", "Yan", role = "aut")
+    person("Haiying", "Wang", role = "aut"),
+    person("Qiang", "Zhang", role = "fnd"),
+    person("Jun", "Yan", role = "ctb")
   )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
 Description: 
@@ -34,8 +34,7 @@ Suggests:
     knitr,
     MASS,
     rmarkdown,
-    tinytest,
-    microbenchmark
+    tinytest
 LinkingTo:
     Rcpp,
     RcppArmadillo

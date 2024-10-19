@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/Subsampling/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 A major challenge in big data statistical analysis is the demand for
@@ -32,22 +32,22 @@ You can install the development version of subsampling from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("dqksnow/Subsampling")
+devtools::install_github("dqksnow/subsampling")
 ```
 
 ## Getting Started
 
-The [Online document](https://dqksnow.github.io/Subsampling/) provides a
+The [Online document](https://dqksnow.github.io/subsampling/) provides a
 guidance for quick start.
 
 - [Generalized linear
-  model](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+  model](https://dqksnow.github.io/subsampling/articles/ssp-logit.html).
 - [Rare event logistic
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html).
+  regression](https://dqksnow.github.io/subsampling/articles/ssp-relogit.html).
 - [Softmax (multinomial)
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html).
+  regression](https://dqksnow.github.io/subsampling/articles/ssp-softmax.html).
 - [Quantile
-  regression](https://dqksnow.github.io/Subsampling/articles/ssp-quantreg.html).
+  regression](https://dqksnow.github.io/subsampling/articles/ssp-quantreg.html).
 
 ## Example
 

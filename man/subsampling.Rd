@@ -39,10 +39,14 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Haiying Wang
   \item Yaqiong Yao
-  \item Qiang Zhang
-  \item Jun Yan
+  \item Haiying Wang
+}
+
+Other contributors:
+\itemize{
+  \item Qiang Zhang [funder]
+  \item Jun Yan [contributor]
 }
 
 }
