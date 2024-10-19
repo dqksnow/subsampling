@@ -7,7 +7,7 @@ Authors@R: c(
     person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
     person("Yaqiong", "Yao", role = "aut"),
     person("Haiying", "Wang", role = "aut"),
-    person("Qiang", "Zhang", role = "fnd"),
+    person("Qiang", "Zhang", role = "ctb"),
     person("Jun", "Yan", role = "ctb")
   )
 Maintainer: Qingkai Dong <qingkai.dong@uconn.edu>
