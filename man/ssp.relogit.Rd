@@ -78,7 +78,7 @@ ssp.relogit returns an object of class "ssp.relogit" containing the following co
 }
 }
 \description{
-Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the \href{https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html}{vignette}.
+Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the \href{https://dqksnow.github.io/subsampling/articles/ssp-relogit.html}{vignette}.
 }
 \details{
 'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw \code{n.ssp} subsmples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability.
@@ -87,7 +87,7 @@ A pilot estimator for the unknown parameter  \eqn{\beta} is required because bot
 optL subsampling probabilities depend on \eqn{\beta}. This
 is achieved by drawing half size subsample from rare observations and half from non-rare observations.
 
-Most of the arguments and returned variables have similar meaning with \link{ssp.glm}. Refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}
+Most of the arguments and returned variables have similar meaning with \link{ssp.glm}. Refer to \href{https://dqksnow.github.io/subsampling/articles/ssp-logit.html}{vignette}
 }
 \examples{
 set.seed(1)

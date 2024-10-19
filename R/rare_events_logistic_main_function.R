@@ -1,6 +1,6 @@
 #' Optimal Subsampling for Logistic Regression Model with Rare Events Data
 #' @description
-#' Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html).
+#' Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the [vignette](https://dqksnow.github.io/subsampling/articles/ssp-relogit.html).
 #'
 #'
 #' @param formula A model formula object of class "formula" that describes the model to be fitted.
@@ -65,7 +65,7 @@
 #' optL subsampling probabilities depend on \eqn{\beta}. This
 #' is achieved by drawing half size subsample from rare observations and half from non-rare observations.
 #' 
-#' Most of the arguments and returned variables have similar meaning with \link{ssp.glm}. Refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
+#' Most of the arguments and returned variables have similar meaning with \link{ssp.glm}. Refer to [vignette](https://dqksnow.github.io/subsampling/articles/ssp-logit.html)
 #' 
 #' @references
 #' Wang, H., Zhang, A., & Wang, C. (2021). Nonuniform negative sampling and log odds correction with rare events data. \emph{Advances in Neural Information Processing Systems}, \strong{34}, 19847-19859.

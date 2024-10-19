@@ -1,6 +1,6 @@
 #' Optimal Subsampling Methods for Generalized Linear Models
 #' @description
-#' Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html).
+#' Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the [vignette](https://dqksnow.github.io/subsampling/articles/ssp-logit.html).
 #'
 #' @param formula A model formula object of class "formula" that describes the model to be fitted.
 #' @param data A data frame containing the variables in the model. Denote \eqn{N} as the number of observations in `data`.

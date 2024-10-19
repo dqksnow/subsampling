@@ -98,7 +98,7 @@ subsampling probability. The default value is 0.
 }
 }
 \description{
-Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the \href{https://dqksnow.github.io/Subsampling/articles/ssp-logit.html}{vignette}.
+Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the \href{https://dqksnow.github.io/subsampling/articles/ssp-logit.html}{vignette}.
 }
 \details{
 A pilot estimator for the unknown parameter  \eqn{\beta} is required because both optA and

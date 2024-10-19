@@ -1,6 +1,6 @@
 #' Optimal Subsampling Methods for Quantile Regression Model
 #' @description
-#' Draw subsample from full dataset and fit quantile regression model. For a quick start, refer to the [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-quantreg.html).
+#' Draw subsample from full dataset and fit quantile regression model. For a quick start, refer to the [vignette](https://dqksnow.github.io/subsampling/articles/ssp-quantreg.html).
 #'
 #'
 #' @param formula A model formula object of class "formula" that describes the model to be fitted.
@@ -59,7 +59,7 @@
 #' }
 #' 
 #' @details
-#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-logit.html)
+#' Most of the arguments and returned variables have the same meaning with \link{ssp.glm}. Refer to [vignette](https://dqksnow.github.io/subsampling/articles/ssp-logit.html)
 #' 
 #' A pilot estimator for the unknown parameter \eqn{\beta} is required because 
 #' optL subsampling probabilities depend on \eqn{\beta}. There is no "free lunch" when determining optimal subsampling probabilities. For quantile regression, this

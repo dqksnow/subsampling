@@ -1,6 +1,6 @@
 #' Optimal Subsampling Method for Softmax (multinomial logistic) Regression Model
 #' @description
-#' Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to [vignette](https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html) for a quick start.
+#' Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to [vignette](https://dqksnow.github.io/subsampling/articles/ssp-softmax.html) for a quick start.
 #' 
 #' @param formula A model formula object of class "formula" that describes the model to be fitted.
 #' @param data A data frame containing the variables in the model. Denote \eqn{N} as the number of observations in `data`.

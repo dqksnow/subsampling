@@ -99,7 +99,7 @@ ssp.softmax returns an object of class "ssp.softmax" containing the following co
 }
 }
 \description{
-Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to \href{https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html}{vignette} for a quick start.
+Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to \href{https://dqksnow.github.io/subsampling/articles/ssp-softmax.html}{vignette} for a quick start.
 }
 \details{
 A pilot estimator for the unknown parameter  \eqn{\beta} is required because MSPE, optA and
