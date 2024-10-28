@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -68,7 +68,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the <a href="https://dqksnow.github.io/Subsampling/articles/ssp-relogit.html" class="external-link">vignette</a>.</p>
+    <p>Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the <a href="https://dqksnow.github.io/subsampling/articles/ssp-relogit.html" class="external-link">vignette</a>.</p>
     </div>
 
     <div id="ref-usage">
@@ -148,7 +148,7 @@ subsampling probability. The default value is 0.</p></li>
     <h2>Value</h2>
     
 
-<p>ssp.relogit returns an object of class "ssp.relogit" containing the following components (some are optional):</p>
+<p><code>ssp.relogit</code> returns an object of class "ssp.relogit" containing the following components (some are optional):</p>
 
 
 <dl><dt>model.call</dt>
@@ -164,10 +164,10 @@ subsampling probability. The default value is 0.</p></li>
 <dd><p>The weighted linear combination of <code>coef.plt</code> and <code>coef.ssp.</code> The combination weights depend on the relative size of <code>n.plt</code> and <code>n.ssp</code> and the estimated covariance matrices of <code>coef.plt</code> and <code>coef.ssp.</code> We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are <code>coef</code> and the square root of <code>diag(cov)</code>.</p></dd>
 
 <dt>cov.ssp</dt>
-<dd><p>The covariance matrix of <code>coef.ssp</code></p></dd>
+<dd><p>The covariance matrix of <code>coef.ssp</code>.</p></dd>
 
 <dt>cov</dt>
-<dd><p>The covariance matrix of <code>beta.cmb</code></p></dd>
+<dd><p>The covariance matrix of <code>beta.cmb</code>.</p></dd>
 
 <dt>index.plt</dt>
 <dd><p>Row indices of pilot subsample in the full dataset.</p></dd>
@@ -192,7 +192,7 @@ subsampling probability. The default value is 0.</p></li>
 <p>A pilot estimator for the unknown parameter  \(\beta\) is required because both optA and
 optL subsampling probabilities depend on \(\beta\). This
 is achieved by drawing half size subsample from rare observations and half from non-rare observations.</p>
-<p>Most of the arguments and returned variables have similar meaning with <a href="ssp.glm.html">ssp.glm</a>. Refer to <a href="https://dqksnow.github.io/Subsampling/articles/ssp-logit.html" class="external-link">vignette</a></p>
+<p>Most of the arguments and returned variables have similar meaning with <a href="ssp.glm.html">ssp.glm</a>. Refer to <a href="https://dqksnow.github.io/subsampling/articles/ssp-logit.html" class="external-link">vignette</a></p>
     </div>
     <div id="references">
     <h2>References</h2>
@@ -265,7 +265,7 @@ is achieved by drawing half size subsample from rare observations and half from 
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+  <p></p><p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

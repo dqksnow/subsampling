@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -68,7 +68,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to <a href="https://dqksnow.github.io/Subsampling/articles/ssp-softmax.html" class="external-link">vignette</a> for a quick start.</p>
+    <p>Draw subsample from full dataset and fit softmax(multinomial logistic) regression model on the subsample. Refer to <a href="https://dqksnow.github.io/subsampling/articles/ssp-softmax.html" class="external-link">vignette</a> for a quick start.</p>
     </div>
 
     <div id="ref-usage">
@@ -185,10 +185,10 @@ subsampling probability. The default value is 0.</p></li>
 <dd><p>The weighted linear combination of <code>coef.plt</code> and <code>coef.ssp</code>. The combination weights depend on the relative size of <code>n.plt</code> and <code>n.ssp</code> and the estimated covariance matrices of <code>coef.plt</code> and <code>coef.ssp.</code> We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are <code>coef</code> and the square root of <code>diag(cov)</code>.</p></dd>
 
 <dt>cov.ssp</dt>
-<dd><p>The covariance matrix of <code>coef.ssp</code></p></dd>
+<dd><p>The covariance matrix of <code>coef.ssp</code>.</p></dd>
 
 <dt>cov</dt>
-<dd><p>The covariance matrix of <code>beta.cmb</code></p></dd>
+<dd><p>The covariance matrix of <code>beta.cmb</code>.</p></dd>
 
 <dt>index.plt</dt>
 <dd><p>Row indices of pilot subsample in the full dataset.</p></dd>
@@ -200,7 +200,7 @@ subsampling probability. The default value is 0.</p></li>
 <dd><p>The number of observations in the full dataset.</p></dd>
 
 <dt>subsample.size.expect</dt>
-<dd><p>The expected subsample size</p></dd>
+<dd><p>The expected subsample size.</p></dd>
 
 <dt>terms</dt>
 <dd><p>The terms object for the fitted model.</p></dd>
@@ -317,7 +317,7 @@ dataset with uniform sampling probability.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+  <p></p><p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

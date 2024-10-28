@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -173,6 +173,10 @@ response variable. The full dataset size is <span class="math inline">\(N = 1 \t
 <span><span class="co">#&gt; 4 0  0.1251949  1.5113247  1.38931519  1.24287417  2.48829727  0.5534888</span></span>
 <span><span class="co">#&gt; 5 0  0.1931921 -0.1478401 -0.14788926  0.46973556  0.05205022  1.0907459</span></span>
 <span><span class="co">#&gt; 6 0 -0.2560258 -1.6065024  0.32710042 -0.04590727 -0.94748664 -1.2310368</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
+</h2>
 <p>The function usage is</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ssp.glm.html">ssp.glm</a></span><span class="op">(</span></span>
@@ -189,10 +193,6 @@ response variable. The full dataset size is <span class="math inline">\(N = 1 \t
 <span>  contrasts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
-</h2>
 <p>The core functionality of <code>ssp.glm</code> revolves around three
 key questions:</p>
 <ul>
@@ -223,7 +223,7 @@ methods.</p>
 <code>withReplacement</code> and <code>poisson</code> (default).
 <code>withReplacement</code> stands for drawing <code>n.ssp</code>
 subsamples from full dataset with replacement, using the specified
-subsampling probability. <code>poisson</code> stands for drawing
+subsampling probabilities. <code>poisson</code> stands for drawing
 subsamples one by one by comparing the subsampling probability with a
 realization of uniform random variable <span class="math inline">\(U(0,1)\)</span>. The expected number of drawn
 samples are <code>n.ssp</code>. More details see <span class="citation">Wang (2019)</span>.</p>
@@ -241,7 +241,7 @@ regression. See <span class="citation">Wang and Kim (2022)</span>.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="results">Results<a class="anchor" aria-label="anchor" href="#results"></a>
+<h2 id="outputs">Outputs<a class="anchor" aria-label="anchor" href="#outputs"></a>
 </h2>
 <p>After drawing subsample, <code>ssp.glm</code> utilizes
 <code><a href="https://rdrr.io/pkg/survey/man/svyglm.html" class="external-link">survey::svyglm</a></code> to fit the model on the subsample, which
@@ -350,8 +350,8 @@ results and indices of the drawn subsample in the full dataset.</p>
 <p>Some key returned variables:</p>
 <ul>
 <li><p><code>index.plt</code> and <code>index</code> are the row indices
-of drawn pilot subsamples and optimal subsamples in the full data. They
-are ready to be used for further analysis or downstream tasks.</p></li>
+of drawn pilot subsamples and optimal subsamples in the full
+data.</p></li>
 <li><p><code>coef.ssp</code> is the subsample estimator for <span class="math inline">\(\beta\)</span> and <code>coef</code> is the linear
 combination of <code>coef.plt</code> (pilot estimator) and
 <code>coef.ssp</code>.</p></li>
@@ -371,10 +371,12 @@ covariance matrices of <code>coef.ssp</code> and
 <p>We also provide examples for poisson regression and gamma regression
 in the help documentation of <code>ssp.glm</code>. Note that
 <code>likelihood = logOddsCorrection</code> is currently implemented
-only for logistic regression (family = binomial or quasibonomial).</p>
-<div class="section level3 unnumbered">
-<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h3>
+only for logistic regression (family = <code>binomial</code> or
+<code>quasibonomial</code>).</p>
+</div>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-wang2019more" class="csl-entry">
 Wang, HaiYing. 2019. <span>“More Efficient Estimation for Logistic
@@ -393,7 +395,6 @@ American Statistical Association</em> 113 (522): 829–44.
 </div>
 </div>
 </div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -408,7 +409,7 @@ American Statistical Association</em> 113 (522): 829–44.
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+<p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

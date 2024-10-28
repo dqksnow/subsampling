@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -100,10 +100,9 @@ Subsampling for Quantile Regression</h1>
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dqksnow/Subsampling" class="external-link">subsampling</a></span><span class="op">)</span></span></code></pre></div>
-<p>This vignette introduces the usage of <code>ssp.quantreg</code>. It
-provides a subsampling method for quantile regression model on massive
-datasets. The statistical theory and algorithms behind this
-implementation can be found in the relevant reference papers.</p>
+<p>This vignette introduces the usage of <code>ssp.quantreg</code>. The
+statistical theory and algorithms behind this implementation can be
+found in the relevant reference papers.</p>
 <p>Quantile regression aims to estimate conditional quantiles by
 minimizing the following loss function:</p>
 <p><span class="math display">\[
@@ -112,8 +111,10 @@ minimizing the following loss function:</p>
 \frac{1}{N} \sum_{i=1}^{N} \left( y_i - \beta^\top x_i \right) \left\{
 \tau - I \left( y_i &lt; \beta^\top x_i \right) \right\},
 \]</span> where <span class="math inline">\(\tau\)</span> is the
-quantile of interest, <span class="math inline">\(N\)</span> is full
-data size.</p>
+quantile of interest, <span class="math inline">\(y\)</span> is the
+response variable, <span class="math inline">\(x\)</span> is covariates
+vector and <span class="math inline">\(N\)</span> is the number of
+observations in full dataset.</p>
 <p>The idea of subsampling methods is as follows: instead of fitting the
 model on the size <span class="math inline">\(N\)</span> full dataset, a
 subsampling probability is assigned to each observation and a smaller,
@@ -140,7 +141,7 @@ observation for inclusion in the subsample.</p></li>
 <p>We introduce <code>ssp.quantreg</code> with simulated data. <span class="math inline">\(X\)</span> contains <span class="math inline">\(d=6\)</span> covariates drawn from multinormal
 distribution and <span class="math inline">\(Y\)</span> is the response
 variable. The full data size is <span class="math inline">\(N = 1 \times
-10^4\)</span>. The interested quantile is 0.75.</p>
+10^4\)</span>. The interested quantile <span class="math inline">\(\tau=0.75\)</span>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">1e4</span></span>
@@ -171,6 +172,10 @@ variable. The full data size is <span class="math inline">\(N = 1 \times
 <span><span class="co">#&gt; 4  1.10717085</span></span>
 <span><span class="co">#&gt; 5 -0.08180055</span></span>
 <span><span class="co">#&gt; 6 -0.03612645</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
+</h2>
 <p>The function usage is</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ssp.quantreg.html">ssp.quantreg</a></span><span class="op">(</span></span>
@@ -189,10 +194,6 @@ variable. The full data size is <span class="math inline">\(N = 1 \times
 <span>  contrasts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
-</h2>
 <p>The core functionality of <code>ssp.quantreg</code> revolves around
 three key questions:</p>
 <ul>
@@ -211,9 +212,8 @@ by the <code>likelihood</code> argument)</p></li>
 the sampling probability for each observation. The choices of
 <code>criterion</code> include <code>optL</code>(default) and
 <code>uniform</code>. In <code>optL</code>, the optimal subsampling
-probability is by minimizing a transformation of the asymptotic
-covariance of subsample estimator. <code>uniform</code> is a baseline
-method.</p>
+probability is by minimizing a transformation of the asymptotic variance
+of subsample estimator. <code>uniform</code> is a baseline method.</p>
 </div>
 <div class="section level3">
 <h3 id="sampling-method">
@@ -222,7 +222,7 @@ method.</p>
 <p>The options for the <code>sampling.method</code> argument include
 <code>withReplacement</code> (default) and <code>poisson</code>.
 <code>withReplacement</code> stands for drawing <span class="math inline">\(n.ssp\)</span> subsamples from full dataset with
-replacement, using the specified subsampling probability.
+replacement, using the specified subsampling probabilities.
 <code>poisson</code> stands for drawing subsamples one by one by
 comparing the subsampling probability with a realization of uniform
 random variable <span class="math inline">\(U(0,1)\)</span>. The
@@ -242,12 +242,13 @@ the bias introduced by unequal subsampling probabilities.</p>
 <code>boot</code> and <code>B</code><a class="anchor" aria-label="anchor" href="#boot-and-b"></a>
 </h3>
 <p>An option for drawing <span class="math inline">\(B\)</span>
-subsamples (each with size <code>n.ssp</code>) and deriving subsample
-estimator and asymptotic covariance matrix based on them. After getting
-<span class="math inline">\(\hat{\beta}_{b}\)</span> on the <span class="math inline">\(b\)</span>-th subsample, <span class="math inline">\(b=1,\dots B\)</span>, it calculates</p>
+subsamples (each with expected size <code>n.ssp</code>) and deriving
+subsample estimator and asymptotic covariance matrix based on them.
+After getting <span class="math inline">\(\hat{\beta}_{b}\)</span> on
+the <span class="math inline">\(b\)</span>-th subsample, <span class="math inline">\(b=1,\dots B\)</span>, it calculates</p>
 <p><span class="math display">\[
 \hat{\beta}_I = \frac{1}{B} \sum_{b=1}^{B} \hat{\beta}_{b}
-\]</span> as the final estimator and <span class="math display">\[
+\]</span> as the final subsample estimator and <span class="math display">\[
 \hat{V}(\hat{\beta}_I) = \frac{1}{r_{ef} B (B - 1)}
 \sum_{b=1}^{B} \left( \hat{\beta}_{b} - \hat{\beta}_I  \right)^{\otimes
 2},
@@ -257,7 +258,7 @@ each subsample can be replicated. For more details, see <span class="citation">W
 </div>
 </div>
 <div class="section level2">
-<h2 id="results">Results<a class="anchor" aria-label="anchor" href="#results"></a>
+<h2 id="outputs">Outputs<a class="anchor" aria-label="anchor" href="#outputs"></a>
 </h2>
 <p>After drawing subsample(s), <code>ssp.quantreg</code> utilizes
 <code><a href="https://rdrr.io/pkg/quantreg/man/rq.html" class="external-link">quantreg::rq</a></code> to fit the model on the subsample(s).
@@ -353,8 +354,8 @@ subsample in the full dataset.</p>
 <p>Some key returned variables:</p>
 <ul>
 <li><p><code>index.plt</code> and <code>index</code> are the row indices
-of drawn pilot subsamples and optimal subsamples in the full data. They
-are ready to be used for further analysis or downstream tasks.</p></li>
+of drawn pilot subsamples and optimal subsamples in the full
+data.</p></li>
 <li><p><code>coef.ssp</code> is the subsample estimator for <span class="math inline">\(\beta\)</span> and <code>coef</code> is the linear
 combination of <code>coef.plt</code> (pilot estimator) and
 <code>coef.ssp</code>.</p></li>
@@ -363,16 +364,18 @@ covariance matrices of <code>coef.ssp</code> and <code>coef</code>. If
 <code>boot=FALSE</code>, covariance matrix would not be estimated and a
 size <code>n.ssp * B</code> subsample would be drawn.</p></li>
 </ul>
+<p>See the help documentation of <code>ssp.quantreg</code> for
+details.</p>
 </div>
-<div class="section level3 unnumbered">
-<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h3>
+</div>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-wang2021optimal" class="csl-entry">
 Wang, Haiying, and Yanyuan Ma. 2021. <span>“Optimal Subsampling for
 Quantile Regression in Big Data.”</span> <em>Biometrika</em> 108 (1):
 99–112.
-</div>
 </div>
 </div>
 </div>
@@ -390,7 +393,7 @@ Quantile Regression in Big Data.”</span> <em>Biometrika</em> 108 (1):
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+<p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

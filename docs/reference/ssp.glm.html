@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -68,7 +68,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the <a href="https://dqksnow.github.io/Subsampling/articles/ssp-logit.html" class="external-link">vignette</a>.</p>
+    <p>Draw subsample from full dataset and fit a generalized linear model (GLM) on the subsample. For a quick start, refer to the <a href="https://dqksnow.github.io/subsampling/articles/ssp-logit.html" class="external-link">vignette</a>.</p>
     </div>
 
     <div id="ref-usage">
@@ -131,8 +131,8 @@ and <code>poisson</code> (default). <code>withReplacement</code> draws exactly <
 subsamples from size \(N\) full dataset with replacement, using the specified
 subsampling probabilities. <code>poisson</code> draws observations independently by
 comparing each subsampling probability with a realization of uniform random
-variable  \(U(0,1)\).
-Differences between methods:</p><ul><li><p>Sample size: <code>withReplacement</code> draws exactly  <code>n.ssp</code> subsamples while <code>poisson</code> draws
+variable  \(U(0,1)\).</p>
+<p>Differences between methods:</p><ul><li><p>Sample size: <code>withReplacement</code> draws exactly  <code>n.ssp</code> subsamples while <code>poisson</code> draws
 subsamples with expected size <code>n.ssp</code>, meaning the actual size may vary.</p></li>
 <li><p>Memory usage: <code>withReplacement</code> requires the entire dataset to be loaded at once, while <code>poisson</code>
 allows for processing observations sequentially (will be implemented in future version).</p></li>
@@ -220,7 +220,7 @@ dataset. The case-control subsample probability is applied, that is, \(\pi_i =
 families, uniform subsampling probabilities are applied. Typically, <code>n.plt</code> is
 relatively small compared to <code>n.ssp</code>.</p>
 <p>When <code>criterion = 'uniform'</code>, there is no need to compute the pilot estimator. In this case, a size <code>n.plt + n.ssp</code> subsample will be drawn with uniform sampling probability and <code>coef</code> is the corresponding  estimator.</p>
-<p>As suggested by <code><a href="https://rdrr.io/pkg/survey/man/svyglm.html" class="external-link">survey::svyglm()</a></code>, for binomial and poisson families, use <code>family=quasibinomial()</code> and <code>family=quasipoisson()</code> to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The ‘quasi’ versions of the family objects give the same point estimates and suppress the warning. Since subsampling methods only rely on point estimates from svyglm() for further computation, using the quasi families does not introduce any issues.</p>
+<p>As suggested by <code><a href="https://rdrr.io/pkg/survey/man/svyglm.html" class="external-link">survey::svyglm()</a></code>, for binomial and poisson families, use <code>family=quasibinomial()</code> and <code>family=quasipoisson()</code> to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The quasi versions of the family objects give the same point estimates and suppress the warning. Since subsampling methods only rely on point estimates from svyglm() for further computation, using the quasi families does not introduce any issues.</p>
 <p>For Gamma family, <code>ssp.glm</code> returns only the estimation of coefficients, as the dispersion parameter is not estimated.</p>
     </div>
     <div id="references">
@@ -535,7 +535,7 @@ relatively small compared to <code>n.ssp</code>.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+  <p></p><p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

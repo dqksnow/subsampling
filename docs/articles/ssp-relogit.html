@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -100,12 +100,9 @@ Subsampling for Logistic Regression Model with Rare Events</h1>
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dqksnow/Subsampling" class="external-link">subsampling</a></span><span class="op">)</span></span></code></pre></div>
-<p>This vignette introduces the usage of <code>ssp.relogit</code>. It
-provides a subsampling strategy for handling rare binary observations in
-logistic regression models. It returns optimal subsample by performing
-negative sampling on non-rare observations while retaining all rare
-observations. The statistical theory and algorithms in this
-implementation can be found in relevant reference papers.</p>
+<p>This vignette introduces the usage of <code>ssp.relogit</code>. The
+statistical theory and algorithms in this implementation can be found in
+relevant reference papers.</p>
 <p>The logistic regression log-likelihood function is</p>
 <p><span class="math display">\[
 \max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left[y_i \beta^{\top}
@@ -168,6 +165,10 @@ as the counts of non-rare observations.</p>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Y</span>, <span class="va">X</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, sep<span class="op">=</span><span class="st">""</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">formula</span> <span class="op">&lt;-</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">.</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
+</h2>
 <p>The function usage is</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ssp.relogit.html">ssp.relogit</a></span><span class="op">(</span></span>
@@ -182,17 +183,12 @@ as the counts of non-rare observations.</p>
 <span>  contrasts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
-</h2>
 <p>The core functionality of <code>ssp.glm</code> revolves around three
 key questions:</p>
 <ul>
 <li><p>How are subsampling probabilities computed? (Controlled by the
 <code>criterion</code> argument)</p></li>
-<li><p>How is the subsample drawn? (Controlled by the
-<code>sampling.method</code> argument)</p></li>
+<li><p>How is the subsample drawn?</p></li>
 <li><p>How is the likelihood adjusted to correct for bias? (Controlled
 by the <code>likelihood</code> argument)</p></li>
 </ul>
@@ -252,15 +248,10 @@ eventually uses <code>glm</code>. Arguments accepted by
 <span>                           criterion <span class="op">=</span> <span class="st">'optA'</span>,</span>
 <span>                           likelihood <span class="op">=</span> <span class="st">'logOddsCorrection'</span></span>
 <span>                           <span class="op">)</span></span></code></pre></div>
-<p>As recommended by <code><a href="https://rdrr.io/pkg/survey/man/svyglm.html" class="external-link">survey::svyglm</a></code>, when working with
-binomial models, it is advisable to use use
-<code>family=quasibinomial()</code> to avoid a warning issued by
-<code>glm</code>. Refer to <a href="https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm" class="external-link">svyglm()
-help documentation Details</a>. The ‘quasi’ version of the family
-objects provide the same point estimates.</p>
-<div class="section level3">
-<h3 id="returned-object">Returned object<a class="anchor" aria-label="anchor" href="#returned-object"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="outputs">Outputs<a class="anchor" aria-label="anchor" href="#outputs"></a>
+</h2>
 <p>The returned object contains estimation results and indices of drawn
 subsample in the full dataset.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -272,8 +263,8 @@ subsample in the full dataset.</p>
 <p>Some key returned variables:</p>
 <ul>
 <li><p><code>index.plt</code> and <code>index</code> are the row indices
-of drawn pilot subsamples and optimal subsamples in the full data. They
-are ready to be used for further analysis or downstream tasks.</p></li>
+of drawn pilot subsamples and optimal subsamples in the full
+data.</p></li>
 <li><p><code>coef.ssp</code> is the subsample estimator for <span class="math inline">\(\beta\)</span> and <code>coef</code> is the linear
 combination of <code>coef.plt</code> (pilot estimator) and
 <code>coef.ssp</code>.</p></li>
@@ -313,18 +304,17 @@ covariance matrices of <code>coef.ssp</code> and
 <span><span class="co">#&gt; V6         -0.5063     0.0821  -6.1705  &lt;0.0001</span></span></code></pre></div>
 <p>In the printed results, <code>Expected Subsample Size</code> is the
 sum of rare event counts (<span class="math inline">\(N_{1}\)</span>)
-and the expected size of negative subsample drawn from <span class="math inline">\(N_{0}\)</span> non-rare observations. For this
-example, <span class="math inline">\(866=N_{1} + n_{ssp} =
-266+600\)</span> and <code>Actual Subsample Size</code> is the sum of
-<span class="math inline">\(N_{1}\)</span> and the actual size of
-negative subsample from <span class="math inline">\(N_{0}\)</span>
-non-rare observations.</p>
-<p>The coefficients and standard errors printed by summary() are
-<code>coef</code> and the square root of <code>diag(cov)</code>.</p>
+and the expected size of negative subsample drawn from <span class="math inline">\(N_{0}\)</span> non-rare observations.
+<code>Actual Subsample Size</code> is the sum of <span class="math inline">\(N_{1}\)</span> and the actual size of negative
+subsample from <span class="math inline">\(N_{0}\)</span> non-rare
+observations.</p>
+<p>The coefficients and standard errors printed by
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> are <code>coef</code> and the square root of
+<code>diag(cov)</code>.</p>
 </div>
-<div class="section level3 unnumbered">
-<h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h3>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-wang2021nonuniform" class="csl-entry">
 Wang, HaiYing, Aonan Zhang, and Chong Wang. 2021. <span>“Nonuniform
@@ -335,7 +325,6 @@ Negative Sampling and Log Odds Correction with Rare Events Data.”</span>
 Wang, HaiYing, Rong Zhu, and Ping Ma. 2018. <span>“Optimal Subsampling
 for Large Sample Logistic Regression.”</span> <em>Journal of the
 American Statistical Association</em> 113 (522): 829–44.
-</div>
 </div>
 </div>
 </div>
@@ -353,7 +342,7 @@ American Statistical Association</em> 113 (522): 829–44.
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+<p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">

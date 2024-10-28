@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subsampling</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -98,42 +98,36 @@ Subsampling for Softmax (Multinomial) Regression Model</h1>
 
     
     
-<div class="section level2">
-<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h2>
 <p>This vignette introduces the usage of <code>ssp.softmax</code>, which
 draws optimal subsample from full data and fit softmax (multinomial)
 regression on the subsample. The statistical theory and algorithms in
 this implementation can be found in the relevant reference papers.</p>
-<p>Denote <span class="math inline">\(Y\)</span> as multi-category
+<p>Denote <span class="math inline">\(y\)</span> as multi-category
 response variable and <span class="math inline">\(K+1\)</span> is the
 number of categories. <span class="math inline">\(N\)</span> is the
 number of observations in the full dataset. <span class="math inline">\(X\)</span> is the <span class="math inline">\(N
 \times d\)</span> covariates matrix. Softmax regression model assumes
 that <span class="math display">\[
-P(Y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top
+P(y_{i,k} = 1 \mid \mathbf{x}_i) = \frac{\exp(\mathbf{x}_i^\top
 \boldsymbol{\beta}_k)}{\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top
-\boldsymbol{\beta}_l)},
+\boldsymbol{\beta}_l)}
 \]</span> for <span class="math inline">\(i = 1, \ldots, N\)</span> and
-<span class="math inline">\(k = 0, 1, \ldots, K\)</span>, where <span class="math inline">\(\boldsymbol{\beta}_k\)</span>’s are <span class="math inline">\(d\)</span>-dimensional unknown coefficients. We
-define <span class="math inline">\(\boldsymbol{\beta} =
-(\boldsymbol{\beta}_0^\top, \boldsymbol{\beta}_1^\top, \ldots,
-\boldsymbol{\beta}_K^\top)^\top\)</span> as a <span class="math inline">\((K+1)d\)</span>-dimensional vector.</p>
+<span class="math inline">\(k = 0, 1, \ldots, K\)</span>, where <span class="math inline">\(\boldsymbol{\beta}_k\)</span>’s are <span class="math inline">\(d\)</span>-dimensional unknown coefficients.</p>
 <p>The log-likelihood function of softmax regression is</p>
 <p><span class="math display">\[
 \max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^{N} \left[ \sum_{k=0}^{K}
-y_{i,k} \mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{
-\sum_{l=0}^{K} \exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\}
-\right]
+y_{i,k}
+\mathbf{x}_i^\top \boldsymbol{\beta}_k - \ln \left\{ \sum_{l=0}^{K}
+\exp(\mathbf{x}_i^\top \boldsymbol{\beta}_l) \right\} \right].
 \]</span></p>
 <p>The idea of subsampling methods is as follows: instead of fitting the
 model on the size <span class="math inline">\(N\)</span> full dataset, a
 subsampling probability is assigned to each observation and a smaller,
 informative subsample is drawn. The model is then fitted on the
 subsample to obtain an estimator with reduced computational cost.</p>
-<div class="section level3">
-<h3 id="terminology">Terminology<a class="anchor" aria-label="anchor" href="#terminology"></a>
-</h3>
+<div class="section level2">
+<h2 id="terminology">Terminology<a class="anchor" aria-label="anchor" href="#terminology"></a>
+</h2>
 <ul>
 <li><p>Full dataset: The whole dataset used as input.</p></li>
 <li><p>Full data estimator: The estimator obtained by fitting the model
@@ -146,17 +140,17 @@ on the subsample.</p></li>
 observation for inclusion in the subsample.</p></li>
 </ul>
 </div>
-</div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dqksnow/Subsampling" class="external-link">subsampling</a></span><span class="op">)</span></span></code></pre></div>
-<p>We introduce the usage of <code>ssp.glm</code> with simulated data.
-<span class="math inline">\(X\)</span> contains <span class="math inline">\(d=3\)</span> covariates drawn from multinormal
+<p>We introduce the usage of <code>ssp.softmax</code> with simulated
+data. <span class="math inline">\(X\)</span> contains <span class="math inline">\(d=3\)</span> covariates drawn from multinormal
 distribution and <span class="math inline">\(Y\)</span> is the
 multicategory response variable with <span class="math inline">\(K+1=3\)</span> categories. The full data size is
-<span class="math inline">\(N = 1 \times 10^4\)</span>.</p>
+<span class="math inline">\(N = 1 \times
+10^4\)</span>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dqksnow/Subsampling" class="external-link">subsampling</a></span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
@@ -182,6 +176,10 @@ multicategory response variable with <span class="math inline">\(K+1=3\)</span> 
 <span><span class="co">#&gt; 4 0  0.1854791  2.45385260  1.2682922</span></span>
 <span><span class="co">#&gt; 5 0  0.8687332  0.21941612 -0.2810234</span></span>
 <span><span class="co">#&gt; 6 1 -0.8336174 -0.32556141 -0.8505501</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
+</h2>
 <p>The function usage is</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ssp.softmax.html">ssp.softmax</a></span><span class="op">(</span></span>
@@ -198,11 +196,8 @@ multicategory response variable with <span class="math inline">\(K+1=3\)</span> 
 <span>  contrasts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="key-arguments">Key Arguments<a class="anchor" aria-label="anchor" href="#key-arguments"></a>
-</h3>
-<p>The core functionality of <code>ssp.glm</code> revolves around three
-key questions:</p>
+<p>The core functionality of <code>ssp.softmax</code> revolves around
+three key questions:</p>
 <ul>
 <li><p>How are subsampling probabilities computed? (Controlled by the
 <code>criterion</code> argument)</p></li>
@@ -211,10 +206,10 @@ key questions:</p>
 <li><p>How is the likelihood adjusted to correct for bias? (Controlled
 by the <code>likelihood</code> argument)</p></li>
 </ul>
-<div class="section level4">
-<h4 id="criterion">
+<div class="section level3">
+<h3 id="criterion">
 <code>criterion</code><a class="anchor" aria-label="anchor" href="#criterion"></a>
-</h4>
+</h3>
 <p>The choices of <code>criterion</code> include <code>optA</code>,
 <code>optL</code>, ,<code>MSPE</code>(default), <code>LUC</code> and
 <code>uniform</code>. The default criterion <code>MSPE</code> minimizes
@@ -222,12 +217,12 @@ the mean squared prediction error between subsample estimator and full
 data estimator. Criterion <code>optA</code> and <code>optL</code> are
 derived by minimizing the asymptotic covariance of subsample estimator.
 <code>LUC</code> and <code>uniform</code> are baseline methods. See
-<span class="citation">Yao, Zou, and Wang (2023)</span> for details.</p>
+<span class="citation">Yao, Zou, and Wang (2023)</span> and <span class="citation">Wang and Kim (2022)</span> for details.</p>
 </div>
-<div class="section level4">
-<h4 id="sampling-method">
+<div class="section level3">
+<h3 id="sampling-method">
 <code>sampling.method</code><a class="anchor" aria-label="anchor" href="#sampling-method"></a>
-</h4>
+</h3>
 <p>The options for <code>sampling.method</code> include
 <code>withReplacement</code> and <code>poisson</code> (default).
 <code>withReplacement.</code> stands for drawing <span class="math inline">\(n.ssp\)</span> subsamples from full dataset with
@@ -237,10 +232,10 @@ comparing the subsampling probability with a realization of uniform
 random variable <span class="math inline">\(U(0,1)\)</span>. The
 expected number of drawed samples are <span class="math inline">\(n.ssp\)</span>.</p>
 </div>
-<div class="section level4">
-<h4 id="likelihood">
+<div class="section level3">
+<h3 id="likelihood">
 <code>likelihood</code><a class="anchor" aria-label="anchor" href="#likelihood"></a>
-</h4>
+</h3>
 <p>The available choices for <code>likelihood</code> include
 <code>weighted</code> and <code>MSCLE</code>(default).
 <code>MSCLE</code> stands for maximum sampled conditional likelihood.
@@ -248,28 +243,28 @@ Both of these likelihood functions can derive an unbiased optimal
 subsample estimator. See <span class="citation">Wang and Kim
 (2022)</span> for details about <code>MSCLE</code>.</p>
 </div>
-<div class="section level4">
-<h4 id="constraint">
+<div class="section level3">
+<h3 id="constraint">
 <code>constraint</code><a class="anchor" aria-label="anchor" href="#constraint"></a>
-</h4>
+</h3>
 <p>Softmax model needs constraint on unknown coefficients for
 identifiability. The options for <code>constraint</code> include
 <code>summation</code> and <code>baseline</code> (default). The baseline
-constraint assumes the coefficient for the baseline category are <span class="math inline">\(0\)</span>. Without loss of generality, we set the
-category <span class="math inline">\(Y=0\)</span> as the baseline
-category so that <span class="math inline">\(\boldsymbol{\beta}_0=0\)</span>. The summation
-constraint <span class="math inline">\(\sum_{k=0}^{K}
-\boldsymbol{\beta}_k\)</span> is also used in the subsampling method for
-the purpose of calculating subsampling probability. These two
-constraints lead to different interpretation of coefficients but are
-equal for computing <span class="math inline">\(P(Y_{i,k} = 1 \mid
+constraint assumes the coefficient for the baseline category are <span class="math inline">\(0\)</span>. Without loss of generality,
+<code>ssp.softmax</code> sets the category <span class="math inline">\(Y=0\)</span> as the baseline category so that
+<span class="math inline">\(\boldsymbol{\beta}_0=0\)</span>. The
+summation constraint <span class="math inline">\(\sum_{k=0}^{K}
+\boldsymbol{\beta}_k\)</span> can also used in the subsampling method
+for the purpose of calculating optimal subsampling probability. These
+two constraints lead to different interpretation of coefficients but are
+equal for computing <span class="math inline">\(P(y_{i,k} = 1 \mid
 \mathbf{x}_i)\)</span>. The estimation of coefficients returned by
 <code><a href="../reference/ssp.softmax.html">ssp.softmax()</a></code> is under baseline constraint.</p>
 </div>
 </div>
-<div class="section level3">
-<h3 id="results">Results<a class="anchor" aria-label="anchor" href="#results"></a>
-</h3>
+<div class="section level2">
+<h2 id="outputs">Outputs<a class="anchor" aria-label="anchor" href="#outputs"></a>
+</h2>
 <p>After drawing subsample, <code>ssp.softmax</code> utilizes
 <code><a href="https://rdrr.io/pkg/nnet/man/multinom.html" class="external-link">nnet::multinom</a></code> to fit the model on the subsample. Arguments
 accepted by <code><a href="https://rdrr.io/pkg/nnet/man/multinom.html" class="external-link">nnet::multinom</a></code> can be passed through
@@ -335,9 +330,9 @@ accepted by <code><a href="https://rdrr.io/pkg/nnet/man/multinom.html" class="ex
 <span><span class="co">#&gt; V2 0.1264097 0.1289246</span></span>
 <span><span class="co">#&gt; V3 0.1277592 0.1278657</span></span></code></pre></div>
 <p><code>summary(ssp.results1)</code> shows that it draws 600
-observations out of 10000, where the number of unique indices is smaller
-since we use <code>sampling.method = 'withReplacement'</code>. After
-fitting softmax model on subsample using the choosen
+observations out of 10000, where the number of unique indices is less
+than 600 since we use <code>sampling.method = 'withReplacement'</code>.
+After fitting softmax model on subsample using the choosen
 <code>weighted</code> likelihood function, we get coefficients
 estimation and standard errors as above.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -395,9 +390,6 @@ estimation and standard errors as above.</p>
 <span><span class="co">#&gt; V1 0.1298265 0.1303422</span></span>
 <span><span class="co">#&gt; V2 0.1448717 0.1389000</span></span>
 <span><span class="co">#&gt; V3 0.1386846 0.1384042</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="returned-object">Returned object<a class="anchor" aria-label="anchor" href="#returned-object"></a>
-</h4>
 <p>The returned object contains estimation results and index of drawn
 subsamples in the full dataset.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -409,8 +401,8 @@ subsamples in the full dataset.</p>
 <p>Some key returned variables:</p>
 <ul>
 <li><p><code>index.plt</code> and <code>index</code> are the row indices
-of drawn pilot subsamples and optimal subsamples in the full data. They
-are ready to be used for further analysis or downstream tasks.</p></li>
+of drawn pilot subsamples and optimal subsamples in the full
+data.</p></li>
 <li><p><code>coef.ssp</code> is the subsample estimator for <span class="math inline">\(\beta\)</span> and <code>coef</code> is the linear
 combination of <code>coef.plt</code> (pilot estimator) and
 <code>coef.ssp</code>.</p></li>
@@ -419,9 +411,9 @@ covariance matrices of <code>coef.ssp</code> and
 <code>coef</code>.</p></li>
 </ul>
 </div>
-<div class="section level4">
-<h4 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h4>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-wang2022maximum" class="csl-entry">
 Wang, HaiYing, and Jae Kwang Kim. 2022. <span>“Maximum Sampled
@@ -433,8 +425,6 @@ Yao, Yaqiong, Jiahui Zou, and HaiYing Wang. 2023. <span>“Model
 Constraints Independent Optimal Subsampling Probabilities for Softmax
 Regression.”</span> <em>Journal of Statistical Planning and
 Inference</em> 225: 188–201.
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -452,7 +442,7 @@ Inference</em> 225: 188–201.
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Qingkai Dong, Haiying Wang, Yaqiong Yao, Qiang Zhang, Jun Yan.</p>
+<p>Developed by Qingkai Dong, Yaqiong Yao, Haiying Wang.</p>
 </div>
 
 <div class="pkgdown">
