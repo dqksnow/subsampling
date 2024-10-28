@@ -195,7 +195,7 @@ summary.ssp.quantreg <- function(object, ...) {
       Estimate = round(coef, digits = 4),
       `Std. Error` = round(se, digits = 4),
       `z value` = round(coef / se, digits = 4),
-      `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
+      `Pr(>|z|)` = format_p_values(2 * (1 - pnorm(abs(coef / se))),
                                    threshold = 0.0001),
       check.names = FALSE
     )

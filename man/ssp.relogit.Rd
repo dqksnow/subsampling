@@ -61,15 +61,15 @@ subsampling probability. The default value is 0.
 \item{...}{A list of parameters which will be passed to \code{svyglm()}.}
 }
 \value{
-ssp.relogit returns an object of class "ssp.relogit" containing the following components (some are optional):
+\code{ssp.relogit} returns an object of class "ssp.relogit" containing the following components (some are optional):
 
 \describe{
 \item{model.call}{The original function call.}
 \item{coef.plt}{The pilot estimator. See Details for more information.}
 \item{coef.ssp}{The estimator obtained from the optimal subsample.}
 \item{coef}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp.} The combination weights depend on the relative size of \code{n.plt} and \code{n.ssp} and the estimated covariance matrices of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are \code{coef} and the square root of \code{diag(cov)}.}
-\item{cov.ssp}{The covariance matrix of \code{coef.ssp}}
-\item{cov}{The covariance matrix of \code{beta.cmb}}
+\item{cov.ssp}{The covariance matrix of \code{coef.ssp}.}
+\item{cov}{The covariance matrix of \code{beta.cmb}.}
 \item{index.plt}{Row indices of pilot subsample in the full dataset.}
 \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
 \item{N}{The number of observations in the full dataset.}

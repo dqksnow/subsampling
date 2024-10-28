@@ -2,8 +2,8 @@
 % Please edit documentation in R/subsampling_pkg.R
 \docType{package}
 \name{subsampling}
-\alias{subsampling}
 \alias{subsampling-package}
+\alias{subsampling}
 \title{Optimal Subsampling Methods for Statistical Models}
 \description{
 Subsampling methods are utilized in statistical modeling for
@@ -45,7 +45,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Qiang Zhang [funder]
+  \item Qiang Zhang [contributor]
   \item Jun Yan [contributor]
 }
 

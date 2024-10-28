@@ -415,7 +415,7 @@ glm.control <- function(alpha = 0, b = 2, ...)
   list(alpha = alpha, b = b)
 }
 ###############################################################################
-format.p.values <- function(p.values, threshold = 0.0001) {
+format_p_values <- function(p.values, threshold = 0.0001) {
   formatted <- sapply(p.values, function(p.value) {
     if (p.value < threshold) {
       return(sprintf("<%.4f", threshold))
@@ -474,7 +474,7 @@ summary.ssp.glm <- function(object, ...) {
     Estimate = round(coef, digits = 4),
     `Std. Error` = round(se, digits = 4),
     `z value` = round(coef / se, digits = 4),
-    `Pr(>|z|)` = format.p.values(2 * (1 - pnorm(abs(coef / se))),
+    `Pr(>|z|)` = format_p_values(2 * (1 - pnorm(abs(coef / se))),
                                  threshold = 0.0001),
     check.names = FALSE
   )

@@ -28,6 +28,7 @@
 #' subsampling probabilities. `poisson` draws observations independently by
 #' comparing each subsampling probability with a realization of uniform random
 #' variable  \eqn{U(0,1)}.
+#' 
 #' Differences between methods:
 #' 
 #' - Sample size: `withReplacement` draws exactly  `n.ssp` subsamples while `poisson` draws

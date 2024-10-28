@@ -8,9 +8,7 @@
 ^\.github$
 ^Makefile$
 ^.*\.DS_Store$
-^\.Rcheck/\.DS_Store$
 ^\.Rcheck$
-^README\.org$
 ^README\.Rmd$
 ^cran-comments\.md$
 
@@ -19,7 +17,6 @@
 
 # docs: pkgdown file
 ^docs/
-^docs$
 ^_pkgdown\.yml$
 ^LICENSE\.md$
 
