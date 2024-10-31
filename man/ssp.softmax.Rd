@@ -88,9 +88,16 @@ ssp.softmax returns an object of class "ssp.softmax" containing the following co
 \item{model.call}{The original function call.}
 \item{coef.plt}{The pilot estimator. See Details for more information.}
 \item{coef.ssp}{The estimator obtained from the optimal subsample.}
-\item{coef}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp}. The combination weights depend on the relative size of \code{n.plt} and \code{n.ssp} and the estimated covariance matrices of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are \code{coef} and the square root of \code{diag(cov)}.}
+\item{coef}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp}, under baseline constraint. The combination weights depend on the relative size of \code{n.plt} and \code{n.ssp} and the estimated covariance matrices of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are \code{coef} and the square root of \code{diag(cov)}.}
+\item{coef.plt.sum}{The pilot estimator under summation constrraint. \code{coef.plt.sum = G \%*\% as.vector(coef.plt)}.}
+\item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constrraint. \code{coef.ssp.sum = G \%*\% as.vector(coef.ssp)}.}
+\item{coef.sum}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp}, under summation constrraint. \code{coef.sum = G \%*\% as.vector(coef)}.}
+\item{cov.plt}{The covariance matrix of \code{coef.plt}.}
 \item{cov.ssp}{The covariance matrix of \code{coef.ssp}.}
-\item{cov}{The covariance matrix of \code{beta.cmb}.}
+\item{cov}{The covariance matrix of \code{coef.cmb}.}
+\item{cov.plt.sum}{The covariance matrix of \code{coef.plt.sum}.}
+\item{cov.ssp.sum}{The covariance matrix of \code{coef.ssp.sum}.}
+\item{cov.sum}{The covariance matrix of \code{coef.sum}.}
 \item{index.plt}{Row indices of pilot subsample in the full dataset.}
 \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
 \item{N}{The number of observations in the full dataset.}

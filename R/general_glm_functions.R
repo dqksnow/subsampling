@@ -75,6 +75,7 @@ calculate.offset <- function (X,
                               d.psi,
                               alpha,
                               ddL.plt.correction,
+                              H = NULL,
                               NPhi = NULL,
                               n.ssp = NULL,
                               criterion,
@@ -93,6 +94,12 @@ calculate.offset <- function (X,
     nm.0 <- abs(d.psi)
   }
   
+  
+  # threshold H is estimated by pilot sample
+  nm.1[nm.1 > H] <- H
+  nm.0[nm.0 > H] <- H
+  
+  
   if (sampling.method == 'withReplacement') {
     stop("Currently only the 'logOddsCorrection' likelihood with
          'poisson' sampling method has been implemented.")
@@ -103,6 +110,40 @@ calculate.offset <- function (X,
   offset <- log(pi.1 / pi.0)
   return(offset)
 }
+# ###############################################################################
+# calculate.offset <- function (X,
+#                               N,
+#                               d.psi,
+#                               alpha,
+#                               ddL.plt.correction,
+#                               NPhi = NULL,
+#                               n.ssp = NULL,
+#                               criterion,
+#                               sampling.method) {
+#   # only compute offsets for subsample, not for full data.
+#   if (criterion == "optA") {
+#     norm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
+#     nm.1 <- abs(1 - d.psi) * norm
+#     nm.0 <- abs(d.psi) * norm
+#   } else if (criterion == "optL") {
+#     norm <- sqrt(rowSums(X^2))
+#     nm.1 <- abs(1 - d.psi) * norm
+#     nm.0 <- abs(d.psi) * norm
+#   } else if (criterion == "LCC") {
+#     nm.1 <- abs(1 - d.psi)
+#     nm.0 <- abs(d.psi)
+#   }
+#   
+#   if (sampling.method == 'withReplacement') {
+#     stop("Currently only the 'logOddsCorrection' likelihood with
+#          'poisson' sampling method has been implemented.")
+#   } else if (sampling.method == 'poisson') {
+#     pi.1 <- pmin(n.ssp * ((1 - alpha) * nm.1 / NPhi + alpha / N), 1)
+#     pi.0 <- pmin(n.ssp * ((1 - alpha) * nm.0 / NPhi + alpha / N), 1)
+#   }
+#   offset <- log(pi.1 / pi.0)
+#   return(offset)
+# }
 ###############################################################################
 calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   if (criterion == "optA"){
@@ -280,7 +321,9 @@ subsampling <- function(inputs,
                                  criterion = criterion,
                                  sampling.method = sampling.method,
                                  NPhi = NPhi,
-                                 n.ssp = n.ssp)
+                                 n.ssp = n.ssp,
+                                 H = H)
+      
     } else if (likelihood == 'weighted') {
       w.ssp <- 1 / pmin(p.ssp[index.ssp], 1)
     }

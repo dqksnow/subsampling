@@ -124,15 +124,17 @@ rare.subsampling <- function(inputs,
   w.ssp <- offset <- NA
   nm <- rare.calculate.nm(X, Y, ddL.plt.correction, P.plt, criterion)
   ## Currently only Poisson sampling method has been implemented.
-  if(criterion %in% c('optL', 'optA')){
-    H <- quantile(nm[index.plt], 1 - n.ssp / (b * N))
+  
+  if(criterion %in% c('optL', 'optA', 'LCC')){
+    # H <- quantile(nm[index.plt], 1 - n.ssp / (b * N))
+    H <- quantile(nm, 1 - n.ssp / (b * N))
     # threshold H is estimated by pilot sample
     nm[nm > H] <- H
     NPhi <- (N0 / N) * sum(nm[index.plt] / p.plt) / n.plt
     # denominator NPhi is estimated by pilot sample
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, Y + (1 - Y) * p.ssp) # negative sampling
-    p.ssp <- pmin(p.ssp[index.ssp], 1)
+    p.ssp <- pmin(p.ssp[index.ssp], 1) # actual sampling probability
     ## calculate offset or weights:
     if (likelihood == 'logOddsCorrection') {
       # only compute offsets for subsample, not for full data.
@@ -141,23 +143,8 @@ rare.subsampling <- function(inputs,
       w.ssp <- 1 / (Y[index.ssp] + (1 - Y[index.ssp]) * p.ssp)
       # inverse of actual sampling probability for each observation
     }
-  } else if (criterion == 'LCC'){
-    dm <- sum(nm[index.plt] / p.plt) / n.plt
-    p.ssp <- (n.ssp + N1) * nm / dm
-    index.ssp <- poisson.index(N, p.ssp)
-    p.ssp <- pmin(p.ssp[index.ssp], 1)
-    ## calculate offset or weights:
-    if (likelihood == 'logOddsCorrection') {
-      # only compute offsets for subsample, not for full data.
-      nm.1 <- abs(1 - P.plt[index.ssp])
-      nm.0 <- abs(P.plt[index.ssp])
-      pi.1 <- pmin((n.ssp + N1) * nm.1 / dm, 1)
-      pi.0 <- pmin((n.ssp + N1) * nm.0 / dm, 1)
-      offset <- log(pi.1 / pi.0)
-    } else if (likelihood == 'weighted') {
-      w.ssp <- 1 / p.ssp
-    }
-  }
+  } 
+
   return (list(index.ssp = index.ssp,
                w.ssp = w.ssp,
                offset = offset
@@ -185,7 +172,6 @@ rare.subsample.estimate <- function(inputs,
     results.ssp <- rare.coef.estimate(x.ssp, y.ssp, weights = w.ssp, ...)
     beta.ssp <- results.ssp$beta
     P.ssp <- results.ssp$pbeta
-    # P.ssp <- pbeta(x.ssp, beta.ssp) # as same as results.ssp$pbeta
     cov.ssp <- results.ssp$cov
     ddL.ssp <- rare.ddL(x.ssp, P.ssp, w = w.ssp * n.ssp / N)
     dL.sq.ssp <- rare.dL.sq(x.ssp, y.ssp, P.ssp, w = w.ssp^2 * n.ssp^2 / N^2)

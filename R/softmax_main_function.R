@@ -68,9 +68,16 @@
 #'   \item{model.call}{The original function call.}
 #'   \item{coef.plt}{The pilot estimator. See Details for more information.}
 #'   \item{coef.ssp}{The estimator obtained from the optimal subsample.}
-#'   \item{coef}{The weighted linear combination of `coef.plt` and `coef.ssp`. The combination weights depend on the relative size of `n.plt` and `n.ssp` and the estimated covariance matrices of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are `coef` and the square root of `diag(cov)`.}
+#'   \item{coef}{The weighted linear combination of `coef.plt` and `coef.ssp`, under baseline constraint. The combination weights depend on the relative size of `n.plt` and `n.ssp` and the estimated covariance matrices of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are `coef` and the square root of `diag(cov)`.}
+#'   \item{coef.plt.sum}{The pilot estimator under summation constrraint. `coef.plt.sum = G %*% as.vector(coef.plt)`.}
+#'   \item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constrraint. `coef.ssp.sum = G %*% as.vector(coef.ssp)`.}
+#'   \item{coef.sum}{The weighted linear combination of `coef.plt` and `coef.ssp`, under summation constrraint. `coef.sum = G %*% as.vector(coef)`.}
+#'   \item{cov.plt}{The covariance matrix of \code{coef.plt}.}
 #'   \item{cov.ssp}{The covariance matrix of \code{coef.ssp}.}
-#'   \item{cov}{The covariance matrix of \code{beta.cmb}.}
+#'   \item{cov}{The covariance matrix of \code{coef.cmb}.}
+#'   \item{cov.plt.sum}{The covariance matrix of \code{coef.plt.sum}.}
+#'   \item{cov.ssp.sum}{The covariance matrix of \code{coef.ssp.sum}.}
+#'   \item{cov.sum}{The covariance matrix of \code{coef.sum}.}
 #'   \item{index.plt}{Row indices of pilot subsample in the full dataset.}
 #'   \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
 #'   \item{N}{The number of observations in the full dataset.}
@@ -191,7 +198,7 @@ ssp.softmax <- function(formula,
   if (criterion %in% c('optL', 'optA', 'MSPE', 'LUC')) {
     plt.estimate.results <- softmax.plt.estimate(inputs, ...)
     p.plt <- plt.estimate.results$p.plt
-    beta.plt.b <- plt.estimate.results$beta.plt
+    beta.plt.b <- plt.estimate.results$beta.plt # under baseline constraint
     P1.plt <- plt.estimate.results$P1.plt
     ddL.plt <- plt.estimate.results$ddL.plt
     dL.sq.plt <- plt.estimate.results$dL.sq.plt
@@ -219,7 +226,7 @@ ssp.softmax <- function(formula,
                                  offsets = offsets,
                                  beta.plt = beta.plt,
                                  ...)
-    beta.ssp.b <- ssp.estimate.results$beta.ssp
+    beta.ssp.b <- ssp.estimate.results$beta.ssp # under baseline constraint
     ddL.ssp <- ssp.estimate.results$ddL.ssp
     dL.sq.ssp <- ssp.estimate.results$dL.sq.ssp
     Lambda.ssp <- ssp.estimate.results$Lambda.ssp
@@ -236,28 +243,39 @@ ssp.softmax <- function(formula,
                                            Lambda.ssp = Lambda.ssp,
                                            beta.plt = beta.plt.b,
                                            beta.ssp = beta.ssp.b)
-    beta.cmb.b <- combining.results$beta.cmb
+    beta.cmb.b <- combining.results$beta.cmb # under baseline constraint
     cov.cmb.b <- combining.results$cov.cmb
     P.cmb <- combining.results$P.cmb
 
-    # beta.plt.b <- G %*% as.vector(beta.plt.b)
-    # beta.ssp.b <- G %*% as.vector(beta.ssp.b)
-    # beta.cmb.b <- G %*% as.vector(beta.cmb.b)
-    # cov.plt.b <- G %*% cov.plt.b %*% t(G)
-    # cov.ssp.b <- G %*% cov.ssp.b %*% t(G)
-    # cov.cmb.b <- G %*% cov.cmb.b %*% t(G)
+    beta.plt.sum <- G %*% as.vector(beta.plt.b)
+    beta.ssp.sum <- G %*% as.vector(beta.ssp.b)
+    beta.cmb.sum <- G %*% as.vector(beta.cmb.b)
+    cov.plt.sum <- G %*% cov.plt.b %*% t(G)
+    cov.ssp.sum <- G %*% cov.ssp.b %*% t(G)
+    cov.cmb.sum <- G %*% cov.cmb.b %*% t(G)
     
     beta.plt <- matrix(beta.plt.b, nrow = d)
     beta.ssp = matrix(beta.ssp.b, nrow = d)
     beta <- matrix(beta.cmb.b, nrow = d)
     rownames(beta.plt) <- rownames(beta.ssp) <- rownames(beta) <- colnames(X)
+    
     results <- list(model.call = model.call,
                     coef.plt = beta.plt,
                     coef.ssp = beta.ssp,
                     coef = beta,
-                    # cov.plt = cov.plt.b,
+                    
+                    coef.plt.sum = beta.plt.sum,
+                    coef.ssp.sum = beta.ssp.sum,
+                    coef.sum = beta.cmb.sum,
+                    
+                    cov.plt = cov.plt.b,
                     cov.ssp = cov.ssp.b,
                     cov = cov.cmb.b,
+                    
+                    cov.plt.sum = cov.plt.sum,
+                    cov.sum = cov.cmb.sum,
+                    cov.ssp.sum = cov.ssp.sum,
+                    
                     index.plt = index.plt,
                     index.ssp = index.ssp,
                     N = N,
@@ -274,15 +292,16 @@ ssp.softmax <- function(formula,
       y.uni <- Y[index.uni]
       results <- softmax.coef.estimate(x.uni, y.uni, ...)
       beta.uni.b <- results$beta
-      P.uni <-results$P1
+      P.uni <- results$P1
       ddL.uni <- softmax_ddL_cpp(X = x.uni, P = P.uni[, -1], p = rep(1, n.uni),
-                                 K, d, scale = N*n.uni)
+                                 K, d, scale = n.uni)
       dL.sq.uni <- softmax_dL_sq_cpp(X = x.uni, 
                                      Y_matrix = Y.matrix[index.uni, ],
                                      P = P.uni[, -1], p = rep(1, n.uni), K = K, 
-                                     d = d, scale = N^2*n.uni^2)
+                                     d = d, scale = n.uni)
       c <- n.uni / N
-      cov.uni.b <- solve(ddL.uni) %*% (dL.sq.uni * (1+c)) %*% solve(ddL.uni)
+      cov.uni.b <- solve(ddL.uni) %*% (dL.sq.uni * (1+c)) %*% 
+        solve(ddL.uni) / n.uni
     } else if (sampling.method == 'poisson') {
       index.uni <- poisson.index(N, n.uni/N)
       p.uni <- rep(n.uni / N, length(index.uni))
@@ -299,13 +318,20 @@ ssp.softmax <- function(formula,
                                      scale=(N^2))
       cov.uni.b <- solve(ddL.uni) %*% dL.sq.uni %*% solve(ddL.uni)
     }
+    
+    beta.sum <- G %*% as.vector(beta.uni.b)
+    
     beta <- matrix(beta.uni.b, nrow = d)
+    
+    cov.sum <- G %*% cov.uni.b %*% t(G)
+    
     rownames(beta) <- colnames(X)
     results <- list(model.call = model.call,
-                    index = index.uni,
+                    index.ssp = index.uni,
                     coef = beta,
                     cov = cov.uni.b,
-                    # P = P.uni,
+                    coef.sum = beta.sum,
+                    cov.sum = cov.sum,
                     N = N,
                     subsample.size.expect = n.uni,
                     terms = mt

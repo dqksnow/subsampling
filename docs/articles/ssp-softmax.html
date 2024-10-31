@@ -326,9 +326,9 @@ accepted by <code><a href="https://rdrr.io/pkg/nnet/man/multinom.html" class="ex
 <span><span class="co">#&gt; Std. Errors:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         [,1]      [,2]</span></span>
-<span><span class="co">#&gt; V1 0.1243253 0.1281017</span></span>
-<span><span class="co">#&gt; V2 0.1264097 0.1289246</span></span>
-<span><span class="co">#&gt; V3 0.1277592 0.1278657</span></span></code></pre></div>
+<span><span class="co">#&gt; V1 0.1457377 0.1459830</span></span>
+<span><span class="co">#&gt; V2 0.1442445 0.1461619</span></span>
+<span><span class="co">#&gt; V3 0.1498036 0.1492071</span></span></code></pre></div>
 <p><code>summary(ssp.results1)</code> shows that it draws 600
 observations out of 10000, where the number of unique indices is less
 than 600 since we use <code>sampling.method = 'withReplacement'</code>.
@@ -353,9 +353,9 @@ estimation and standard errors as above.</p>
 <span><span class="co">#&gt; converged</span></span>
 <span><span class="co">#&gt; [1] "Message from nnet::multinom: "</span></span>
 <span><span class="co">#&gt; # weights:  21 (6 variable)</span></span>
-<span><span class="co">#&gt; initial  value 859.421875 </span></span>
-<span><span class="co">#&gt; iter  10 value 655.108401</span></span>
-<span><span class="co">#&gt; final  value 655.010241 </span></span>
+<span><span class="co">#&gt; initial  value 1155.595717 </span></span>
+<span><span class="co">#&gt; iter  10 value 694.729584</span></span>
+<span><span class="co">#&gt; final  value 694.727136 </span></span>
 <span><span class="co">#&gt; converged</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ssp.results2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Model Summary</span></span>
@@ -380,24 +380,26 @@ estimation and standard errors as above.</p>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         [,1]      [,2]</span></span>
-<span><span class="co">#&gt; V1 -1.429566 -1.405951</span></span>
-<span><span class="co">#&gt; V2 -1.738377 -1.596937</span></span>
-<span><span class="co">#&gt; V3 -1.420287 -1.469564</span></span>
+<span><span class="co">#&gt; V1 -1.451076 -1.433182</span></span>
+<span><span class="co">#&gt; V2 -1.780664 -1.735468</span></span>
+<span><span class="co">#&gt; V3 -1.445315 -1.632805</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Std. Errors:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         [,1]      [,2]</span></span>
-<span><span class="co">#&gt; V1 0.1298265 0.1303422</span></span>
-<span><span class="co">#&gt; V2 0.1448717 0.1389000</span></span>
-<span><span class="co">#&gt; V3 0.1386846 0.1384042</span></span></code></pre></div>
+<span><span class="co">#&gt; V1 0.1191177 0.1229054</span></span>
+<span><span class="co">#&gt; V2 0.1320770 0.1283766</span></span>
+<span><span class="co">#&gt; V3 0.1243176 0.1266856</span></span></code></pre></div>
 <p>The returned object contains estimation results and index of drawn
 subsamples in the full dataset.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">ssp.results1</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "model.call"            "coef.plt"              "coef.ssp"             </span></span>
-<span><span class="co">#&gt;  [4] "coef"                  "cov.ssp"               "cov"                  </span></span>
-<span><span class="co">#&gt;  [7] "index.plt"             "index.ssp"             "N"                    </span></span>
-<span><span class="co">#&gt; [10] "subsample.size.expect" "terms"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [4] "coef"                  "coef.plt.sum"          "coef.ssp.sum"         </span></span>
+<span><span class="co">#&gt;  [7] "coef.sum"              "cov.plt"               "cov.ssp"              </span></span>
+<span><span class="co">#&gt; [10] "cov"                   "cov.plt.sum"           "cov.sum"              </span></span>
+<span><span class="co">#&gt; [13] "cov.ssp.sum"           "index.plt"             "index.ssp"            </span></span>
+<span><span class="co">#&gt; [16] "N"                     "subsample.size.expect" "terms"</span></span></code></pre></div>
 <p>Some key returned variables:</p>
 <ul>
 <li><p><code>index.plt</code> and <code>index</code> are the row indices

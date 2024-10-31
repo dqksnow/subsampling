@@ -182,13 +182,34 @@ subsampling probability. The default value is 0.</p></li>
 <dd><p>The estimator obtained from the optimal subsample.</p></dd>
 
 <dt>coef</dt>
-<dd><p>The weighted linear combination of <code>coef.plt</code> and <code>coef.ssp</code>. The combination weights depend on the relative size of <code>n.plt</code> and <code>n.ssp</code> and the estimated covariance matrices of <code>coef.plt</code> and <code>coef.ssp.</code> We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are <code>coef</code> and the square root of <code>diag(cov)</code>.</p></dd>
+<dd><p>The weighted linear combination of <code>coef.plt</code> and <code>coef.ssp</code>, under baseline constraint. The combination weights depend on the relative size of <code>n.plt</code> and <code>n.ssp</code> and the estimated covariance matrices of <code>coef.plt</code> and <code>coef.ssp.</code> We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are <code>coef</code> and the square root of <code>diag(cov)</code>.</p></dd>
+
+<dt>coef.plt.sum</dt>
+<dd><p>The pilot estimator under summation constrraint. <code>coef.plt.sum = G %*% as.vector(coef.plt)</code>.</p></dd>
+
+<dt>coef.ssp.sum</dt>
+<dd><p>The estimator obtained from the optimal subsample under summation constrraint. <code>coef.ssp.sum = G %*% as.vector(coef.ssp)</code>.</p></dd>
+
+<dt>coef.sum</dt>
+<dd><p>The weighted linear combination of <code>coef.plt</code> and <code>coef.ssp</code>, under summation constrraint. <code>coef.sum = G %*% as.vector(coef)</code>.</p></dd>
+
+<dt>cov.plt</dt>
+<dd><p>The covariance matrix of <code>coef.plt</code>.</p></dd>
 
 <dt>cov.ssp</dt>
 <dd><p>The covariance matrix of <code>coef.ssp</code>.</p></dd>
 
 <dt>cov</dt>
-<dd><p>The covariance matrix of <code>beta.cmb</code>.</p></dd>
+<dd><p>The covariance matrix of <code>coef.cmb</code>.</p></dd>
+
+<dt>cov.plt.sum</dt>
+<dd><p>The covariance matrix of <code>coef.plt.sum</code>.</p></dd>
+
+<dt>cov.ssp.sum</dt>
+<dd><p>The covariance matrix of <code>coef.ssp.sum</code>.</p></dd>
+
+<dt>cov.sum</dt>
+<dd><p>The covariance matrix of <code>coef.sum</code>.</p></dd>
 
 <dt>index.plt</dt>
 <dd><p>Row indices of pilot subsample in the full dataset.</p></dd>
@@ -303,10 +324,10 @@ dataset with uniform sampling probability.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Std. Errors:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          [,1]       [,2]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> V1 0.08803001 0.08917739</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> V2 0.08516142 0.08456003</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> V3 0.08726432 0.08841460</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [,1]      [,2]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> V1 0.1127325 0.1122913</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> V2 0.1133850 0.1108925</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> V3 0.1202163 0.1178532</span>
 </code></pre></div>
     </div>
   </div>

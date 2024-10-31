@@ -89,7 +89,7 @@ softmax.plt.estimate <- function(inputs, ...){
   K <- inputs$K
   d <- inputs$d
   criterion <- inputs$criterion
-
+  
   index.plt <- random.index(N, n.plt)
   p.plt <- rep(1 / N, n.plt) # pilot sampling probability, uniform
   x.plt <- X[index.plt, ]
@@ -102,13 +102,12 @@ softmax.plt.estimate <- function(inputs, ...){
   
   dL.sq.plt <- softmax_dL_sq_cpp(X = x.plt, Y_matrix = Y.matrix[index.plt, ],
                                  P = P1.plt[, -1], p = rep(1, n.plt), K = K,
-                                 d = d, scale = n.plt^2)
+                                 d = d, scale = n.plt)
   c <- n.plt / N
-  Lambda.plt <- c * softmax_dL_sq_cpp(X = x.plt, 
-                                      Y_matrix = Y.matrix[index.plt, ],
-                                      P = P1.plt[, -1], p = rep(1, n.plt),
-                                      K = K, d = d, scale = n.plt^2)
-  cov.plt <- solve(ddL.plt) %*% (dL.sq.plt + Lambda.plt) %*% solve(ddL.plt)
+  Lambda.plt <- c * dL.sq.plt
+  cov.plt <- solve(ddL.plt) %*% (dL.sq.plt + Lambda.plt) %*% 
+             solve(ddL.plt) / n.plt
+
   if (criterion == "MSPE") {
     Omega.plt <- softmax_Omega_cpp(x.plt, P1 = P1.plt, p = p.plt, K, d,
                                    scale = N*n.plt)
@@ -156,11 +155,13 @@ softmax.calculate.nm <- function(ddL.plt, Omega.plt, sixi, G,
 }
 ###############################################################################
 ###############################################################################
-softmax.calculate.offsets <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
+softmax.calculate.offsets <- function(P.ssp, X.ssp, H = NA, dm = NA,
+                                      G, ddL.plt, Omega.plt,
                                       criterion, alpha, N,
                                       index.plt,
                                       n.plt,
                                       p.plt,
+                                      p.ssp,
                                       b){
   # only compute offsets for subsample, not for full data.
   P.ssp.dim <- dim(P.ssp) # P.ssp = P1.plt[index.ssp, ]
@@ -199,10 +200,18 @@ softmax.calculate.offsets <- function(P.ssp, X.ssp, G, ddL.plt, Omega.plt,
         temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)
         nm <- sqrt(rowSums(temp^2))
       }
-      # threshold H is not used here
-      dm <- sum(nm)
-      # denominator dm is estimated by pilot sample
-      offsets[, k] <- log(pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1))
+      # threshold H 
+      # dm <- sum(nm)
+      # H <- quantile(nm, 1-n.ssp/(b*N))
+      # nm[nm > H] <- H
+      # threshold H is estimated by pilot sample
+      # dm <- (sum(nm /p.ssp)) * (n.ssp/(n.ssp - K*d))
+
+      dm <- (sum(nm /p.ssp)) * (n.ssp/(n.ssp - K*d))
+
+      offsets[, k] <- log(
+        pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1)
+        )
     }
   }
   return(offsets)
@@ -252,6 +261,7 @@ softmax.subsampling <- function(inputs,
                                            index.plt = index.plt,
                                            n.plt = n.plt,
                                            p.plt = p.plt,
+                                           p.ssp = p.ssp[index.ssp],
                                            b = b)
     } else if (likelihood == 'weighted') {
       offsets <- NA
@@ -271,17 +281,20 @@ softmax.subsampling <- function(inputs,
       }
       offsets <- NA
     } else if (sampling.method == "poisson"){
-      H <- quantile(nm[index.plt], 1-n.ssp/(b*N))
       # threshold H is estimated by pilot sample
+      H <- quantile(nm[index.plt], 1-n.ssp/(b*N))
+      # H <- quantile(nm, 1-n.ssp/(b*N))
       nm[nm > H] <- H
-      dm <- (sum(nm[index.plt] /p.plt) / n.plt) * (n.plt/(n.plt - K*d))
       # denominator dm is estimated by pilot sample
-      p.ssp <- pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1) # threshold
+      dm <- (sum(nm[index.plt] /p.plt) / n.plt) * (n.plt/(n.plt - K*d))
+      p.ssp <- pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1)
       index.ssp <- poisson.index(N, p.ssp)
       # calculate offsets
       if (likelihood == 'MSCLE') {
         offsets <- softmax.calculate.offsets(P1.plt[index.ssp, ],
                                            X[index.ssp, ],
+                                           H = H,
+                                           dm = dm,
                                            G = G,
                                            ddL.plt = ddL.plt,
                                            Omega.plt = Omega.plt,
@@ -291,7 +304,9 @@ softmax.subsampling <- function(inputs,
                                            index.plt = index.plt,
                                            n.plt = n.plt,
                                            p.plt = p.plt,
-                                           b = b)
+                                           p.ssp = p.ssp[index.ssp],
+                                           b = b
+                                           )
       } else if (likelihood == 'weighted') {
         offsets <- NA
       }
@@ -386,6 +401,8 @@ softmax.combining <- function(inputs, n.ssp,
   ddL.inv <- solve(ddL.plt + ddL.ssp)
   beta.cmb <- ddL.inv %*% (ddL.plt %*% c(beta.plt) + ddL.ssp %*% c(beta.ssp))
   beta.cmb <- matrix(beta.cmb, nrow = d)
+
+  
   cov.cmb <- ddL.inv %*% (dL.sq.plt + Lambda.plt + dL.sq.ssp + Lambda.ssp) %*% 
               ddL.inv
 
