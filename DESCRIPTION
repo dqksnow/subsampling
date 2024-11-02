@@ -1,7 +1,7 @@
 Type: Package
 Package: subsampling
 Title: Optimal Subsampling Methods for Statistical Models
-Version: 0.1.0
+Version: 0.1.1
 Date: 2024-11-2
 Authors@R: c(
     person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
