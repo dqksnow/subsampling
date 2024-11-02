@@ -1,4 +1,4 @@
-# subsampling 0.1
+# subsampling 0.1.0
 
 * Initial CRAN submission.
 

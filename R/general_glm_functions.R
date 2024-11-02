@@ -94,12 +94,11 @@ calculate.offset <- function (X,
     nm.0 <- abs(d.psi)
   }
   
-  
-  # threshold H is estimated by pilot sample
+  # threshold H is estimated on pilot sample
   nm.1[nm.1 > H] <- H
   nm.0[nm.0 > H] <- H
   
-  
+  # denominator NPhi is estimated on pilot sample
   if (sampling.method == 'withReplacement') {
     stop("Currently only the 'logOddsCorrection' likelihood with
          'poisson' sampling method has been implemented.")
@@ -110,40 +109,6 @@ calculate.offset <- function (X,
   offset <- log(pi.1 / pi.0)
   return(offset)
 }
-# ###############################################################################
-# calculate.offset <- function (X,
-#                               N,
-#                               d.psi,
-#                               alpha,
-#                               ddL.plt.correction,
-#                               NPhi = NULL,
-#                               n.ssp = NULL,
-#                               criterion,
-#                               sampling.method) {
-#   # only compute offsets for subsample, not for full data.
-#   if (criterion == "optA") {
-#     norm <- sqrt(rowSums((X %*% t(solve(ddL.plt.correction)))^2))
-#     nm.1 <- abs(1 - d.psi) * norm
-#     nm.0 <- abs(d.psi) * norm
-#   } else if (criterion == "optL") {
-#     norm <- sqrt(rowSums(X^2))
-#     nm.1 <- abs(1 - d.psi) * norm
-#     nm.0 <- abs(d.psi) * norm
-#   } else if (criterion == "LCC") {
-#     nm.1 <- abs(1 - d.psi)
-#     nm.0 <- abs(d.psi)
-#   }
-#   
-#   if (sampling.method == 'withReplacement') {
-#     stop("Currently only the 'logOddsCorrection' likelihood with
-#          'poisson' sampling method has been implemented.")
-#   } else if (sampling.method == 'poisson') {
-#     pi.1 <- pmin(n.ssp * ((1 - alpha) * nm.1 / NPhi + alpha / N), 1)
-#     pi.0 <- pmin(n.ssp * ((1 - alpha) * nm.0 / NPhi + alpha / N), 1)
-#   }
-#   offset <- log(pi.1 / pi.0)
-#   return(offset)
-# }
 ###############################################################################
 calculate.nm <- function(X, Y, ddL.plt.correction, d.psi, criterion){
   if (criterion == "optA"){
@@ -226,7 +191,6 @@ pilot.estimate <- function(inputs, ...){
                                          weights = (1 / (p.plt*N*n.plt)),
                                          family = family)
     
-    
     dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
                        x.plt,
                        y.plt,
@@ -306,10 +270,10 @@ subsampling <- function(inputs,
     }
   } else if (sampling.method == "poisson"){
     H <- quantile(nm[index.plt], 1 - n.ssp / (b * N)) 
-    # threshold H is estimated by pilot sample
+    # threshold H is estimated on pilot sample
     nm[nm > H] <- H
     NPhi <- sum(nm[index.plt] / p.plt) / n.plt
-    # denominator NPhi is estimated by pilot sample
+    # denominator NPhi is estimated on pilot sample
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
     index.ssp <- poisson.index(N, p.ssp)
     if (likelihood == 'logOddsCorrection') {
@@ -323,7 +287,6 @@ subsampling <- function(inputs,
                                  NPhi = NPhi,
                                  n.ssp = n.ssp,
                                  H = H)
-      
     } else if (likelihood == 'weighted') {
       w.ssp <- 1 / pmin(p.ssp[index.ssp], 1)
     }

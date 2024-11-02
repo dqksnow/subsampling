@@ -154,22 +154,23 @@ softmax.calculate.nm <- function(ddL.plt, Omega.plt, sixi, G,
   return(nm)
 }
 ###############################################################################
-###############################################################################
-softmax.calculate.offsets <- function(P.ssp, X.ssp, H = NA, dm = NA,
+softmax.calculate.offsets <- function(P.ssp, X.ssp,
+                                      H = NA,
+                                      dm = NA,
                                       G, ddL.plt, Omega.plt,
-                                      criterion, alpha, N,
+                                      criterion, 
+                                      constraint = NA,
+                                      alpha, N,
                                       index.plt,
-                                      n.plt,
-                                      p.plt,
-                                      p.ssp,
-                                      b){
+                                      n.plt
+                                      ){
   # only compute offsets for subsample, not for full data.
-  P.ssp.dim <- dim(P.ssp) # P.ssp = P1.plt[index.ssp, ]
+  P.ssp.dim <- dim(P.ssp) # P.ssp = P1.plt[index.ssp, ], dim= n.ssp * (K+1)
   n.ssp <- P.ssp.dim[1]
   K <- P.ssp.dim[2] - 1
   d <- ncol(X.ssp)
   offsets <- matrix(NA, nrow = n.ssp, ncol = (K+1))
-  
+
   if (criterion == 'LUC') {
     q <- pmax(apply(P.ssp, 1, max), 0.5)
     etaK <- P.ssp == q
@@ -180,34 +181,39 @@ softmax.calculate.offsets <- function(P.ssp, X.ssp, H = NA, dm = NA,
     offsets <- log(piK1)
   } else { # for optL, optA, MSPE
     P0.ssp <- P.ssp[, -1]
-    for (k in 1:(K+1)) {
+    for (k in 1:(K+1)) { # when all subsample have y[k]=1
       if (k == 1) {
-        P.temp <- cbind(rowSums(P0.ssp), P0.ssp)
+        P.temp <- -P0.ssp 
         sixi <- P.temp[, rep(seq(K), each = d)] * X.ssp[, rep(seq(d), K)]
       } else {
         P.temp <- - P0.ssp
         P.temp[, (k-1)] <- 1 + P.temp[, (k-1)]
         sixi <- P.temp[, rep(seq(K), each = d)] * X.ssp[, rep(seq(d), K)]
       }
-      
+
       if (criterion == "optA") {
-        temp <- sixi %*% solve(ddL.plt) %*% t(G)
-        nm <- sqrt(rowSums(temp^2))
+        if (constraint == "baseline"){
+          temp <- sixi %*% solve(ddL.plt)
+          nm <- sqrt(rowSums(temp^2))
+        } else if (constraint == "summation"){
+          temp <- sixi %*% solve(ddL.plt) %*% t(G)
+          nm <- sqrt(rowSums(temp^2))
+        }
       } else if (criterion == "optL"){
-        temp <- sixi %*% t(G %*% solve(t(G) %*% G))
-        nm <- sqrt(rowSums(temp^2))
+        if (constraint == "baseline"){
+          nm <- sqrt(rowSums(sixi^2))
+        } else if (constraint == "summation"){
+          temp <- sixi %*% t(G %*% solve(t(G) %*% G))
+          nm <- sqrt(rowSums(temp^2))
+        }
+ 
       } else if (criterion == "MSPE") {
         temp <- sixi %*% solve(ddL.plt) %*% expm::sqrtm(Omega.plt)
         nm <- sqrt(rowSums(temp^2))
       }
-      # threshold H 
-      # dm <- sum(nm)
-      # H <- quantile(nm, 1-n.ssp/(b*N))
-      # nm[nm > H] <- H
-      # threshold H is estimated by pilot sample
-      # dm <- (sum(nm /p.ssp)) * (n.ssp/(n.ssp - K*d))
 
-      dm <- (sum(nm /p.ssp)) * (n.ssp/(n.ssp - K*d))
+      # threshold H and denominator dm are estimated on pilot sample
+      nm[nm > H] <- H
 
       offsets[, k] <- log(
         pmin(n.ssp * ((1 - alpha) * nm / dm + alpha / N), 1)
@@ -243,7 +249,7 @@ softmax.subsampling <- function(inputs,
     m <- (gamma >= 2 * q)
     piK1 <- 2 * m * (q + (1 - 2 * q) * etaK) / gamma + (1 - m) *
       (1 + (1 - gamma) / (gamma - q) * etaK)
-    p.ssp <- n.ssp * piK1 / sum(piK1) # poisson sampling probability
+    p.ssp <- pmin(n.ssp * piK1 / sum(piK1), 1) # poisson sampling probability
     index.ssp <- poisson.index(N, p.ssp)
     if (sampling.method == "withReplacement") {
       stop("The 'LUC' criterion + 'withReplacement' sampling method
@@ -259,10 +265,8 @@ softmax.subsampling <- function(inputs,
                                            alpha = alpha,
                                            N = N,
                                            index.plt = index.plt,
-                                           n.plt = n.plt,
-                                           p.plt = p.plt,
-                                           p.ssp = p.ssp[index.ssp],
-                                           b = b)
+                                           n.plt = n.plt
+                                           )
     } else if (likelihood == 'weighted') {
       offsets <- NA
     }
@@ -283,7 +287,6 @@ softmax.subsampling <- function(inputs,
     } else if (sampling.method == "poisson"){
       # threshold H is estimated by pilot sample
       H <- quantile(nm[index.plt], 1-n.ssp/(b*N))
-      # H <- quantile(nm, 1-n.ssp/(b*N))
       nm[nm > H] <- H
       # denominator dm is estimated by pilot sample
       dm <- (sum(nm[index.plt] /p.plt) / n.plt) * (n.plt/(n.plt - K*d))
@@ -299,13 +302,11 @@ softmax.subsampling <- function(inputs,
                                            ddL.plt = ddL.plt,
                                            Omega.plt = Omega.plt,
                                            criterion = criterion,
+                                           constraint = constraint,
                                            alpha = alpha,
                                            N = N,
                                            index.plt = index.plt,
-                                           n.plt = n.plt,
-                                           p.plt = p.plt,
-                                           p.ssp = p.ssp[index.ssp],
-                                           b = b
+                                           n.plt = n.plt
                                            )
       } else if (likelihood == 'weighted') {
         offsets <- NA
