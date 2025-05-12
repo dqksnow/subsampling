@@ -1,10 +1,11 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # subsampling
 
 <!-- badges: start -->
 
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/subsampling)](https://CRAN.R-project.org/package=subsampling)
+[![Total_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/subsampling)](https://CRAN.R-project.org/package=subsampling)
+[![Monthly_Downloads](https://cranlogs.r-pkg.org/badges/subsampling)](https://CRAN.R-project.org/package=subsampling)
 [![R-CMD-check](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -23,14 +24,19 @@ various statistical models such as generalized linear models (GLM),
 softmax (multinomial) regression, rare event logistic regression and
 quantile regression model. Specialized subsampling techniques are
 provided to address specific challenges across different models and
-datasets.
+datasets. With specified model assumptions and subsampling techniques,
+it draws subsample from the full data, fits model on the subsample and
+perform statistical inferences.
 
 ## Installation
 
-You can install the development version of subsampling from
-[GitHub](https://github.com/) with:
+You can install the package by
 
 ``` r
+# Install from CRAN
+install.packages("subsampling")
+
+# Or install the development version from GitHub
 # install.packages("devtools")
 devtools::install_github("dqksnow/subsampling")
 ```
@@ -108,3 +114,9 @@ summary(ssp.results)
 #> V5         -0.3725     0.1045 -3.5649   0.0004
 #> V6         -0.6703     0.0973 -6.8859  <0.0001
 ```
+
+## Acknowledgments
+
+The development of this package was supported by the National Eye
+Institute of the National Institutes of Health under Award Number
+R21EY035710.

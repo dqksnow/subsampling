@@ -1,9 +1,9 @@
 ---
-title: "Introduction to `ssp.glm`: Subsampling for Generalized Linear Models"
+title: "`ssp.glm`: Subsampling for Generalized Linear Models"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{Introduction to `ssp.glm`: Subsampling for Generalized Linear Models}
+  %\VignetteIndexEntry{`ssp.glm`: Subsampling for Generalized Linear Models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

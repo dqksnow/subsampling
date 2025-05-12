@@ -1,9 +1,9 @@
 ---
-title: "Introduction to `ssp.softmax`: Subsampling for Softmax (Multinomial) Regression Model"
+title: "`ssp.softmax`: Subsampling for Softmax (Multinomial) Regression Model"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{Introduction to `ssp.softmax`: Subsampling for Softmax (Multinomial) Regression Model}
+  %\VignetteIndexEntry{`ssp.softmax`: Subsampling for Softmax (Multinomial) Regression Model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,51 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/articles/ssp-logit.html</loc>
-  </url>
-  <url>
-    <loc>/articles/ssp-quantreg.html</loc>
-  </url>
-  <url>
-    <loc>/articles/ssp-relogit.html</loc>
-  </url>
-  <url>
-    <loc>/articles/ssp-softmax.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ssp.glm.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ssp.quantreg.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ssp.relogit.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ssp.softmax.html</loc>
-  </url>
-  <url>
-    <loc>/reference/subsampling.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://dqksnow.github.io/subsampling/404.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/LICENSE.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/articles/index.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/articles/ssp-logit.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/articles/ssp-quantreg.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/articles/ssp-relogit.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/articles/ssp-softmax.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/authors.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/index.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/news/index.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/index.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/ssp.glm.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/ssp.quantreg.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/ssp.relogit.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/ssp.softmax.html</loc></url>
+<url><loc>https://dqksnow.github.io/subsampling/reference/subsampling.html</loc></url>
 </urlset>
+

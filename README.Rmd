@@ -2,8 +2,6 @@
 output: github_document
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -16,6 +14,9 @@ knitr::opts_chunk$set(
 # subsampling
 
 <!-- badges: start -->
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/subsampling)](https://CRAN.R-project.org/package=subsampling)
+[![Total_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/subsampling)](https://CRAN.R-project.org/package=subsampling)
+[![Monthly_Downloads](https://cranlogs.r-pkg.org/badges/subsampling)](https://CRAN.R-project.org/package=subsampling)
 [![R-CMD-check](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dqksnow/subsampling/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -29,13 +30,17 @@ unavailable. Subsampling has become a widely used
 technique to balance the trade-off between computational efficiency and statistical
 efficiency.
 
-The R package `subsampling` provides optimal subsampling methods for various statistical models such as generalized linear models (GLM), softmax (multinomial) regression, rare event logistic regression and quantile regression model. Specialized subsampling techniques are provided to address specific challenges across different models and datasets.
+The R package `subsampling` provides optimal subsampling methods for various statistical models such as generalized linear models (GLM), softmax (multinomial) regression, rare event logistic regression and quantile regression model. Specialized subsampling techniques are provided to address specific challenges across different models and datasets. With specified model assumptions and subsampling techniques, it draws subsample from the full data, fits model on the subsample and perform statistical inferences.
 
 ## Installation
 
-You can install the development version of subsampling from [GitHub](https://github.com/) with:
+You can install the package by
 
 ``` r
+# Install from CRAN
+install.packages("subsampling")
+
+# Or install the development version from GitHub
 # install.packages("devtools")
 devtools::install_github("dqksnow/subsampling")
 ```
@@ -80,3 +85,7 @@ ssp.results <- ssp.glm(formula = formula,
                        )
 summary(ssp.results)
 ```
+
+## Acknowledgments
+
+The development of this package was supported by the National Eye Institute of the National Institutes of Health under Award Number R21EY035710.
