@@ -30,7 +30,7 @@ analysis.
 Useful links:
 \itemize{
   \item \url{https://github.com/dqksnow/subsampling}
-  \item \url{https://dqksnow.github.io/subsampling}
+  \item \url{https://dqksnow.github.io/subsampling/}
   \item Report bugs at \url{https://github.com/dqksnow/Subsampling/issues}
 }
 

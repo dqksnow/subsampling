@@ -27,7 +27,7 @@
 #' 
 #' - `weighted` Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
 #' 
-#' - `logOddsCorrection` This lieklihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+#' - `logOddsCorrection` This likelihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
 #' 
 #' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.
 #' @param control The argument `control` contains two tuning parameters `alpha` and `b`. 
@@ -37,7 +37,7 @@
 #' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 #' subsampling probability. The default value is 0.
 #' 
-#' - `b` is a positive number which is used to constaint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value. See relevant references for further details.
+#' - `b` is a positive number which is used to constraint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value. See relevant references for further details.
 #' 
 #' @param ... A list of parameters which will be passed to \code{svyglm()}. 
 #'
@@ -59,7 +59,7 @@
 #' }
 #'
 #' @details
-#' 'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw `n.ssp` subsmples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. 
+#' 'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw `n.ssp` subsamples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability. 
 #' 
 #' A pilot estimator for the unknown parameter  \eqn{\beta} is required because both optA and
 #' optL subsampling probabilities depend on \eqn{\beta}. This

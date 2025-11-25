@@ -14,7 +14,7 @@ computing resources. For example, when fitting a logistic regression
 model to binary response variable with $N \times d$ dimensional
 covariates, the computational complexity of estimating the coefficients
 using the IRLS algorithm is $O(\zeta N d^2)$, where $\zeta$ is the
-number of iteriation. When $N$ is large, the cost can be prohibitive,
+number of iteration. When $N$ is large, the cost can be prohibitive,
 especially if high performance computing resources are unavailable.
 Subsampling has become a widely used technique to balance the trade-off
 between computational efficiency and statistical efficiency.

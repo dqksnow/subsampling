@@ -30,7 +30,7 @@ unavailable. Subsampling has become a widely used
 technique to balance the trade-off between computational efficiency and statistical
 efficiency.
 
-The R package `subsampling` provides optimal subsampling methods for various statistical models such as generalized linear models (GLM), softmax (multinomial) regression, rare event logistic regression and quantile regression model. Specialized subsampling techniques are provided to address specific challenges across different models and datasets. With specified model assumptions and subsampling techniques, it draws subsample from the full data, fits model on the subsample and perform statistical inferences.
+The R package `subsampling` provides optimal subsampling methods for various statistical models such as generalized linear models (GLMs), softmax (multinomial) regression, rare event logistic regression and quantile regression model. Specialized subsampling techniques are provided to address specific challenges across different models and datasets. With specified model assumptions and subsampling techniques, it draws subsample from the full data, fits model on the subsample and perform statistical inferences.
 
 ## Installation
 

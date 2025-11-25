@@ -65,7 +65,7 @@ subsample estimator with lower asymptotic variance compared to the
 \code{logOddsCorrection}. A bias-correction likelihood function is required for subsample since unequal subsampling probabilities introduce bias.
 \itemize{
 \item \code{weighted} Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
-\item \code{logOddsCorrection} This lieklihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+\item \code{logOddsCorrection} This likelihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
 }}
 
 \item{control}{The argument \code{control} contains two tuning parameters \code{alpha} and \code{b}.
@@ -73,8 +73,8 @@ subsample estimator with lower asymptotic variance compared to the
 \item \code{alpha} \eqn{\in [0,1]} is the mixture weight of the user-assigned subsampling
 probability and uniform subsampling probability. The actual subsample
 probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
-subsampling probability. The default value is 0.
-\item \code{b} is a positive number which is used to constaint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
+subsampling probability. The default value is 0.01.
+\item \code{b} is a positive number which is used to constraint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
 }}
 
 \item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
@@ -95,6 +95,7 @@ subsampling probability. The default value is 0.
 \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
 \item{N}{The number of observations in the full dataset.}
 \item{subsample.size.expect}{The expected subsample size, equals to \code{n.ssp} for \code{ssp.glm.} Note that for other functions, such as \link{ssp.relogit}, this value may differ.}
+\item{comp.time}{The total time of computing subsampling probabilities, drawing subsample and fitting model on the subsample.}
 \item{terms}{The terms object for the fitted model.}
 }
 }
@@ -128,7 +129,8 @@ corr <- 0.5
 sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
 X <- MASS::mvrnorm(N, rep(0, d), sigmax)
 Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X \%*\% beta0[-1])))
-data <- as.data.frame(cbind(Y, X))
+colnames(X) <- paste0("X", 1:d)
+data <- data.frame(Y = Y, X)
 formula <- Y ~ .
 n.plt <- 500
 n.ssp <- 1000
@@ -167,7 +169,8 @@ X <- matrix(runif(N * d), N, d)
 epsilon <- runif(N)
 lambda <- exp(beta0[1] + X \%*\% beta0[-1])
 Y <- rpois(N, lambda)
-data <- as.data.frame(cbind(Y, X))
+colnames(X) <- paste0("X", 1:d)
+data <- data.frame(Y = Y, X)
 formula <- Y ~ .
 n.plt <- 200
 n.ssp <- 600
@@ -197,6 +200,33 @@ family = 'poisson',
 criterion = 'uniform')
 summary(Uni.subsampling.results)
 ##################
+# normal linear regression
+set.seed(4)
+N <- 1e4
+beta0 <- rep(-0.5, 7)
+d <- length(beta0) - 1
+corr <- 0.5
+sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
+X <- MASS::mvrnorm(N, rep(0, d), sigmax)
+epsilon <- rnorm(N, sd = 1)
+Y <- beta0[1] + X \%*\% beta0[-1] + epsilon
+colnames(X) <- paste0("X", 1:d)
+data <- data.frame(Y = Y, X)
+formula <- Y ~ .
+n.plt <- 200
+n.ssp <- 1000
+subsampling.results <- ssp.glm(
+formula = formula,
+data = data,
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = "gaussian",
+criterion = "optA", 
+sampling.method = 'poisson',
+likelihood = "weighted"
+)
+summary(subsampling.results)
+##################
 # gamma regression
 set.seed(1)
 N <- 1e4
@@ -208,7 +238,8 @@ X <- matrix(runif(N * d), N, d)
 link_function <- function(X, beta0) 1 / (beta0[1] + X \%*\% beta0[-1])
 scale <- link_function(X, beta0) / shape
 Y <- rgamma(N, shape = shape, scale = scale)
-data <- as.data.frame(cbind(Y, X))
+colnames(X) <- paste0("X", 1:d)
+data <- data.frame(Y = Y, X)
 formula <- Y ~ .
 n.plt <- 200
 n.ssp <- 1000

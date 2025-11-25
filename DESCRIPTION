@@ -1,8 +1,8 @@
 Type: Package
 Package: subsampling
 Title: Optimal Subsampling Methods for Statistical Models
-Version: 0.1.1
-Date: 2024-11-12
+Version: 0.2.0
+Date: 2025-11-25
 Authors@R: c(
     person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
     person("Yaqiong", "Yao", role = "aut"),
@@ -22,7 +22,7 @@ Description:
     functions to draw subsamples from the full data, fit the model on the 
     subsamples, and perform statistical inference.
 License: GPL-3
-URL: https://github.com/dqksnow/subsampling, https://dqksnow.github.io/subsampling
+URL: https://github.com/dqksnow/subsampling, https://dqksnow.github.io/subsampling/
 BugReports: https://github.com/dqksnow/Subsampling/issues
 Imports: 
     expm,

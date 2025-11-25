@@ -129,7 +129,7 @@ $U(0,1)$. The expected number of drawn samples are $n.ssp$.
 ### `likelihood`
 
 The available choice for `likelihood` in `ssp.quantreg` is `weighted`. It takes
-the inverse of sampling probabblity as the weights in likelihood function to
+the inverse of sampling probability as the weights in likelihood function to
 correct the bias introduced by unequal subsampling probabilities.
 
 ### `boot` and `B`

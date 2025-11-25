@@ -44,7 +44,7 @@ optA is \eqn{O(N d^2)} while that of optL is \eqn{O(N d)}.
 \code{logOddsCorrection} (default). A bias-correction likelihood function is required for subsample since unequal subsampling probabilities introduce bias.
 \itemize{
 \item \code{weighted} Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
-\item \code{logOddsCorrection} This lieklihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+\item \code{logOddsCorrection} This likelihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
 }}
 
 \item{control}{The argument \code{control} contains two tuning parameters \code{alpha} and \code{b}.
@@ -53,7 +53,7 @@ optA is \eqn{O(N d^2)} while that of optL is \eqn{O(N d)}.
 probability and uniform subsampling probability. The actual subsample
 probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 subsampling probability. The default value is 0.
-\item \code{b} is a positive number which is used to constaint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
+\item \code{b} is a positive number which is used to constraint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
 }}
 
 \item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
@@ -81,7 +81,7 @@ subsampling probability. The default value is 0.
 Draw subsample from full dataset and fit logistic regression model on subsample. For a quick start, refer to the \href{https://dqksnow.github.io/subsampling/articles/ssp-relogit.html}{vignette}.
 }
 \details{
-'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw \code{n.ssp} subsmples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability.
+'Rare event' stands for the number of observations where \eqn{Y=1} is rare compare to the number of \eqn{Y=0} in the full data. In the face of logistic regression with rare events, @wang2021nonuniform shows that the available information ties to the number of positive instances instead of the full data size. Based on this insight, one can keep all the rare instances and perform subsampling on the non-rare instances to reduce the computational cost. When \code{criterion = optA, optL or LCC}, all observations with \eqn{Y=1} are preserved and it draw \code{n.ssp} subsamples from observations with Y=0. When \code{criterion = uniform}, it draws (n.plt+n.ssp) subsmples from the full sample with equal sampling probability.
 
 A pilot estimator for the unknown parameter  \eqn{\beta} is required because both optA and
 optL subsampling probabilities depend on \eqn{\beta}. This

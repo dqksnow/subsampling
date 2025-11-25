@@ -38,7 +38,7 @@
 #' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 #' subsampling probability. The default value is 0.
 #' 
-#' - `b` is a positive number which is used to constaint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value.
+#' - `b` is a positive number which is used to constraint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value.
 #' See relevant references for further details.
 #' 
 #' @param ... A list of parameters which will be passed to \code{quantreg::rq()}. 

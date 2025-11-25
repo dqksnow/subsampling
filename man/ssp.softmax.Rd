@@ -75,7 +75,7 @@ subsample estimator with lower asymptotic variance compared to the
 probability and uniform subsampling probability. The actual subsample
 probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 subsampling probability. The default value is 0.
-\item \code{b} is a positive number which is used to constaint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
+\item \code{b} is a positive number which is used to constraint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value. See relevant references for further details.
 }}
 
 \item{contrasts}{An optional list. It specifies how categorical variables are represented in the design matrix. For example, \code{contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')}.}
@@ -89,7 +89,7 @@ ssp.softmax returns an object of class "ssp.softmax" containing the following co
 \item{coef.plt}{The pilot estimator. See Details for more information.}
 \item{coef.ssp}{The estimator obtained from the optimal subsample.}
 \item{coef}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp}, under baseline constraint. The combination weights depend on the relative size of \code{n.plt} and \code{n.ssp} and the estimated covariance matrices of \code{coef.plt} and \code{coef.ssp.} We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are \code{coef} and the square root of \code{diag(cov)}.}
-\item{coef.plt.sum}{The pilot estimator under summation constrraint. \code{coef.plt.sum = G \%*\% as.vector(coef.plt)}.}
+\item{coef.plt.sum}{The pilot estimator under summation constraint. \code{coef.plt.sum = G \%*\% as.vector(coef.plt)}.}
 \item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constrraint. \code{coef.ssp.sum = G \%*\% as.vector(coef.ssp)}.}
 \item{coef.sum}{The weighted linear combination of \code{coef.plt} and \code{coef.ssp}, under summation constrraint. \code{coef.sum = G \%*\% as.vector(coef)}.}
 \item{cov.plt}{The covariance matrix of \code{coef.plt}.}

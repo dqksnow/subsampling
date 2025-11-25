@@ -136,7 +136,7 @@ The options for `sampling.method` include `withReplacement` and `poisson`
 dataset with replacement, using the specified subsampling probability. `poisson`
 stands for drawing subsamples one by one by comparing the subsampling
 probability with a realization of uniform random variable $U(0,1)$. The expected
-number of drawed samples are $n.ssp$.
+number of drawn samples are $n.ssp$.
 
 ### `likelihood`
 
@@ -184,7 +184,7 @@ summary(ssp.results1)
 ```
 
 `summary(ssp.results1)` shows that it draws 600 observations out of 10000, where
-the number of unique indices is less than 600 since we use `sampling.method = 'withReplacement'`. After fitting softmax model on subsample using the choosen
+the number of unique indices is less than 600 since we use `sampling.method = 'withReplacement'`. After fitting softmax model on subsample using the chosen
 `weighted` likelihood function, we get coefficients estimation and standard
 errors as above.
 

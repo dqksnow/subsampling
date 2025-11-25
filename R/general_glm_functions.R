@@ -166,9 +166,10 @@ pilot.estimate <- function(inputs, ...){
   family <-  inputs$family
   N <- inputs$N
   family <- inputs$family
-  variance <- family$variance
   linkinv  <- family$linkinv
 
+  h_N <- n.plt / N
+  
   if (family[["family"]] %in% c('binomial', 'quasibinomial')){
     N1 <- sum(Y)
     N0 <- N - N1
@@ -186,7 +187,8 @@ pilot.estimate <- function(inputs, ...){
                                   family = family, ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
     
-    ddL.plt <- ddL.plt.correction <- ddL(eta = linear.predictor.plt,
+    ### phi: p.plt*N
+    ddL.plt <- ddL(eta = linear.predictor.plt,
                                          X = x.plt,
                                          weights = (1 / (p.plt*N*n.plt)),
                                          family = family)
@@ -194,14 +196,14 @@ pilot.estimate <- function(inputs, ...){
     dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
                        x.plt,
                        y.plt,
-                       weights = (1 / (p.plt*N*n.plt)^2),
+                       weights = (1 / ((p.plt*N)^2*n.plt)),
                        family = family)
     c <- n.plt / N
-    Lambda.plt <- c * dL.sq(eta = linear.predictor.plt,
-                            x.plt,
-                            y.plt,
-                            weights = (1 / (p.plt*N*n.plt^2)),
-                            family = family)
+    Lambda.plt <- dL.sq(eta = linear.predictor.plt,
+                        x.plt,
+                        y.plt,
+                        weights = (1 / (p.plt*N*n.plt)),
+                        family = family)
     d.psi <- linkinv(X %*% beta.plt) # N dimension
   } else {
     ## This is uniform sampling with replacement.
@@ -212,22 +214,27 @@ pilot.estimate <- function(inputs, ...){
     beta.plt <- glm.coef.estimate(X = x.plt, Y = y.plt, family = family,
                                   ...)$beta
     linear.predictor.plt <- as.vector(x.plt %*% beta.plt)
-    ddL.plt <- ddL.plt.correction <- ddL(eta = linear.predictor.plt, 
-                                         x.plt, weights = 1 / n.plt,
-                                         family = family)
+    ddL.plt <- ddL(eta = linear.predictor.plt, 
+                   x.plt, weights = 1 / n.plt,
+                   family = family)
     dL.sq.plt <- dL.sq(eta = linear.predictor.plt,
-                       x.plt, y.plt, weights = 1 / n.plt^2, family = family)
-    c <- n.plt / N
-    Lambda.plt <- c * dL.sq.plt
+                       x.plt, y.plt, weights = 1 / n.plt, 
+                       family = family)
+    Lambda.plt <- dL.sq.plt
     d.psi <- linkinv(X %*% beta.plt)
   }
+  
+  ddL.plt.inv <- solve(ddL.plt)
+  cov.plt <- 
+    (1 / n.plt) * ddL.plt.inv %*% (dL.sq.plt + h_N * Lambda.plt) %*% ddL.plt.inv
+  
   return(list(p.plt = p.plt,
               beta.plt = beta.plt,
               ddL.plt = ddL.plt,
               dL.sq.plt = dL.sq.plt,
-              ddL.plt.correction = ddL.plt.correction,
               Lambda.plt = Lambda.plt,
               d.psi = d.psi,
+              cov.plt = cov.plt,
               index.plt = index.plt
               )
          )
@@ -235,7 +242,7 @@ pilot.estimate <- function(inputs, ...){
 ###############################################################################
 subsampling <- function(inputs,
                         p.plt,
-                        ddL.plt.correction,
+                        ddL.plt,
                         d.psi,
                         index.plt) {
   X <- inputs$X
@@ -257,7 +264,7 @@ subsampling <- function(inputs,
   ## n.plt, so here we reset n.plt.
   
   w.ssp <- offset <- NA
-  nm <- calculate.nm(X, Y, ddL.plt.correction, d.psi, criterion) # numerator
+  nm <- calculate.nm(X, Y, ddL.plt, d.psi, criterion) # numerator
   if (sampling.method == "withReplacement"){
     dm <- sum(nm) # denominator
     p.ssp <- (1 - alpha) * nm / dm + alpha / N
@@ -271,7 +278,7 @@ subsampling <- function(inputs,
   } else if (sampling.method == "poisson"){
     H <- quantile(nm[index.plt], 1 - n.ssp / (b * N)) 
     # threshold H is estimated on pilot sample
-    nm[nm > H] <- H
+    nm <- pmin(nm, H)
     NPhi <- sum(nm[index.plt] / p.plt) / n.plt
     # denominator NPhi is estimated on pilot sample
     p.ssp <- n.ssp * ((1 - alpha) * nm / NPhi + alpha / N)
@@ -281,7 +288,7 @@ subsampling <- function(inputs,
                                  N = N,
                                  d.psi = d.psi[index.ssp],
                                  alpha = alpha,
-                                 ddL.plt.correction = ddL.plt.correction,
+                                 ddL.plt.correction = ddL.plt,
                                  criterion = criterion,
                                  sampling.method = sampling.method,
                                  NPhi = NPhi,
@@ -311,7 +318,7 @@ subsample.estimate <- function(inputs,
   sampling.method <- inputs$sampling.method
   likelihood <- inputs$likelihood
   family <- inputs$family
-  
+  h_N <- n.ssp / N
   if (likelihood == "weighted") {
     results.ssp <- glm.coef.estimate(x.ssp,
                                      y.ssp,
@@ -321,6 +328,8 @@ subsample.estimate <- function(inputs,
     beta.ssp <- results.ssp$beta
     linear.predictor.ssp <- as.vector(x.ssp %*% beta.ssp)
     if (sampling.method == 'poisson') {
+      ## w = 1/(h_N * phi), phi has been truncated.
+      ## 1/phi = n*w.ssp / N
       ddL.ssp <- ddL(linear.predictor.ssp,
                      x.ssp,
                      weights = w.ssp / N,
@@ -328,11 +337,12 @@ subsample.estimate <- function(inputs,
       dL.sq.ssp <- dL.sq(linear.predictor.ssp,
                          x.ssp,
                          y.ssp,
-                         weights = w.ssp ^ 2 / N ^ 2,
+                         weights = (w.ssp^2) * (n.ssp / N^2),
                          family = family)
 
       Lambda.ssp <- 0 # placeholder
     } else if (sampling.method == "withReplacement") {
+      # w.ssp = N / phi
       ddL.ssp <- ddL(linear.predictor.ssp,
                      x.ssp,
                      weights = w.ssp / (N * n.ssp),
@@ -340,13 +350,13 @@ subsample.estimate <- function(inputs,
       dL.sq.ssp <- dL.sq(linear.predictor.ssp,
                          x.ssp,
                          y.ssp,
-                         weights = w.ssp ^ 2 / (N ^ 2 * n.ssp ^ 2),
+                         weights = w.ssp ^ 2 / (N ^ 2 * n.ssp),
                          family = family)
-      c <- n.ssp / N
-      Lambda.ssp <- c * dL.sq(linear.predictor.ssp,
+      
+      Lambda.ssp <- dL.sq(linear.predictor.ssp,
                               x.ssp,
                               y.ssp,
-                              weights = w.ssp / (N * n.ssp ^ 2),
+                              weights = w.ssp / (N * n.ssp),
                               family = family)
     }
   } else if (likelihood == 'logOddsCorrection') {
@@ -370,13 +380,16 @@ subsample.estimate <- function(inputs,
     dL.sq.ssp <- dL.sq(linear.predictor.ssp,
                        x.ssp,
                        y.ssp,
-                       weights = 1 / n.ssp ^ 2,
+                       weights = 1 / n.ssp,
                        offset = offset,
                        family = family)
     Lambda.ssp <- 0 # placeholder
   }
-  cov.ssp <- solve(ddL.ssp) %*% (dL.sq.ssp + Lambda.ssp) %*% solve(ddL.ssp)
 
+  ddL.ssp.inv <- solve(ddL.ssp)
+  cov.ssp <- 
+    (1 / n.ssp) * ddL.ssp.inv %*% (dL.sq.ssp + h_N * Lambda.ssp) %*% ddL.ssp.inv
+ 
   return(list(beta.ssp = beta.ssp,
               ddL.ssp = ddL.ssp,
               dL.sq.ssp = dL.sq.ssp,
@@ -396,23 +409,26 @@ combining <- function(ddL.plt,
                       n.ssp,
                       beta.plt,
                       beta.ssp) {
-  ddL.plt <- n.plt * ddL.plt
-  ddL.ssp <- n.ssp * ddL.ssp
-  dL.sq.plt <- n.plt ^ 2 * dL.sq.plt
-  dL.sq.ssp <- n.ssp ^ 2 * dL.sq.ssp
-  Lambda.plt <- n.plt ^ 2 * Lambda.plt
-  Lambda.ssp <- n.ssp ^ 2 * Lambda.ssp
-  MNsolve <- solve(ddL.plt + ddL.ssp)
-  beta.cmb <- c(MNsolve %*% (ddL.plt %*% beta.plt + ddL.ssp %*% beta.ssp))
-  cov.cmb <- MNsolve %*% 
-    (dL.sq.plt + Lambda.plt + dL.sq.ssp + Lambda.ssp) %*% MNsolve
+  
+  
+  Info.plt <- n.plt * ddL.plt
+  Info.ssp <- n.ssp * ddL.ssp
+  
+  Info.solve <- solve(Info.plt + Info.ssp)
+  beta.cmb <- c(Info.solve %*% (Info.plt %*% beta.plt + Info.ssp %*% beta.ssp))
+  
+  cov.cmb <- Info.solve %*% 
+    (n.plt * (dL.sq.plt + Lambda.plt) + 
+       n.ssp * (dL.sq.ssp + Lambda.ssp)) %*% 
+    Info.solve
+  
   return(list(beta.cmb = beta.cmb,
               cov.cmb = cov.cmb
               )
          )
 }
 ###############################################################################
-glm.control <- function(alpha = 0, b = 2, ...)
+glm.control <- function(alpha = 0.01, b = 2, ...)
 {
   if(!is.numeric(alpha) || alpha < 0 || alpha > 1)
     stop("sampling probability weight 'alpha' must between [0, 1]")

@@ -58,7 +58,7 @@
 #' probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 #' subsampling probability. The default value is 0.
 #' 
-#' - `b` is a positive number which is used to constaint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value. See relevant references for further details.
+#' - `b` is a positive number which is used to constraint the poisson subsampling probability. `b` close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. `b=2` is the default value. See relevant references for further details.
 #' 
 #' @param ... A list of parameters which will be passed to \code{nnet::multinom()}. 
 #'
@@ -69,7 +69,7 @@
 #'   \item{coef.plt}{The pilot estimator. See Details for more information.}
 #'   \item{coef.ssp}{The estimator obtained from the optimal subsample.}
 #'   \item{coef}{The weighted linear combination of `coef.plt` and `coef.ssp`, under baseline constraint. The combination weights depend on the relative size of `n.plt` and `n.ssp` and the estimated covariance matrices of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are `coef` and the square root of `diag(cov)`.}
-#'   \item{coef.plt.sum}{The pilot estimator under summation constrraint. `coef.plt.sum = G %*% as.vector(coef.plt)`.}
+#'   \item{coef.plt.sum}{The pilot estimator under summation constraint. `coef.plt.sum = G %*% as.vector(coef.plt)`.}
 #'   \item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constrraint. `coef.ssp.sum = G %*% as.vector(coef.ssp)`.}
 #'   \item{coef.sum}{The weighted linear combination of `coef.plt` and `coef.ssp`, under summation constrraint. `coef.sum = G %*% as.vector(coef)`.}
 #'   \item{cov.plt}{The covariance matrix of \code{coef.plt}.}

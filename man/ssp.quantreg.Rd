@@ -63,7 +63,7 @@ calculate the optimal subsampling estimator. Currently \code{weighted} is implem
 probability and uniform subsampling probability. The actual subsample
 probability is \eqn{\pi = (1-\alpha)\pi^{opt} + \alpha \pi^{uni}}. This protects the estimator from extreme small
 subsampling probability. The default value is 0.
-\item \code{b} is a positive number which is used to constaint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value.
+\item \code{b} is a positive number which is used to constraint the poisson subsampling probability. \code{b} close to 0 results in subsampling probabilities closer to uniform probability \eqn{\frac{1}{N}}. \code{b=2} is the default value.
 See relevant references for further details.
 }}
 
