@@ -70,8 +70,8 @@
 #'   \item{coef.ssp}{The estimator obtained from the optimal subsample.}
 #'   \item{coef}{The weighted linear combination of `coef.plt` and `coef.ssp`, under baseline constraint. The combination weights depend on the relative size of `n.plt` and `n.ssp` and the estimated covariance matrices of `coef.plt` and `coef.ssp.` We blend the pilot subsample information into optimal subsample estimator since the pilot subsample has already been drawn. The coefficients and standard errors reported by summary are `coef` and the square root of `diag(cov)`.}
 #'   \item{coef.plt.sum}{The pilot estimator under summation constraint. `coef.plt.sum = G %*% as.vector(coef.plt)`.}
-#'   \item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constrraint. `coef.ssp.sum = G %*% as.vector(coef.ssp)`.}
-#'   \item{coef.sum}{The weighted linear combination of `coef.plt` and `coef.ssp`, under summation constrraint. `coef.sum = G %*% as.vector(coef)`.}
+#'   \item{coef.ssp.sum}{The estimator obtained from the optimal subsample under summation constraint. `coef.ssp.sum = G %*% as.vector(coef.ssp)`.}
+#'   \item{coef.sum}{The weighted linear combination of `coef.plt` and `coef.ssp`, under summation constraint. `coef.sum = G %*% as.vector(coef)`.}
 #'   \item{cov.plt}{The covariance matrix of \code{coef.plt}.}
 #'   \item{cov.ssp}{The covariance matrix of \code{coef.ssp}.}
 #'   \item{cov}{The covariance matrix of \code{coef.cmb}.}

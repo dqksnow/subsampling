@@ -1,8 +1,8 @@
 Type: Package
 Package: subsampling
 Title: Optimal Subsampling Methods for Statistical Models
-Version: 0.2.0
-Date: 2025-11-25
+Version: 0.3.0
+Date: 2025-12-04
 Authors@R: c(
     person("Qingkai", "Dong", , "qingkai.dong@uconn.edu", role = c("aut", "cre", "cph")),
     person("Yaqiong", "Yao", role = "aut"),
@@ -39,6 +39,7 @@ Suggests:
 LinkingTo:
     Rcpp,
     RcppArmadillo
+SystemRequirements: C++17
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

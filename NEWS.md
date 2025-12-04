@@ -1,3 +1,7 @@
+# subsampling 0.3.0
+
+* Added `ssp.glm.rF()`. It provides balanced subsampling methods to deal with rare features in GLMs.
+
 # subsampling 0.2.0
 
 ## Changes to `ssp.glm()`

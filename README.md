@@ -20,13 +20,13 @@ Subsampling has become a widely used technique to balance the trade-off
 between computational efficiency and statistical efficiency.
 
 The R package `subsampling` provides optimal subsampling methods for
-various statistical models such as generalized linear models (GLM),
-softmax (multinomial) regression, rare event logistic regression and
-quantile regression model. Specialized subsampling techniques are
-provided to address specific challenges across different models and
-datasets. With specified model assumptions and subsampling techniques,
-it draws subsample from the full data, fits model on the subsample and
-perform statistical inferences.
+various statistical models such as generalized linear models (GLMs),
+softmax (multinomial) regression, rare event logistic regression,
+quantile regression model and GLMs with rare features. Specialized
+subsampling techniques are provided to address specific challenges
+across different models and datasets. With specified model assumptions
+and subsampling techniques, it draws subsample from the full data, fits
+model on the subsample and perform statistical inferences.
 
 ## Installation
 
@@ -106,13 +106,13 @@ summary(ssp.results)
 #> Coefficients:
 #> 
 #>           Estimate Std. Error z value Pr(>|z|)
-#> Intercept  -0.4149     0.0803 -5.1694  <0.0001
-#> V1         -0.5874     0.0958 -6.1286  <0.0001
-#> V2         -0.4723     0.1086 -4.3499  <0.0001
-#> V3         -0.5492     0.1014 -5.4164  <0.0001
-#> V4         -0.4044     0.1012 -3.9950  <0.0001
-#> V5         -0.3725     0.1045 -3.5649   0.0004
-#> V6         -0.6703     0.0973 -6.8859  <0.0001
+#> Intercept  -0.4149     0.0924 -4.4920  <0.0001
+#> V1         -0.5874     0.1084 -5.4191  <0.0001
+#> V2         -0.4723     0.1283 -3.6812   0.0002
+#> V3         -0.5492     0.1163 -4.7205  <0.0001
+#> V4         -0.4044     0.1173 -3.4471   0.0006
+#> V5         -0.3725     0.1234 -3.0177   0.0025
+#> V6         -0.6703     0.1138 -5.8929  <0.0001
 ```
 
 ## Acknowledgments

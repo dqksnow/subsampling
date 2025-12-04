@@ -1,0 +1,166 @@
+---
+title: "`ssp.glm.rF`: Balanced Subsampling for Preserving Rare Features in Generalized Linear Models"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{`ssp.glm.rF`: Balanced Subsampling for Preserving Rare Features in Generalized Linear Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+This vignette illustrates how to use `ssp.glm.rF` for logistic regression with rare features. We focus on the practical usage of the function; additional statistical theory and algorithmic details will be released in a forthcoming paper.
+
+
+## Installation
+
+You can install the development version of `subsampling` from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("dqksnow/Subsampling")
+```
+
+```{r setup}
+library(subsampling)
+```
+
+
+
+## Example: Logistic Regression with Simulated Data Containing Rare Features
+
+
+
+
+We introduce the usage of `ssp.glm.RF` using simulated data. The covariate matrix $X$ contains $d=5$ variables: three independent rare binary features $Z$ with probabilities `p_rare`; two  non-rare features jointly normally distributed. The full dataset size is $N = 1 \times 10^4$. 
+
+```{r}
+set.seed(2)
+N <- 1e4
+d_rare <- 3
+d_cont <- 2
+p_rare <- c(0.01, 0.02, 0.05)
+beta0 <- c(0.5, rep(0.5, d_rare), rep(0.5, d_cont)) 
+corr <- 0.5
+sigmax  <- matrix(corr, d_cont, d_cont) + diag(1-corr, d_cont)
+X <- MASS::mvrnorm(N, rep(0, d_cont), sigmax)
+Z <- do.call(cbind, lapply(seq_along(p_rare), function(i) {
+rbinom(N, 1, p_rare[i])
+}))
+X <- cbind(Z, X)
+P <- 1 / (1 + exp(-(beta0[1] + X %*% beta0[-1])))
+Y <- as.integer(rbinom(N, 1, P))
+colnames(X) <- paste0("X", 1:(d_rare + d_cont))
+rareFeature.index <- c(1:d_rare)
+data <- data.frame(Y = Y, X)
+formula <- Y ~ .
+head(data)
+summary(data)
+```
+
+
+## Key Arguments
+
+The main function interface is
+
+```{r, eval = FALSE}
+ssp.glm.rF(formula,
+           data,
+           subset = NULL,
+           n.plt,
+           n.ssp,
+           family = 'binomial',
+           criterion = 'BL-Uni',
+           sampling.method = 'poisson',
+           likelihood = 'weighted',
+           balance.plt = TRUE,
+           balance.Y = FALSE,
+           rareFeature.index = NULL,
+           control = list(...),
+           contrasts = NULL,
+           ...
+           ) 
+```
+
+
+
+The idea of subsampling is to draw a size $n \ll N$ subsample and fit the model on it. The subsampling probabilities depend on the chosen method. For general background, refer to the documentation of `ssp.glm`. The function `ssp.glm.rF` extends `ssp.glm` to address the rare feature problem, where some binary features take the value 1 infrequently.
+
+
+Why rare features require special treatment? A rare feature is a binary covariate
+$Z$ such that $N_{\cdot 1} = \sum_{i=1}^{N}Z_i \ll N$. The key challenge is that the estimate of the coefficient of a rare feature converges at rate $O(1/N_{\cdot 1})$ rather than $O(1/N)$.
+In other words, the accuracy for a rare feature's coefficient estimation depends directly on the number of $Z=1$ cases in the dataset. It implicates that a good subsampling method should assign higher sampling probabilities to observations with rare feature expressions.
+Classical criterion to compute sampling probabilities such as `Uni` and `Lopt` cannot sufficiently upweight those rare observations. `Aopt` can upweight them but replies heavily on the quality of the pilot estimator.
+
+
+To address this issue, `ssp.glm.rF` incorporates the balance score $b(Z)$, which is defined as:
+$$
+  b(Z) = \sum_{j=1}^{d_{r}} \frac{\left|
+  Z_{\cdot j} - \bar{Z}_{\cdot j}\right|}{\bar{Z}_{\cdot j}},
+$$
+where $\bar{Z}_{\cdot j} = N_{\cdot j} / N$ is the mean of the $j$-th
+rare feature in the full dataset, and $d_r$ is the dimension of rare features. The balance score upweights observations that contain expressed rare features and aggregates contributions when multiple rare features occur together. Furthermore, it does not rely on unknown model parameters, thus does not require a pilot estimator.
+
+
+In the function,  `criterion='BL-Uni'` uses sampling probabilities proportional to the balance score. `criterion = "R-Lopt" `extends L-optimality so that it also accounts for rarity, albeit requires a pilot estimator. 
+If `balance.plt = TRUE`, the pilot sample is drawn using `"BL-Uni"`, which is important because an unstable pilot harms `"Aopt"`, `"Lopt"`, or `"R-Lopt"` performance.
+`rareFeature.index` must specify which columns of the design matrix correspond to rare features
+
+
+## Outputs
+
+
+Below are two examples demonstrating the use of `ssp.glm` with different
+configurations.
+
+```{r}
+n.plt <- 300
+n.ssp <- 2000
+BL.Uni.results <- ssp.glm.rF(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'quasibinomial',
+criterion = 'BL-Uni',
+sampling.method = 'poisson',
+likelihood = 'weighted',
+balance.plt = TRUE,
+balance.Y = FALSE,
+rareFeature.index = rareFeature.index
+)
+summary(BL.Uni.results)
+```
+
+The Subsample Summary reports the distribution of the three rare features in the pilot sample, the subsample, and the full dataset. When `"BL-Uni"` criterion is used, the pilot sample and the subsample return the same results. The value `size_subsample` corresponds to the realized subsample size. The value `count1_ssp` represents the number of observations with $X1=1$ in the subsample. Here, 95 out of 1964 observations (4.7%). The corresponding `coverage_ssp` = 100% indicates that all 95 rare cases for $X1=1$ in the full dataset are included in the subsample. The remaining quantities follow the same interpretation as in `ssp.glm.`
+ 
+
+```{r}
+R.Lopt.results <- ssp.glm.rF(formula = formula, 
+data = data, 
+n.plt = n.plt,
+n.ssp = n.ssp,
+family = 'quasibinomial',
+criterion = 'R-Lopt',
+sampling.method = 'poisson',
+likelihood = 'weighted',
+balance.plt = TRUE,
+balance.Y = FALSE,
+rareFeature.index = rareFeature.index
+)
+summary(R.Lopt.results)
+```
+
+
+As recommended by `survey::svyglm`, when working with binomial models, it is
+advisable to use use `family=quasibinomial()` to avoid a warning issued by
+`glm`. Refer to [svyglm() help documentation Details
+](https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm). The
+'quasi' version of the family objects provide the same point estimates.
+
