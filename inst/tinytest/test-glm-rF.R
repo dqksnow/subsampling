@@ -7,7 +7,7 @@ p_rare <- c(0.01, 0.02, 0.05)
 beta0 <- c(0.5, rep(0.5, d_rare), rep(0.5, d_cont))
 corr <- 0.5
 sigmax <- matrix(corr, d_cont, d_cont) + diag(1 - corr, d_cont)
-X_cont <- mvtnorm::rmvnorm(N, rep(0, d_cont), sigmax)
+X_cont <- MASS::mvrnorm(N, rep(0, d_cont), sigmax)
 Z <- do.call(cbind, lapply(seq_along(p_rare), function(i) {
   rbinom(N, 1, p_rare[i])
 }))
