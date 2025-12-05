@@ -1,15 +1,15 @@
 #' Balanced Subsampling Methods for Generalized Linear Models with Rare Features
 #'
 #' @description
-#' Rare features refer to binary covariates with low prevalence of being one
+#' This function inherits the weighted objective function (`likelihood = "weighted"`) and the poisson sampling method (`sampling.method = "poisson"`) from `ssp.glm`, while additionally handling rare features in the model. Rare features refer to binary covariates with low prevalence of being one
 #' (expressed) and mostly zero. Such features create challenges for subsampling,
-#' because naive subsampling is likely to miss these rare but informative
+#' because it is likely to miss these rare but informative
 #' observations. The balanced subsampling method upweights observations that
 #' contain expressed rare features, thereby preserving estimation efficiency for
-#' the coefficients of rare features.  
+#' the coefficients of rare features. 
 #'
 #' A quick start guide is provided in the vignette:
-#' https://dqksnow.github.io/subsampling/articles/ssp-logit.html.
+#' https://dqksnow.github.io/subsampling/articles/ssp-logit-rF.html.
 #'
 #'
 #' @param formula A model formula object.
@@ -36,7 +36,7 @@
 #'   * `"Lopt"`: classical L-optimality, minimizing a transformed trace of the
 #'     asymptotic covariance.
 #'   * `"BL-Lopt"`: balance score combined with L-optimality.
-#'   * `"Uni"`: uniform sampling with equal probabilities.
+#'   * `"Uni"`: uniform sampling.
 #'
 #' @param sampling.method The sampling method. Currently `"poisson"` is
 #'   supported, which avoids drawing repeated observations.
@@ -57,7 +57,8 @@
 #'
 #' @param balance.Y Logical. Whether to balance the binary response variable in
 #'   logistic regression. If `TRUE`, the pilot sampling probability combines the
-#'   balance score with the case-control method, and the negative subsampling will be performed for subsampling method. That is, automatically include all Y=1 observations to the subsample, while performing subsampling for Y=0 observations.
+#'   balance score with the case-control method, and the negative subsampling will be performed for the second-step subsampling method. That is, automatically include all Y=1 observations to the subsample, while performing subsampling for Y=0 observations.
+#'   
 #' @param contrasts Optional list specifying how categorical variables are
 #'   encoded in the design matrix.
 #'
@@ -95,8 +96,7 @@
 #'
 #' \item{subsample.size.actual}{Actual number of subsampled observations.}
 #'
-#' \item{full.rare.count}{Counts of each rare feature in the full dataset.}
-#'
+#' \item{full.rare.count}{For each rare feature, return the counts of ones in the full dataset.}
 #'
 #' \item{rare.count.plt}{Vector of length K giving, for each rare feature,
 #'   the number of ones in the pilot subsample.}
@@ -105,14 +105,12 @@
 #'
 #' \item{rare.count.cmb}{Same as above, computed for the combined subsample.}
 #'
-#'
 #' \item{index.plt}{Row indices of the pilot subsample within the full dataset.}
 #'
 #' \item{index.ssp}{Row indices of the optimal subsample within the full
 #'   dataset.}
 #'
 #' \item{index.cmb}{Union of pilot and optimal subsample row indices.}
-#'
 #'
 #' \item{rareFeature.index}{Column indices of rare features in the design
 #'   matrix (same as the user input).}
@@ -240,12 +238,10 @@ ssp.glm.rF <- function(formula,
   canonical_families <- c("binomial", "poisson", "Gamma", "gaussian",
                           "quasibinomial", "quasipoisson")
   if (!family$family %in% canonical_families) {
-    stop(sprintf("Unsupported GLM family '%s'. Only canonical GLMs (%s) are allowed.",
+    stop(sprintf("Unsupported GLM family '%s'. Only (%s) are supported",
                  family$family,
                  paste(canonical_families, collapse = ", ")))
   }
-  
-  
   
   
   N <- nrow(X)

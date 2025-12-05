@@ -48,7 +48,7 @@ covariance matrix.
 \item \code{"Lopt"}: classical L-optimality, minimizing a transformed trace of the
 asymptotic covariance.
 \item \code{"BL-Lopt"}: balance score combined with L-optimality.
-\item \code{"Uni"}: uniform sampling with equal probabilities.
+\item \code{"Uni"}: uniform sampling.
 }}
 
 \item{sampling.method}{The sampling method. Currently \code{"poisson"} is
@@ -65,7 +65,7 @@ subsampling; a poor pilot estimator may cause failure.}
 
 \item{balance.Y}{Logical. Whether to balance the binary response variable in
 logistic regression. If \code{TRUE}, the pilot sampling probability combines the
-balance score with the case-control method, and the negative subsampling will be performed for subsampling method. That is, automatically include all Y=1 observations to the subsample, while performing subsampling for Y=0 observations.}
+balance score with the case-control method, and the negative subsampling will be performed for the second-step subsampling method. That is, automatically include all Y=1 observations to the subsample, while performing subsampling for Y=0 observations.}
 
 \item{rareFeature.index}{Column indices of binary rare features in the design
 matrix, coded as \code{1} for the rare case. For example,
@@ -110,7 +110,7 @@ estimators because only one sampling step is used.}
 
 \item{subsample.size.actual}{Actual number of subsampled observations.}
 
-\item{full.rare.count}{Counts of each rare feature in the full dataset.}
+\item{full.rare.count}{For each rare feature, return the counts of ones in the full dataset.}
 
 \item{rare.count.plt}{Vector of length K giving, for each rare feature,
 the number of ones in the pilot subsample.}
@@ -137,15 +137,15 @@ drawing subsamples, and fitting the subsample estimator.}
 }
 }
 \description{
-Rare features refer to binary covariates with low prevalence of being one
+This function inherits the weighted objective function (\code{likelihood = "weighted"}) and the poisson sampling method (\code{sampling.method = "poisson"}) from \code{ssp.glm}, while additionally handling rare features in the model. Rare features refer to binary covariates with low prevalence of being one
 (expressed) and mostly zero. Such features create challenges for subsampling,
-because naive subsampling is likely to miss these rare but informative
+because it is likely to miss these rare but informative
 observations. The balanced subsampling method upweights observations that
 contain expressed rare features, thereby preserving estimation efficiency for
 the coefficients of rare features.
 
 A quick start guide is provided in the vignette:
-https://dqksnow.github.io/subsampling/articles/ssp-logit.html.
+https://dqksnow.github.io/subsampling/articles/ssp-logit-rF.html.
 }
 \details{
 See the package vignette for more details and examples.
