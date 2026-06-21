@@ -15,10 +15,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette introduces the usage of `ssp.softmax`, which draws optimal
-subsample from full data and fit softmax (multinomial) regression on the
-subsample. The statistical theory and algorithms in this implementation can be
-found in the relevant reference papers.
+This vignette shows how to use `ssp.softmax`, which draws optimal subsample from
+full data and fits softmax (multinomial) regression on the subsample. The
+statistical theory and algorithms in this implementation can be found in the
+relevant reference papers.
 
 Denote $y$ as multi-category response variable and $K+1$ is the number of
 categories. $N$ is the number of observations in the full dataset. $X$ is the $N
@@ -160,7 +160,7 @@ $P(y_{i,k} = 1 \mid \mathbf{x}_i)$. The estimation of coefficients returned by
 
 ## Outputs
 
-After drawing subsample, `ssp.softmax` utilizes `nnet::multinom` to fit the
+After drawing subsample, `ssp.softmax` uses `nnet::multinom` to fit the
 model on the subsample. Arguments accepted by `nnet::multinom` can be passed
 through `...` in `ssp.softmax`.
 

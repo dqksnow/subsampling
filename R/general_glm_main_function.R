@@ -46,7 +46,7 @@
 #' 
 #' - `weighted` Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
 #' 
-#' - `logOddsCorrection` This likelihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+#' - `logOddsCorrection` This likelihood is currently implemented only for logistic regression with `sampling.method = "poisson"` (i.e., when `family` is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
 #'   
 #' @param contrasts An optional list. It specifies how categorical variables are represented in the design matrix. For example, `contrasts = list(v1 = 'contr.treatment', v2 = 'contr.sum')`.
 #' 
@@ -72,7 +72,7 @@
 #'   \item{cov.ssp}{The covariance matrix of `coef.ssp`.}
 #'   \item{cov}{The covariance matrix of `coef`.}
 #'   \item{index.plt}{Row indices of pilot subsample in the full dataset.}
-#'   \item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
+#'   \item{index}{Row indices of the drawn subsample in the full dataset. For `criterion = "uniform"`, this is the single-stage uniform subsample.}
 #'   \item{N}{The number of observations in the full dataset.}
 #'   \item{subsample.size.expect}{The expected subsample size, equals to `n.ssp` for `ssp.glm.` Note that for other functions, such as \link{ssp.relogit}, this value may differ.}
 #'   \item{comp.time}{The total time of computing subsampling probabilities, drawing subsample and fitting model on the subsample.}
@@ -91,11 +91,13 @@
 #' families, uniform subsampling probabilities are applied. Typically, `n.plt` is
 #' relatively small compared to `n.ssp`.
 #' 
-#' When `criterion = 'uniform'`, there is no need to compute the pilot estimator. In this case, a size `n.plt + n.ssp` subsample will be drawn with uniform sampling probability and `coef` is the corresponding  estimator.
+#' When `criterion = 'uniform'`, there is no need to compute the pilot estimator. In this case, a size `n.plt + n.ssp` subsample will be drawn with uniform sampling probability and `coef` is the corresponding estimator. Accordingly, the returned `subsample.size.expect` is `n.plt + n.ssp` rather than `n.ssp`.
 #' 
 #' As suggested by `survey::svyglm()`, for binomial and poisson families, use `family=quasibinomial()` and `family=quasipoisson()` to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The quasi versions of the family objects give the same point estimates and suppress the warning. Since subsampling methods only rely on point estimates from svyglm() for further computation, using the quasi families does not introduce any issues.
 #' 
 #' For Gamma family, `ssp.glm` returns only the estimation of coefficients, as the dispersion parameter is not estimated.
+#'
+#' The `logOddsCorrection` likelihood is intended only for logistic regression with Poisson subsampling and is not implemented for `sampling.method = "withReplacement"` or non-binomial families.
 #'
 #' @references
 #' Wang, H. (2019). More efficient estimation for logistic regression with optimal subsamples. \emph{Journal of machine learning research}, \strong{20}(132), 1-59.

@@ -237,6 +237,12 @@ summary.ssp.relogit <- function(object, ...) {
   subsample.rate.expect <- (n.ssp.expect / N) * 100
   subsample.rate.actual <- (n.ssp.actual / N) * 100
   subsample.rate.unique <- (n.ssp.unique / N) * 100
+  safe_pct <- function(num, den, digits = 2) {
+    if (is.null(num) || is.null(den) || den == 0) {
+      return(NA_character_)
+    }
+    paste0(round(100 * num / den, digits), "%")
+  }
   cat("Model Summary\n\n")
   cat("\nCall:\n")
   cat("\n")
@@ -266,6 +272,17 @@ summary.ssp.relogit <- function(object, ...) {
   colnames(size_table) <- NULL
   rownames(size_table) <- NULL
   print(size_table)
+  cat("\n")
+  cat("Sample Composition (Logistic Regression):\n")
+  y_table <- data.frame(
+    Sample = c("Subsample", "Full data"),
+    Size = c(n.ssp.actual, N),
+    Y_count = c(object$Y.count.ssp, object$N1),
+    Y_rate = c(safe_pct(object$Y.count.ssp, n.ssp.actual),
+               safe_pct(object$N1, N)),
+    check.names = FALSE
+  )
+  print(y_table, row.names = FALSE)
   cat("\n")
   cat("Coefficients:\n")
   cat("\n")

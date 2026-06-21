@@ -13,12 +13,18 @@ ssp.glm.rF(
   family = "binomial",
   criterion = "BL-Uni",
   sampling.method = "poisson",
-  likelihood = "weighted",
-  balance.plt = TRUE,
-  balance.Y = FALSE,
-  rareFeature.index = NULL,
+  objective.weight.plt = "weighted",
+  objective.weight = "weighted",
   control = list(...),
   contrasts = NULL,
+  balance.X.plt = FALSE,
+  balance.Y.plt = FALSE,
+  balance.Y.ssp = FALSE,
+  balance.Y.all = FALSE,
+  record.stage.time = FALSE,
+  rareFeature.index = NULL,
+  rareThreshold = 0.09,
+  na.action = getOption("na.action"),
   ...
 )
 }
@@ -30,173 +36,138 @@ ssp.glm.rF(
 \item{subset}{An optional vector specifying a subset of observations to be
 used as the full dataset.}
 
-\item{n.plt}{The pilot sample size for computing the pilot estimator and
-estimating optimal subsampling probabilities.}
+\item{n.plt}{The expected pilot sample size for two-step methods. For
+one-step methods (\code{criterion = "Uni"} or \code{"BL-Uni"}), the expected sample
+size is \code{n.plt + n.ssp}.}
 
-\item{n.ssp}{The expected size of the optimal subsample. For
-\code{sampling.method = "poisson"}, the actual sample size may vary, but the
-expected size equals \code{n.ssp}.}
+\item{n.ssp}{The expected second-step subsample size. For Poisson
+subsampling, the actual sample size may vary.}
 
-\item{family}{A character string naming a family. It can be a character string naming a family function, a family function or the result of a call to a family function.}
+\item{family}{A character string naming a family, a family function, or the
+result of a call to a family function. Supported families include
+\code{"binomial"}, \code{"quasibinomial"}, \code{"poisson"}, \code{"quasipoisson"}, \code{"gaussian"},
+and \code{"Gamma"}.}
 
 \item{criterion}{The subsampling criterion. Choices include:
 \itemize{
 \item \code{"BL-Uni"} (default): probabilities proportional to the balance score.
+\item \code{"Uni"}: uniform Poisson subsampling.
+\item \code{"Lopt"}: classical L-optimality.
+\item \code{"Aopt"}: classical A-optimality.
 \item \code{"R-Lopt"}: rareness-aware L-optimality.
-\item \code{"Aopt"}: classical A-optimality, minimizing the trace of the asymptotic
-covariance matrix.
-\item \code{"Lopt"}: classical L-optimality, minimizing a transformed trace of the
-asymptotic covariance.
 \item \code{"BL-Lopt"}: balance score combined with L-optimality.
-\item \code{"Uni"}: uniform sampling.
 }}
 
-\item{sampling.method}{The sampling method. Currently \code{"poisson"} is
-supported, which avoids drawing repeated observations.}
+\item{sampling.method}{The sampling method. Currently only \code{"poisson"} is
+supported.}
 
-\item{likelihood}{The objective function used for estimation. Currently
-\code{"weighted"} is supported. Each sampled observation is weighted by the
-inverse of its subsampling probability.}
+\item{objective.weight.plt}{Objective weighting for the pilot fit. Use
+\code{"weighted"} for inverse-probability weighting or \code{"unweighted"} for an
+unweighted pilot objective. Unweighted pilot fitting is not allowed when the
+pilot sampling probability depends on the response.}
 
-\item{balance.plt}{Logical. Whether to use \code{"BL-Uni"} to draw the pilot
-sample for two-step subsampling methods. Default is \code{TRUE}. A good pilot
-estimator significantly improves the performance of the second-step
-subsampling; a poor pilot estimator may cause failure.}
+\item{objective.weight}{Objective weighting for the one-step or second-step
+fit. Two-step methods currently require \code{"weighted"}.}
 
-\item{balance.Y}{Logical. Whether to balance the binary response variable in
-logistic regression. If \code{TRUE}, the pilot sampling probability combines the
-balance score with the case-control method, and the negative subsampling will be performed for the second-step subsampling method. That is, automatically include all Y=1 observations to the subsample, while performing subsampling for Y=0 observations.}
-
-\item{rareFeature.index}{Column indices of binary rare features in the design
-matrix, coded as \code{1} for the rare case. For example,
-\code{c(4, 9)} indicates that columns 4 and 9 of the design matrix contain rare
-features.}
-
-\item{control}{A list passed to \code{glm.control()}. It includes:
+\item{control}{A list passed to \code{glm.control()}. Supported entries include:
 \itemize{
-\item \code{alpha}: mixture weight between optimal and uniform probabilities, giving
-\eqn{\pi = (1 - \alpha)\pi^{opt} + \alpha \pi^{uni}}.
+\item \code{alpha}: mixture weight between optimal and uniform probabilities.
+\item \code{b}: pilot-based truncation tuning parameter.
+\item \code{poi.method}: \code{"exact"} or \code{"estimated"} for Poisson probability
+normalization.
 }}
 
 \item{contrasts}{Optional list specifying how categorical variables are
 encoded in the design matrix.}
 
-\item{...}{Additional arguments passed to \code{svyglm()}.}
+\item{balance.X.plt}{Logical. Whether to use balance-score sampling for the
+pilot sample in two-step methods.}
+
+\item{balance.Y.plt}{Logical. Whether to balance the binary response in the
+pilot sample. Ignored for non-binary response families.}
+
+\item{balance.Y.ssp}{Logical. For one-step \code{"Uni"} and \code{"BL-Uni"} methods,
+whether to allocate the expected sample size across \code{Y = 0} and \code{Y = 1}
+groups in a case-control style. Ignored for two-step optimality criteria and
+non-binary response families.}
+
+\item{balance.Y.all}{Logical. Whether to include all \code{Y = 1} observations and
+subsample from \code{Y = 0}. Ignored for non-binary response families.}
+
+\item{record.stage.time}{Logical. Whether to store timing for major internal
+stages in the returned object.}
+
+\item{rareFeature.index}{Rare-feature columns. Numeric values follow the same
+convention as the original data/model variables: if the model contains an
+intercept, the function internally shifts the indices to account for the
+intercept column in the design matrix. Character values are matched to
+design-matrix column names. If \code{NULL}, rare binary features are detected
+automatically using \code{rareThreshold}.}
+
+\item{rareThreshold}{Prevalence threshold used to automatically identify rare
+binary features, and to warn when user-supplied rare features have
+prevalence at or above the threshold.}
+
+\item{na.action}{Currently accepted for interface compatibility.}
+
+\item{...}{Additional arguments passed to \code{glm.fit()} or \code{lm.wfit()}.}
 }
 \value{
-An object of class \code{"ssp.glm.rF"} containing the following fields.
-
-\describe{
-
-\item{model.call}{The original function call.}
-
-\item{coef.plt}{Pilot estimator obtained from the pilot subsample.}
-
-\item{coef.ssp}{Estimator obtained from the optimal subsample.}
-
-\item{coef.cmb}{Combined estimator using the union of pilot and optimal subsamples.
-If \code{criterion = "BL-Uni"} or \code{"Uni"}, this equals the pilot and subsample
-estimators because only one sampling step is used.}
-
-\item{cov.plt}{Estimated covariance matrix of \code{coef.plt}.}
-
-\item{cov.ssp}{Estimated covariance matrix of \code{coef.ssp}.}
-
-\item{cov.cmb}{Estimated covariance matrix of \code{coef.cmb}.}
-
-\item{N}{Number of observations in the full dataset.}
-
-\item{subsample.size.expect}{Expected subsample size (\code{n.ssp}).}
-
-\item{subsample.size.actual}{Actual number of subsampled observations.}
-
-\item{full.rare.count}{For each rare feature, return the counts of ones in the full dataset.}
-
-\item{rare.count.plt}{Vector of length K giving, for each rare feature,
-the number of ones in the pilot subsample.}
-
-\item{rare.count.ssp}{Same as above, computed for the optimal subsample.}
-
-\item{rare.count.cmb}{Same as above, computed for the combined subsample.}
-
-\item{index.plt}{Row indices of the pilot subsample within the full dataset.}
-
-\item{index.ssp}{Row indices of the optimal subsample within the full
-dataset.}
-
-\item{index.cmb}{Union of pilot and optimal subsample row indices.}
-
-\item{rareFeature.index}{Column indices of rare features in the design
-matrix (same as the user input).}
-
-\item{comp.time}{Total computation time for computing sampling probabilities,
-drawing subsamples, and fitting the subsample estimator.}
-
-\item{terms}{The \code{terms} object for the fitted model.}
-
-}
+An object of class \code{"ssp.glm.rF"} containing fitted coefficients, covariance
+estimates, selected row indices, rare-feature counts, response-composition
+summaries, and optional stage timings.
 }
 \description{
-This function inherits the weighted objective function (\code{likelihood = "weighted"}) and the poisson sampling method (\code{sampling.method = "poisson"}) from \code{ssp.glm}, while additionally handling rare features in the model. Rare features refer to binary covariates with low prevalence of being one
-(expressed) and mostly zero. Such features create challenges for subsampling,
-because it is likely to miss these rare but informative
-observations. The balanced subsampling method upweights observations that
-contain expressed rare features, thereby preserving estimation efficiency for
-the coefficients of rare features.
+Rare features are binary covariates with low prevalence of being one. Because
+uniform or classical optimal subsampling can miss expressed rare-feature
+observations or produce unstable pilot estimates, this function uses
+rarity-aware sampling probabilities to preserve information for estimating
+rare-feature coefficients.
 
-A quick start guide is provided in the vignette:
-https://dqksnow.github.io/subsampling/articles/ssp-logit-rF.html.
+The function extends \code{ssp.glm} by supporting
+rarity-aware designs, optional response balancing for binary outcomes,
+weighted or unweighted pilot objectives, and a combined estimator based on the
+union of the pilot and second-step subsamples.
 }
 \details{
-See the package vignette for more details and examples.
+Two-step criteria (\code{"Lopt"}, \code{"Aopt"}, \code{"R-Lopt"}, and \code{"BL-Lopt"}) draw a
+pilot sample, compute second-step Poisson probabilities, fit the second-step
+weighted GLM, and then refit on the union of the pilot and second-step
+samples. One-step criteria (\code{"Uni"} and \code{"BL-Uni"}) draw a single Poisson
+subsample with expected size \code{n.plt + n.ssp}.
 }
 \examples{
-# logistic regression
 set.seed(2)
-N <- 1e4
-d_rare <- 3
-d_cont <- 2
-p_rare <- c(0.01, 0.02, 0.05)
-beta0 <- c(0.5, rep(0.5, d_rare), rep(0.5, d_cont)) 
-corr <- 0.5
-sigmax  <- matrix(corr, d_cont, d_cont) + diag(1-corr, d_cont)
-X <- MASS::mvrnorm(N, rep(0, d_cont), sigmax)
-Z <- do.call(cbind, lapply(seq_along(p_rare), function(i) {
-rbinom(N, 1, p_rare[i])
-}))
-X <- cbind(Z, X)
-P <- 1 / (1 + exp(-(beta0[1] + X \%*\% beta0[-1])))
-Y <- as.integer(rbinom(N, 1, P))
-colnames(X) <- paste0("X", 1:(d_rare + d_cont))
-rareFeature.index <- c(1:d_rare)
-data <- data.frame(Y = Y, X)
-formula <- Y ~ .
-n.plt <- 300
-n.ssp <- 2000
-BL.Uni.results <- ssp.glm.rF(formula = formula, 
-data = data, 
-n.plt = n.plt,
-n.ssp = n.ssp,
-family = 'quasibinomial',
-criterion = 'BL-Uni',
-sampling.method = 'poisson',
-likelihood = 'weighted',
-balance.plt = TRUE,
-balance.Y = FALSE,
-rareFeature.index = rareFeature.index
+N <- 1000
+Z1 <- rbinom(N, 1, 0.04)
+Z2 <- rbinom(N, 1, 0.07)
+X1 <- rnorm(N)
+X2 <- rnorm(N)
+eta <- 0.5 + 0.5 * Z1 + 0.5 * Z2 + 0.5 * X1 + 0.5 * X2
+Y <- rbinom(N, 1, plogis(eta))
+data <- data.frame(Y, Z1, Z2, X1, X2)
+
+fit_bl <- ssp.glm.rF(
+  Y ~ .,
+  data = data,
+  n.plt = 100,
+  n.ssp = 150,
+  family = "quasibinomial",
+  criterion = "BL-Uni",
+  rareFeature.index = 1:2
 )
-summary(BL.Uni.results)
-R.Lopt.results <- ssp.glm.rF(formula = formula, 
-data = data, 
-n.plt = n.plt,
-n.ssp = n.ssp,
-family = 'quasibinomial',
-criterion = 'R-Lopt',
-sampling.method = 'poisson',
-likelihood = 'weighted',
-balance.plt = TRUE,
-balance.Y = FALSE,
-rareFeature.index = rareFeature.index
+summary(fit_bl)
+
+fit_rl <- ssp.glm.rF(
+  Y ~ .,
+  data = data,
+  n.plt = 100,
+  n.ssp = 150,
+  family = "quasibinomial",
+  criterion = "R-Lopt",
+  balance.X.plt = TRUE,
+  rareFeature.index = c("Z1", "Z2")
 )
-summary(R.Lopt.results)
+summary(fit_rl)
+
 }

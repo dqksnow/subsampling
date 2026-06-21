@@ -1,9 +1,9 @@
 ---
-title: "`ssp.relogit`: Subsampling for Logistic Regression Model with Rare Events"
+title: "`ssp.relogit`: Optimal Subsampling for Logistic Regression with Rare Events"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{`ssp.relogit`: Subsampling for Logistic Regression Model with Rare Events}
+  %\VignetteIndexEntry{`ssp.relogit`: Optimal Subsampling for Logistic Regression with Rare Events}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,179 +19,387 @@ knitr::opts_chunk$set(
 library(subsampling)
 ```
 
-This vignette introduces the usage of `ssp.relogit`. The statistical theory and
-algorithms in this implementation can be found in relevant reference papers.
+This vignette introduces `ssp.relogit()`, the rare-event logistic regression
+method in `subsampling`. When positive responses are rare, subsampling both
+classes symmetrically can waste computation. `ssp.relogit()` keeps all rare
+events and subsamples only the non-rare events.
 
-The logistic regression log-likelihood function is
+## Model and Rare-Event Setting
+
+Let $(y_i, x_i)$, $i = 1, \ldots, N$, denote the full data, where
+$y_i \in \{0,1\}$ and $x_i$ includes the intercept. The logistic regression
+model is
 
 $$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left[y_i \beta^{\top} x_i -
-\log\left(1 + e^{\beta^\top x_i}\right) \right].
+P(Y_i = 1 \mid x_i)
+= p_i(\beta)
+= \frac{\exp(x_i^\top\beta)}{1 + \exp(x_i^\top\beta)}.
 $$
 
-## Terminology
+The full-data objective is
 
-- Full dataset: The whole dataset used as input.
+$$
+\ell_N(\beta)
+= \frac{1}{N}\sum_{i=1}^N
+\left[
+y_i x_i^\top\beta -
+\log\{1 + \exp(x_i^\top\beta)\}
+\right].
+$$
 
-- Full data estimator: The estimator obtained by fitting the model on the full
-  dataset.
+In rare-event logistic regression, the number of positives
 
-- Subsample: A subset of observations drawn from the full dataset.
+$$
+N_1 = \sum_{i=1}^N y_i
+$$
 
-- Subsample estimator: The estimator obtained by fitting the model on the
-  subsample.
+is much smaller than the number of negatives
 
-- Subsampling probability ($\pi$): The probability assigned to each observation
-  for inclusion in the subsample.
+$$
+N_0 = N - N_1.
+$$
 
-- Rare events: Observations where $Y=1$ (positive instances).
+In this setting, `ssp.relogit()` keeps all positive observations and subsamples
+only the negatives, which reduces computation while preserving the information
+carried by the rare class [@wang2021nonuniform].
 
-- Non-rare events: Observations where $Y=0$ (negative instances).
+## How `ssp.relogit()` Works
 
-The idea of subsampling methods is as follows: instead of fitting the model on
-the size $N$ full dataset, a subsampling probability is assigned to each
-observation and a smaller, informative subsample is drawn. The model is then
-fitted on the subsample to obtain an estimator with reduced computational cost.
+For `criterion %in% c("optA", "optL", "LCC")`, the function uses the following
+two-stage design.
 
-In the face of logistic regression with rare events, @wang2021nonuniform shows
-that the available information ties to the number of positive instances instead
-of the full data size. Based on this insight, one can keep all the rare
-instances and perform subsampling on the non-rare instances to reduce the
-computational cost.
+1. Draw a pilot sample of size `n.plt`.
+2. Fit a pilot estimator $\widehat{\beta}$.
+3. Use $\widehat{\beta}$ to construct negative-sampling probabilities.
+4. Keep all positive observations.
+5. Draw a Poisson subsample from the negative observations with expected size
+   `n.ssp`.
+6. Fit the subsample estimator and form an information-weighted average of the
+   pilot and subsample estimators.
 
-## Example
+So in this function, `n.ssp` is the expected number of sampled negatives, not
+the expected total sample size. The returned expected total subsample size is
 
-We introduce the basic usage by using `ssp.relogit` with simulated data. $X$
-contains $d=6$ covariates drawn from multinormal distribution and $Y$ is the
-binary response variable. The full data size is $N = 2 \times 10^4$. Denote
-$N_{1}=sum(Y)$ as the counts of rare observations and $N_{0} = N - N_{1}$ as the
-counts of non-rare observations.
+$$
+N_1 + n_{\mathrm{ssp}}.
+$$
+
+For `criterion = "uniform"`, the function still keeps all positives, but it
+samples negatives uniformly with probability `n.ssp / N0`. There is no pilot
+estimator in that branch.
+
+## Pilot Estimator
+
+The pilot estimator is designed specifically for rare-event logistic
+regression. Let $S_{\mathrm{plt}}$ denote the pilot sample. The code draws about
+half the pilot sample from positives and half from negatives, then fits an
+unweighted logistic model on that balanced pilot sample.
+
+The pilot objective is
+
+$$
+\widehat{\beta}^{\,\mathrm{bal}}
+= \arg\max_\beta
+\sum_{i \in S_{\mathrm{plt}}}
+\left[
+y_i x_i^\top\beta -
+\log\{1 + \exp(x_i^\top\beta)\}
+\right].
+$$
+
+Because the pilot sample has an artificial class balance, the fitted intercept
+is then corrected by
+
+$$
+\widehat{\beta}_0
+= \widehat{\beta}^{\,\mathrm{bal}}_0 - \log\left(\frac{N_0}{N_1}\right),
+$$
+
+while the slope coefficients are kept unchanged. The fitted pilot probabilities
+are
+
+$$
+\widehat{p}_i = p_i(\widehat{\beta}),\qquad i = 1,\ldots,N.
+$$
+
+These pilot probabilities are used to construct the raw importance scores for
+negative sampling.
+
+## Choosing `criterion`
+
+The `criterion` argument determines the raw importance score $m_i$. These scores
+represent relative importance. They are not probabilities yet. The function
+turns them into valid negative-sampling probabilities by truncation, scaling,
+and the uniform mixture controlled by `alpha`.
+
+Although the score is written for all observations, it matters operationally for
+the negative class because all positives are kept automatically.
+
+### `criterion = "optA"`
+
+The A-optimal score is
+
+$$
+m_i
+= \widehat{p}_i \sqrt{1-\widehat{p}_i}
+\left\lVert
+\widehat{M}^{-1} x_i
+\right\rVert,
+$$
+
+where $\widehat{M}$ is the pilot estimate of the information matrix. This
+criterion aims to minimize the asymptotic variance of the subsample estimator.
+It targets smaller asymptotic variance but is computationally expensive because
+it uses $\widehat{M}^{-1}$.
+
+### `criterion = "optL"`
+
+The L-optimal score is
+
+$$
+m_i
+= \widehat{p}_i \sqrt{1-\widehat{p}_i}\,\lVert x_i \rVert.
+$$
+
+This is the default. It keeps the same leading rare-event factor as `optA`, but
+replaces $\lVert \widehat{M}^{-1} x_i \rVert$ by $\lVert x_i \rVert$. So it
+avoids multiplying by the inverse pilot information matrix inside the norm and
+is computationally cheaper.
+
+### `criterion = "LCC"`
+
+The local case-control score is
+
+$$
+m_i = |y_i - \widehat{p}_i|.
+$$
+
+This is a baseline method related to local case-control sampling.
+
+### `criterion = "uniform"`
+
+In the uniform branch, all positives are still retained. The negative
+observations are sampled with the same probability, so there is no pilot-based
+importance score.
+
+## Negative-Sampling Probabilities
+
+For `optA`, `optL`, and `LCC`, `ssp.relogit()` uses a Poisson negative-sampling
+design.
+
+First, the raw score is truncated:
+
+$$
+m_i^* = \min(m_i, H),
+$$
+
+where $H$ is a threshold controlled by `b`.
+
+Then the negative inclusion probability is
+
+$$
+\pi_i^{-}
+= \min\left[
+n_{\mathrm{ssp}}
+\left\{
+(1-\alpha)\frac{m_i^*}{\widehat{\Phi}}
++ \alpha\frac{1}{N}
+\right\},
+1
+\right],
+$$
+
+where $\widehat{\Phi}$ is the pilot-based normalizing quantity. The actual
+subsampling design is
+
+$$
+\pi_i =
+\begin{cases}
+1, & y_i = 1,\\[6pt]
+\pi_i^{-}, & y_i = 0.
+\end{cases}
+$$
+
+So positives are always kept, while negatives are independently included.
+
+For `criterion = "uniform"`, the design becomes
+
+$$
+\pi_i =
+\begin{cases}
+1, & y_i = 1,\\[6pt]
+\dfrac{n_{\mathrm{ssp}}}{N_0}, & y_i = 0.
+\end{cases}
+$$
+
+## Choosing `likelihood`
+
+The `likelihood` argument controls how the model fit corrects for unequal
+sampling probabilities.
+
+### `likelihood = "weighted"`
+
+The weighted likelihood uses inverse sampling probabilities:
+
+$$
+\ell_S^{\mathrm{w}}(\beta)
+= \sum_{i \in S}
+\frac{1}{\pi_i}
+\left[
+y_i x_i^\top\beta -
+\log\{1 + \exp(x_i^\top\beta)\}
+\right].
+$$
+
+This is the more general correction and can be useful as a baseline.
+
+### `likelihood = "logOddsCorrection"`
+
+This is the default and the more specialized rare-event correction
+[@wang2021nonuniform]. For negative sampling, the sampled conditional model can
+be written as
+
+$$
+P(Y_i = 1 \mid x_i, i \in S)
+=
+\frac{
+\exp(x_i^\top\beta + a_i)
+}{
+1 + \exp(x_i^\top\beta + a_i)
+},
+$$
+
+where the offset is
+
+$$
+a_i = -\log(\pi_i^{-}).
+$$
+
+This is exactly the offset used in the implementation for the non-uniform
+negative-sampling branch.
+
+## Method Summary
+
+| Component | Setting |
+|---|---|
+| `criterion` | `optA` |
+| `criterion` | `optL` |
+| `criterion` | `LCC` |
+| `criterion` | `uniform` |
+| `likelihood` | `logOddsCorrection` |
+| `likelihood` | `weighted` |
+
+The main design features to remember are:
+
+- all positives are retained in every branch
+- `n.ssp` is the expected number of sampled negatives
+- the expected total subsample size is `N1 + n.ssp`
+
+## Example Data
+
+We simulate a rare-event logistic regression problem with $N = 2 \times 10^4$
+observations.
 
 ```{r}
 set.seed(2)
 N <- 2 * 1e4
 beta0 <- c(-6, -rep(0.5, 6))
 d <- length(beta0) - 1
-X <- matrix(0, N, d)
 corr <- 0.5
 sigmax <- corr ^ abs(outer(1:d, 1:d, "-"))
 X <- MASS::mvrnorm(n = N, mu = rep(0, d), Sigma = sigmax)
 Y <- rbinom(N, 1, 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1])))
-print(paste('N: ', N))
-print(paste('sum(Y): ', sum(Y)))
-n.plt <- 200
-n.ssp <- 1000
-data <- as.data.frame(cbind(Y, X))
-colnames(data) <- c("Y", paste("V", 1:ncol(X), sep=""))
-formula <- Y ~ .
-```
-
-## Key Arguments
-
-The function usage is
-
-```{r, eval = FALSE}
-ssp.relogit(
-  formula,
-  data,
-  subset = NULL,
-  n.plt,
-  n.ssp,
-  criterion = "optL",
-  likelihood = "logOddsCorrection",
-  control = list(...),
-  contrasts = NULL,
-  ...
-)
-```
-
-The core functionality of `ssp.glm` revolves around three key questions:
-
-- How are subsampling probabilities computed? (Controlled by the `criterion`
-  argument)
-
-- How is the subsample drawn?
-
-- How is the likelihood adjusted to correct for bias? (Controlled by the
-  `likelihood` argument)
-
-Different from `ssp.glm` which can choose `withReplacement` and `poisson` as the
-option of `sampling.method`, `ssp.relogit` uses `poisson` as default sampling
-method. `poisson` stands for drawing subsamples one by one by comparing the
-subsampling probability with a realization of uniform random variable
-$U(0,1)$. The actual size of drawn subsample is random but the expected size is
-$n.ssp$.
-
-### `criterion`
-
-The choices of `criterion` include `optA`, `optL`(default), `LCC` and
-`uniform`. The optimal subsampling criterion `optA` and `optL` are derived by
-minimizing the asymptotic covariance of subsample estimator, proposed by
-@wang2018optimal. `LCC` and `uniform` are baseline methods.
-
-Note that for rare observations $Y=1$ in the full data, the sampling
-probabilities are $1$. For non-rare observations, the sampling probabilities
-depend on the choice of `criterion`.
-
-### `likelihood`
-
-The available choices for `likelihood` include `weighted` and
-`logOddsCorrection`(default). Both of these likelihood functions can derive an
-unbiased estimator. Theoretical results indicate that `logOddsCorrection` is
-more efficient than `weighted` in the context of rare events logistic
-regression. See @@wang2021nonuniform.
-
-## Results
-
-After drawing subsample, `ssp.relogit` utilizes `survey::svyglm` to fit the
-model on the subsample, which eventually uses `glm`. Arguments accepted by
-`svyglm` can be passed through `...` in `ssp.glm`.
-
-Below is an example demonstrating the use of `ssp.relogit`.
-
-```{r}
 n.plt <- 200
 n.ssp <- 600
-ssp.results <- ssp.relogit(formula = formula,
-                           data = data,
-                           n.plt = n.plt,
-                           n.ssp = n.ssp,
-                           criterion = 'optA',
-                           likelihood = 'logOddsCorrection'
-                           )
+data <- as.data.frame(cbind(Y, X))
+colnames(data) <- c("Y", paste0("V", 1:ncol(X)))
+formula <- Y ~ .
+print(paste("N:", N))
+print(paste("sum(Y):", sum(Y)))
 ```
 
-## Outputs
+## Example 1: Default Rare-Event Fit
 
-The returned object contains estimation results and indices of drawn subsample
-in the full dataset.
+The default recommendation is `criterion = "optL"` with
+`likelihood = "logOddsCorrection"`.
 
 ```{r}
-names(ssp.results)
+set.seed(11)
+
+fit_default <- ssp.relogit(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
+  criterion = "optL",
+  likelihood = "logOddsCorrection"
+)
+
+summary(fit_default)
 ```
 
-Some key returned variables:
+## Example 2: A-Optimal Criterion
 
-- `index.plt` and `index` are the row indices of drawn pilot subsamples and
-optimal subsamples in the full data.
-
-- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear
-combination of `coef.plt` (pilot estimator) and `coef.ssp`.
-
-- `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
-`coef`. 
+If you want the A-optimal criterion, you can switch `criterion` while keeping
+the same rare-event correction.
 
 ```{r}
-summary(ssp.results)
+set.seed(2)
+
+fit_optA <- ssp.relogit(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
+  criterion = "optA",
+  likelihood = "logOddsCorrection"
+)
+
+summary(fit_optA)
 ```
 
-In the printed results, `Expected Subsample Size` is the sum of rare event
-counts ($N_{1}$) and the expected size of negative subsample drawn from $N_{0}$
-non-rare observations. 
-`Actual Subsample Size` is the sum of $N_{1}$ and the actual size of negative
-subsample from $N_{0}$ non-rare observations.
+## Example 3: Uniform Baseline
 
-The coefficients and standard errors printed by `summary()` are `coef` and the
-square root of `diag(cov)`.
+The uniform branch still keeps all positives and samples negatives uniformly.
+
+```{r}
+set.seed(9)
+
+fit_uniform <- ssp.relogit(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
+  criterion = "uniform",
+  likelihood = "logOddsCorrection"
+)
+
+fit_uniform$subsample.size.expect
+length(fit_uniform$index)
+summary(fit_uniform)
+```
+
+## Returned Object
+
+The returned object stores the fitted estimators, covariance estimates, and row
+indices of the selected observations.
+
+```{r}
+names(fit_default)
+```
+
+Important components include:
+
+- `coef.plt`: pilot estimator.
+- `coef.ssp`: estimator from the retained positives plus sampled negatives.
+- `coef`: combined estimator printed by `summary()`.
+- `cov.ssp`: covariance estimate for `coef.ssp`.
+- `cov`: covariance estimate for `coef`.
+- `index.plt`: row indices of the pilot sample, when a pilot sample is used.
+- `index`: row indices of the final retained-and-sampled subsample.
+- `subsample.size.expect`: expected total subsample size.
+
+The coefficients and standard errors printed by `summary()` are based on `coef`
+and `sqrt(diag(cov))`.
 
 ## References

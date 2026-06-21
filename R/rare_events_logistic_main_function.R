@@ -199,6 +199,9 @@ ssp.relogit <-  function(formula,
                     index.plt = index.plt,
                     index = index.ssp,
                     N = N,
+                    N1 = N1,
+                    N0 = N0,
+                    Y.count.ssp = sum(Y[index.ssp]),
                     subsample.size.expect = N1 + n.ssp,
                     terms = mt
                     )
@@ -224,6 +227,9 @@ ssp.relogit <-  function(formula,
                     coef = beta.uni,
                     cov = cov.uni,
                     N = N,
+                    N1 = N1,
+                    N0 = N0,
+                    Y.count.ssp = sum(Y[index.uni]),
                     subsample.size.expect = n.uni,
                     terms = mt
                     )
@@ -231,5 +237,4 @@ ssp.relogit <-  function(formula,
     return(results)
   }
 }
-
 

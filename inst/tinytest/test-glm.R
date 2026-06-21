@@ -107,6 +107,57 @@ expect_silent(ssp.results <-
               
               info = "It should run without errors when use contrasts.")
 
+set.seed(101)
+uniform.results <- ssp.glm(formula = formula,
+                           data = data,
+                           n.plt = n.plt,
+                           n.ssp = n.ssp,
+                           family = family,
+                           criterion = "uniform",
+                           sampling.method = "withReplacement",
+                           likelihood = "weighted")
+
+expect_equal(uniform.results$subsample.size.expect,
+             n.plt + n.ssp,
+             info = "For criterion = 'uniform', the expected subsample size should be n.plt + n.ssp.")
+
+expect_true(!is.null(uniform.results$index),
+            info = "Returned object should store the drawn subsample indices in 'index'.")
+
+expect_equal(length(uniform.results$index),
+             n.plt + n.ssp,
+             info = "With replacement uniform sampling should draw exactly n.plt + n.ssp observations.")
+
+expect_true(all(is.finite(uniform.results$coef)),
+            info = "Coefficient estimates should be finite for a valid uniform subsample fit.")
+
+expect_true(all(is.finite(diag(uniform.results$cov))),
+            info = "Estimated variances should be finite for a valid uniform subsample fit.")
+
+expect_error(ssp.glm(formula = formula,
+                     data = data,
+                     n.plt = n.plt,
+                     n.ssp = n.ssp,
+                     family = family,
+                     criterion = "optL",
+                     sampling.method = "withReplacement",
+                     likelihood = "logOddsCorrection"),
+             info = paste(
+               "'logOddsCorrection' should error with sampling.method =",
+               "'withReplacement'."
+             ))
+
+expect_error(ssp.glm(formula = formula,
+                     data = data,
+                     n.plt = n.plt,
+                     n.ssp = n.ssp,
+                     family = "poisson",
+                     criterion = "optL",
+                     sampling.method = "poisson",
+                     likelihood = "logOddsCorrection"),
+             info = paste(
+               "'logOddsCorrection' should error for non-binomial families."
+             ))
 
 
 

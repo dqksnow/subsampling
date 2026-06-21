@@ -1,9 +1,9 @@
 ---
-title: "`ssp.glm`: Subsampling for Generalized Linear Models"
+title: "`ssp.glm`: Optimal Subsampling for Generalized Linear Models"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{`ssp.glm`: Subsampling for Generalized Linear Models}
+  %\VignetteIndexEntry{`ssp.glm`: Optimal Subsampling for Generalized Linear Models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,63 +15,306 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette introduces the usage of the `ssp.glm` using logistic regression as
-an example of generalized linear models (GLM). The statistical theory and
-algorithms in this implementation can be found in the relevant reference papers.
-
-The log-likelihood function for a GLM is
-
-$$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left\{y_i u(\beta^{\top} x_i)
-- \psi \left[ u(\beta^{\top} x_i) \right] \right\},
-$$
-where $u$ and $\psi$ are known functions depend on the distribution from the
-exponential family. For the binomial distribution, the log-likelihood function
-becomes
-
-$$
-\max_{\beta} L(\beta) = \frac{1}{N} \sum_{i=1}^N \left[y_i \beta^{\top} x_i -
-\log\left(1 + e^{\beta^\top x_i}\right) \right].
-$$
-
-The idea of subsampling methods is as follows: instead of fitting the model on
-the size $N$ full dataset, a subsampling probability is assigned to each
-observation and a smaller, informative subsample is drawn. The model is then
-fitted on the subsample to obtain an estimator with reduced computational cost.
-
-## Installation
-
-You can install the development version of subsampling from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("dqksnow/Subsampling")
-```
+This vignette introduces `ssp.glm()`, the main function for optimal subsampling
+with generalized linear models (GLMs). We use logistic regression as the main
+example because it is the most common use case and because all three key
+choices in `ssp.glm()`--`criterion`, `sampling.method`, and `likelihood`--are
+available for logistic models.
 
 ```{r setup}
 library(subsampling)
 ```
 
-## Terminology
+## Model and Objective
 
-- Full dataset: The whole dataset used as input.
+Let $(y_i, x_i)$, $i = 1, \ldots, N$, denote the full data, where $x_i$ includes
+the intercept. For a GLM with canonical parameter $\theta_i = x_i^\top\beta$,
+the full-data objective can be written as
 
-- Full data estimator: The estimator obtained by fitting the model on the full
-  dataset.
+$$
+\ell_N(\beta)
+= \frac{1}{N}\sum_{i=1}^N
+\left\{y_i x_i^\top\beta - \psi(x_i^\top\beta)\right\}.
+$$
 
-- Subsample: A subset of observations drawn from the full dataset.
+For logistic regression,
 
-- Subsample estimator: The estimator obtained by fitting the model on the
-  subsample.
+$$
+p_i(\beta) = P(Y_i = 1 \mid x_i)
+= \psi'(x_i^\top\beta)
+= \frac{\exp(x_i^\top\beta)}{1 + \exp(x_i^\top\beta)},
+$$
 
-- Subsampling probability ($\pi$): The probability assigned to each observation
-  for inclusion in the subsample.
+where $\psi(t) = \log\{1 + \exp(t)\}$. The objective becomes
 
-## Example: Logistic Regression with Simulated Data
+$$
+\ell_N(\beta)
+= \frac{1}{N}\sum_{i=1}^N
+\left[
+y_i x_i^\top\beta -
+\log\{1 + \exp(x_i^\top\beta)\}
+\right].
+$$
 
-We introduce the usage of `ssp.glm` with simulated data. $X$ contains $d=6$
-covariates drawn from multinormal distribution, and $Y$ is the binary response
-variable. The full dataset size is $N = 1 \times 10^4$.
+Fitting this objective on all $N$ observations may be expensive when $N$ is
+large. Subsampling replaces the full-data fit with a smaller, informative
+subsample. The central question is how to assign a sampling probability to each
+observation so that the resulting subsample estimator is statistically efficient.
+
+## Two Ways `ssp.glm()` Works
+
+Most choices of `criterion` use a two-stage procedure.
+
+1. Draw a pilot subsample of size `n.plt`.
+2. Fit a pilot estimator $\widehat{\beta}$.
+3. Use $\widehat{\beta}$ to compute second-stage subsampling probabilities.
+4. Draw the second-stage subsample with expected size `n.ssp`.
+5. Fit the GLM on the second-stage subsample and form an information-weighted
+   average of the pilot and second-stage estimators.
+
+This two-stage path is used when
+
+``` r
+criterion %in% c("optA", "optL", "LCC")
+```
+
+The exception is `criterion = "uniform"`. In that case, no pilot estimator is
+needed. Uniform means that all $N$ observations have the same sampling
+probability. The function draws one uniform subsample of size `n.plt + n.ssp`,
+and the returned `subsample.size.expect` is therefore `n.plt + n.ssp` rather
+than `n.ssp`.
+
+## Pilot Estimator
+
+The pilot sample provides an initial estimate of the unknown parameter. Let
+$S_{\mathrm{plt}}$ denote the pilot sample and let
+$\pi_i^{\mathrm{plt}}$ be the pilot sampling probability for observation $i$.
+The pilot estimator is obtained from the weighted pilot objective
+
+$$
+\widehat{\beta}
+= \arg\max_\beta
+\sum_{i \in S_{\mathrm{plt}}}
+\frac{1}{\pi_i^{\mathrm{plt}}}
+\left\{
+y_i x_i^\top\beta - \psi(x_i^\top\beta)
+\right\}.
+$$
+
+The fitted mean from this pilot estimator is
+
+$$
+\widehat{p}_i = p_i(\widehat{\beta}),\qquad i = 1,\ldots,N.
+$$
+
+This fitted mean appears in the raw importance scores used below.
+
+For binomial and quasibinomial families, `ssp.glm()` draws the pilot sample by
+case-control sampling with replacement:
+
+$$
+\pi_i^{\mathrm{plt}}
+=
+\begin{cases}
+\dfrac{1}{2N_1}, & y_i = 1,\\[6pt]
+\dfrac{1}{2N_0}, & y_i = 0,
+\end{cases}
+$$
+
+where $N_1 = \sum_i y_i$ and $N_0 = N - N_1$. The pilot model is then fit by
+weighted likelihood. For other GLM families, the pilot sample is drawn uniformly
+with replacement.
+
+## Choosing `criterion`
+
+The `criterion` argument controls the raw importance score $m_i$ assigned to
+each observation. These scores are not probabilities yet. They measure the
+relative importance of observations, and then `ssp.glm()` turns them into valid
+sampling probabilities by normalization for with-replacement sampling, or by
+truncation and scaling for Poisson subsampling. For logistic regression, the
+common factor is the pilot residual magnitude $|y_i - \widehat{p}_i|$.
+
+### `criterion = "optA"`
+
+The A-optimal criterion uses
+
+$$
+m_i
+= |y_i - \widehat{p}_i|
+\left\lVert
+\widehat{M}^{-1} x_i
+\right\rVert,
+$$
+
+where $\widehat{M}$ is the pilot estimate of the information matrix. This criterion
+aims to minimize the asymptotic variance of the subsample estimator
+[@wang2018optimal; @wang2019more]. It targets smaller asymptotic variance but is
+computationally heavier because it uses $\widehat{M}^{-1}$.
+
+### `criterion = "optL"`
+
+The L-optimal criterion uses
+
+$$
+m_i = |y_i - \widehat{p}_i| \, \lVert x_i \rVert.
+$$
+
+This is the default. It keeps the main idea of assigning larger scores to
+observations with large pilot residuals and large covariate magnitude, but it is
+computationally cheaper than `optA` because it removes the matrix
+$\widehat{M}^{-1}$ before $x_i$ inside the norm.
+
+### `criterion = "LCC"`
+
+Local case-control sampling uses
+
+$$
+m_i = |y_i - \widehat{p}_i|.
+$$
+
+It favors observations whose responses are surprising under the pilot model.
+This is a simple baseline related to local case-control sampling
+[@fithian2014local].
+
+### `criterion = "uniform"`
+
+Uniform sampling assigns equal probability to all observations and does not use
+the pilot stage:
+
+$$
+m_i = 1,\qquad i = 1,\ldots,N.
+$$
+
+This is useful as a baseline because it separates the effect of subsample size
+from the effect of optimal probability construction.
+
+## Choosing `sampling.method`
+
+After $m_i$ is computed, `sampling.method` controls how the actual subsample is
+drawn.
+
+### `sampling.method = "withReplacement"`
+
+With replacement sampling draws exactly `n.ssp` observations from the full data,
+allowing repeated indices. The sampling probability is
+
+$$
+p_i
+= (1-\alpha)\frac{m_i}{\sum_{j=1}^N m_j}
++ \alpha\frac{1}{N},
+$$
+
+where `alpha` is a small mixing weight controlled by `control = list(alpha =
+...)`. The default is `alpha = 0.01`. This mixture prevents extremely small
+sampling probabilities.
+
+### `sampling.method = "poisson"`
+
+Poisson subsampling includes each observation independently. The realized
+subsample size is random, but its expectation is controlled by `n.ssp`.
+
+The implementation first truncates large scores,
+
+$$
+m_i^* = \min(m_i, H),
+$$
+
+where $H$ is estimated from the pilot sample and depends on the control
+parameter `b`. Then the inclusion probability is
+
+$$
+\pi_i
+= \min\left[
+n_{\mathrm{ssp}}
+\left\{
+(1-\alpha)\frac{m_i^*}{\widehat\Phi}
++ \alpha\frac{1}{N}
+\right\},
+1
+\right],
+$$
+
+where $\widehat\Phi$ estimates the full-data total of the truncated score. The
+parameter `b` controls the truncation level; smaller values push the sampling
+probabilities closer to uniform.
+
+## Choosing `likelihood`
+
+The `likelihood` argument controls how the model fit corrects for unequal
+subsampling probabilities.
+
+### `likelihood = "weighted"`
+
+The weighted likelihood is the general-purpose option. For a subsample $S$, let
+$\pi_i$ denote the relevant sampling probability: the drawing probability for
+with-replacement sampling or the inclusion probability for Poisson subsampling.
+The weighted objective is
+
+$$
+\ell_S^{\mathrm{w}}(\beta)
+= \sum_{i \in S}
+\frac{1}{\pi_i}
+\left[
+y_i x_i^\top\beta - \psi(x_i^\top\beta)
+\right].
+$$
+
+This likelihood works for all supported GLM families and both sampling methods.
+
+### `likelihood = "logOddsCorrection"`
+
+The log odds correction likelihood is a specialized option for logistic
+regression with Poisson subsampling [@wang2022maximum]. Instead of fitting a
+weighted likelihood, it fits a sampled conditional likelihood with an offset.
+For an observation in the Poisson subsample,
+
+$$
+P(Y_i = 1 \mid x_i, i \in S)
+=
+\frac{
+\exp(x_i^\top\beta + a_i)
+}{
+1 + \exp(x_i^\top\beta + a_i)
+},
+$$
+
+where
+
+$$
+a_i = \log\left(\frac{\pi_i^{(1)}}{\pi_i^{(0)}}\right).
+$$
+
+Here $\pi_i^{(1)}$ and $\pi_i^{(0)}$ are the inclusion probabilities that would
+be assigned to observation $i$ if its response were 1 or 0, respectively, with
+the same covariates and pilot fit. In `ssp.glm()`, this option is implemented
+only for binomial or quasibinomial families with
+`sampling.method = "poisson"`.
+
+## Method Summary
+
+| Component | Setting |
+|---|---|
+| `criterion` | `optA` |
+| `criterion` | `optL` |
+| `criterion` | `LCC` |
+| `criterion` | `uniform` |
+| `sampling.method` | `withReplacement` |
+| `sampling.method` | `poisson` |
+| `likelihood` | `weighted` |
+| `likelihood` | `logOddsCorrection` |
+
+The main restrictions are:
+
+- `logOddsCorrection` is implemented only for binomial and quasibinomial
+  families.
+- `logOddsCorrection` requires `sampling.method = "poisson"`.
+- `criterion = "uniform"` uses a one-stage uniform sample of size
+  `n.plt + n.ssp`.
+
+## Example Data
+
+We simulate a logistic regression problem with $N = 10^4$ observations and six
+covariates.
 
 ```{r}
 set.seed(1)
@@ -79,144 +322,121 @@ N <- 1e4
 beta0 <- rep(-0.5, 7)
 d <- length(beta0) - 1
 corr <- 0.5
-sigmax  <- matrix(corr, d, d) + diag(1-corr, d)
+sigmax <- matrix(corr, d, d) + diag(1 - corr, d)
 X <- MASS::mvrnorm(N, rep(0, d), sigmax)
-colnames(X) <- paste("V", 1:ncol(X), sep = "")
+colnames(X) <- paste0("V", 1:d)
 P <- 1 - 1 / (1 + exp(beta0[1] + X %*% beta0[-1]))
 Y <- rbinom(N, 1, P)
-data <- as.data.frame(cbind(Y, X))
+data <- data.frame(Y = Y, X)
 formula <- Y ~ .
 head(data)
 ```
 
+## Example 1: Default Optimal Subsampling
 
-## Key Arguments
+The default choice is `criterion = "optL"` with Poisson subsampling and weighted
+likelihood. This is a good starting point for large logistic regression
+problems.
 
-The function usage is
+```{r}
+set.seed(2)
+n.plt <- 200
+n.ssp <- 600
 
-```{r, eval = FALSE}
-ssp.glm(
-  formula,
-  data,
-  subset = NULL,
-  n.plt,
-  n.ssp,
+fit_optL <- ssp.glm(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
   family = "quasibinomial",
   criterion = "optL",
   sampling.method = "poisson",
-  likelihood = "weighted",
-  control = list(...),
-  contrasts = NULL,
-  ...
-  )
+  likelihood = "weighted"
+)
+
+summary(fit_optL)
 ```
 
-The core functionality of `ssp.glm` revolves around three key questions:
+## Example 2: Logistic Poisson Correction
 
-- How are subsampling probabilities computed? (Controlled by the `criterion`
-  argument)
-
-- How is the subsample drawn? (Controlled by the `sampling.method` argument)
-
-- How is the likelihood adjusted to correct for bias? (Controlled by the
-  `likelihood` argument)
-
-### `criterion`
-
-The choices of `criterion` include `optA`, `optL`(default), `LCC` and
-`uniform`. The optimal subsampling criterion `optA` and `optL` are derived by
-minimizing the asymptotic covariance of subsample estimator, proposed by
-@wang2018optimal. `LCC` and `uniform` are baseline methods.
-
-### `sampling.method`
-
-The options for the `sampling.method` argument include `withReplacement` and
-`poisson` (default). `withReplacement` stands for drawing `n.ssp` subsamples
-from full dataset with replacement, using the specified subsampling
-probabilities. `poisson` stands for drawing subsamples one by one by comparing the
-subsampling probability with a realization of uniform random variable
-$U(0,1)$. The expected number of drawn samples are `n.ssp`. More details see
-@wang2019more.
-
-### `likelihood`
-
-The available choices for `likelihood` include `weighted` (default) and
-`logOddsCorrection`. Both of these likelihood functions can derive an unbiased
-estimator. Theoretical results indicate that `logOddsCorrection` is more
-efficient than `weighted` in the context of logistic regression. See
-@wang2022maximum.
-
-## Outputs
-
-After drawing subsample, `ssp.glm` utilizes `survey::svyglm` to fit the model on
-the subsample, which eventually uses `glm`. Arguments accepted by `svyglm` can
-be passed through `...` in `ssp.glm`.
-
-Below are two examples demonstrating the use of `ssp.glm` with different
-configurations.
+For logistic regression with Poisson subsampling, `logOddsCorrection` uses the
+sampled conditional likelihood described above.
 
 ```{r}
-n.plt <- 200
-n.ssp <- 600
-ssp.results <- ssp.glm(formula = formula,
-                       data = data,
-                       n.plt = n.plt,
-                       n.ssp = n.ssp,
-                       family = "quasibinomial",
-                       criterion = "optL",
-                       sampling.method = "withReplacement",
-                       likelihood = "weighted"
-                       )
-summary(ssp.results)
+set.seed(18)
+
+fit_logodds <- ssp.glm(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
+  family = "quasibinomial",
+  criterion = "optA",
+  sampling.method = "poisson",
+  likelihood = "logOddsCorrection"
+)
+
+summary(fit_logodds)
 ```
+
+## Example 3: Uniform Baseline
+
+Uniform sampling is useful as a baseline. Notice that the expected subsample
+size is `n.plt + n.ssp`, because the pilot and second-stage sizes are combined
+into one uniform draw.
 
 ```{r}
-ssp.results <- ssp.glm(formula = formula,
-                       data = data,
-                       n.plt = n.plt,
-                       n.ssp = n.ssp,
-                       family = "quasibinomial",
-                       criterion = "optA",
-                       sampling.method = "poisson",
-                       likelihood = "logOddsCorrection"
-                       )
-summary(ssp.results)
+set.seed(4)
+
+fit_uniform <- ssp.glm(
+  formula = formula,
+  data = data,
+  n.plt = n.plt,
+  n.ssp = n.ssp,
+  family = "quasibinomial",
+  criterion = "uniform",
+  sampling.method = "withReplacement",
+  likelihood = "weighted"
+)
+
+fit_uniform$subsample.size.expect
+length(fit_uniform$index)
+summary(fit_uniform)
 ```
 
-As recommended by `survey::svyglm`, when working with binomial models, it is
-advisable to use use `family=quasibinomial()` to avoid a warning issued by
-`glm`. Refer to [svyglm() help documentation Details
-](https://www.rdocumentation.org/packages/survey/versions/4.4-2/topics/svyglm). The
-'quasi' version of the family objects provide the same point estimates.
+## Returned Object
 
-### Returned object 
-
-The object returned by `ssp.glm` contains estimation results and indices of the
-drawn subsample in the full dataset.
+The returned object stores the model call, coefficient estimates, covariance
+estimates, and row indices of the drawn samples.
 
 ```{r}
-names(ssp.results)
+names(fit_optL)
 ```
 
-Some key returned variables:
+Important components include:
 
-- `index.plt` and `index` are the row indices of drawn pilot subsamples and
-optimal subsamples in the full data.
+- `coef.plt`: the pilot estimator.
+- `coef.ssp`: the estimator from the second-stage subsample.
+- `coef`: the combined estimator printed by `summary()`.
+- `cov.ssp`: covariance estimate for `coef.ssp`.
+- `cov`: covariance estimate for `coef`.
+- `index.plt`: row indices for the pilot subsample, when a pilot sample is used.
+- `index`: row indices for the final drawn subsample.
+- `subsample.size.expect`: the expected subsample size reported by the method.
 
-- `coef.ssp` is the subsample estimator for $\beta$ and `coef` is the linear 
-combination of `coef.plt` (pilot estimator) and `coef.ssp`. 
-
-- `cov.ssp` and `cov` are estimated covariance matrices of `coef.ssp` and
-`coef`. 
-
-The coefficients and standard errors printed by `summary()` are `coef` and the
-square root of `diag(cov)`. See the help documentation of `ssp.glm` for details.
+The coefficients and standard errors printed by `summary()` are based on `coef`
+and `sqrt(diag(cov))`.
 
 ## Other Families
 
-We also provide examples for poisson regression and gamma regression in the help
-documentation of `ssp.glm`. Note that `likelihood = logOddsCorrection` is
-currently implemented only for logistic regression (family = `binomial` or
-`quasibonomial`).
+`ssp.glm()` also supports Poisson, quasipoisson, Gaussian, and Gamma GLMs with
+the weighted likelihood. The `logOddsCorrection` likelihood is specific to
+logistic regression and should be used only with binomial or quasibinomial
+families and Poisson subsampling.
+
+For binomial and Poisson models, `survey::svyglm()` recommends the quasi
+families, such as `quasibinomial()` and `quasipoisson()`, to avoid warnings
+about non-integer successes after weighting. The quasi families give the same
+point estimates for these models.
 
 ## References

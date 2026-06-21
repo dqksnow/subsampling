@@ -1,0 +1,278 @@
+---
+title: "Algorithmic Structure of Optimal Subsampling"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Algorithmic Structure of Optimal Subsampling}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette describes the common algorithmic structure used by the optimal
+subsampling methods in `subsampling`.
+
+The exact model, score, and objective function differ across functions, but the
+optimal subsampling workflow in this package can be viewed as the following
+procedure.
+
+1. Draw a first-step pilot subsample.
+2. Fit a first-step pilot estimator.
+3. Calculate second-step subsampling probabilities (feasible optimal subsampling probabilities).
+4. Draw the second-step subsample.
+5. Fit the model using the corresponding objective function.
+6. Optionally combine the pilot and second-step estimators.
+
+The steps below explain the same structure used across the models in this
+package.
+
+## Full-Data Problem
+
+Suppose the full data are
+
+$$
+\{z_i: i = 1,\ldots,N\},
+$$
+
+where $z_i$ may contain a response and covariates. Let $\theta$ denote the model
+parameter. The full-data estimator can often be written as an optimization
+problem of the form
+
+$$
+\widehat{\theta}_{\mathrm{full}}
+= \arg\min_\theta
+\frac{1}{N}\sum_{i=1}^N \ell_i(\theta).
+$$
+
+When $N$ is large, solving the full-data problem may be computationally
+expensive. The goal of subsampling is to draw a smaller informative subsample
+that balances computational efficiency and statistical efficiency.
+
+## Step 1: Pilot Estimation
+
+Optimal subsampling probabilities usually depend on the unknown model parameter
+and on quantities that would be expensive to calculate on the full data. The
+pilot sample provides an initial value or a cheaper approximation to these
+quantities.
+
+Let $S_{\mathrm{plt}}$ be the pilot sample and let
+$\pi_i^{\mathrm{plt}}$ be the pilot sampling probability. A generic weighted
+pilot estimator is
+
+$$
+\widehat{\theta}_{\mathrm{plt}}
+= \arg\min_\theta
+\sum_{i \in S_{\mathrm{plt}}}
+\frac{1}{\pi_i^{\mathrm{plt}}}\ell_i(\theta).
+$$
+
+Some models use a specialized pilot design. For example, `ssp.relogit()` draws a
+case-control pilot sample from positive and negative classes, then applies an
+intercept correction. `ssp.glm.rF()` can use balanced pilot sampling to preserve
+rare binary features. The purpose is the same: obtain a useful first estimate
+or approximation without fitting the model on all $N$ observations.
+
+## Step 2: Calculate Raw Importance Scores
+
+The pilot estimator is used to assign each observation a raw importance score,
+say
+
+$$
+m_i = m(z_i; \widehat{\theta}_{\mathrm{plt}}).
+$$
+
+This score measures relative importance, not a valid sampling probability. A
+large $m_i$ means observation $i$ is more useful for the target estimation goal.
+
+For example, in `ssp.glm()` with logistic regression,
+
+$$
+m_i^{\mathrm{optL}}
+= |y_i - \widehat{p}_i|\,\lVert x_i\rVert.
+$$
+
+Other models use different scores, but the role of the score is the same: it
+summarizes how important each observation is for constructing the second-step
+subsampling probabilities.
+
+## Step 3: Construct Probabilities and Draw the Second-Step Subsample
+
+Raw scores are transformed so that they become valid sampling probabilities.
+Once these probabilities are available, the second-step subsample is drawn
+directly from the corresponding sampling design.
+
+The package uses two main sampling procedures: sampling with replacement and
+Poisson subsampling. We use $\pi_i$ for both mechanisms, but the meaning is
+different.
+
+For sampling with replacement, a common drawing probability is
+
+$$
+\pi_i
+= (1-\alpha)\frac{m_i}{\sum_{j=1}^N m_j}
++ \alpha\frac{1}{N},
+$$
+
+where $\alpha \in [0,1]$ mixes the optimal probabilities with uniform
+probabilities. These probabilities satisfy
+
+$$
+\sum_{i=1}^N \pi_i = 1.
+$$
+
+Here $\pi_i$ is the probability that observation $i$ is selected on one draw.
+Sampling with replacement draws exactly `n.ssp` times:
+
+$$
+I_1,\ldots,I_{n_{\mathrm{ssp}}}
+\sim \mathrm{Multinomial}(\pi_1,\ldots,\pi_N).
+$$
+
+Repeated row indices are allowed.
+
+For Poisson subsampling, $\pi_i$ is an inclusion probability for observation
+$i$. The raw score may be truncated as
+
+$$
+m_i^* = \min(m_i, H),
+$$
+
+and then transformed into
+
+$$
+\pi_i
+= \min\left[
+n_{\mathrm{ssp}}
+\left\{
+(1-\alpha)\frac{m_i^*}{\widehat{\Phi}}
++ \alpha\frac{1}{N}
+\right\},
+1
+\right].
+$$
+
+Here $H$ is a truncation threshold and $\widehat{\Phi}$ is a pilot-based
+normalizing quantity. The probabilities are designed so that
+
+$$
+\sum_{i=1}^N \pi_i \approx n_{\mathrm{ssp}},
+$$
+
+up to truncation at 1 and pilot approximation error. Poisson subsampling draws
+each observation independently:
+
+$$
+\delta_i \sim \mathrm{Bernoulli}(\pi_i),
+$$
+
+and
+
+$$
+S_{\mathrm{ssp}} = \{i: \delta_i = 1\}.
+$$
+
+There is no replacement under Poisson subsampling because each observation is
+included at most once. The actual sample size can differ from the designed
+expected size:
+
+$$
+|S_{\mathrm{ssp}}| = \sum_{i=1}^N \delta_i.
+$$
+
+## Step 4: Fit a Corrected Subsample Objective Function
+
+Nonuniform subsampling changes the objective. A corrected objective is required to
+remove the bias introduced by informative sampling.
+
+The most general correction is inverse-probability weighting:
+
+$$
+\widehat{\theta}_{\mathrm{ssp}}
+= \arg\min_\theta
+\sum_{i \in S_{\mathrm{ssp}}}
+\frac{1}{\pi_i}\ell_i(\theta).
+$$
+
+For with-replacement sampling, the denominator should be read as the drawing
+probability. For Poisson subsampling, the denominator is the inclusion
+probability.
+
+Some models support other objectives instead of a weighted objective. For logistic
+regression with Poisson subsampling, `ssp.glm()` supports `logOddsCorrection`.
+For rare-event logistic regression, `ssp.relogit()` uses a negative-sampling
+log-odds correction by default. For softmax regression, `ssp.softmax()` supports
+`MSCLE`, a sampled conditional likelihood.
+
+The implementation details differ by model, but the role is the same: fit the
+model on the subsample using a loss that accounts for the sampling design.
+
+## Step 5: Optional Combination
+
+Some functions combine the pilot estimator and the subsample estimator. The
+pilot sample has already been computed, so it can still contribute information.
+A typical combination has the form
+
+$$
+\widehat{\theta}_{\mathrm{cmb}}
+=
+\left(\widehat{I}_{\mathrm{plt}}
++ \widehat{I}_{\mathrm{ssp}}\right)^{-1}
+\left(
+\widehat{I}_{\mathrm{plt}}\widehat{\theta}_{\mathrm{plt}}
++ \widehat{I}_{\mathrm{ssp}}\widehat{\theta}_{\mathrm{ssp}}
+\right),
+$$
+
+where $\widehat{I}_{\mathrm{plt}}$ and $\widehat{I}_{\mathrm{ssp}}$ are
+estimated information matrices.
+
+Not every function uses this step in the same way. For example, `ssp.glm()`,
+`ssp.relogit()`, and `ssp.softmax()` combine pilot and subsample estimators,
+while `ssp.quantreg()` uses repeated subsampling to estimate covariance for the
+subsample estimator.
+
+## Function Map
+
+The table below maps package-level functions to the helper functions that
+implement the common algorithmic pattern.
+
+| Function | Pilot | Probability and draw | Subsample fit | Combination |
+|---|---|---|---|---|
+| `ssp.glm()` | `pilot.estimate()` | `subsampling()` | `subsample.estimate()` | `combining()` |
+| `ssp.relogit()` | `rare.pilot.estimate()` | `rare.subsampling()` | `rare.subsample.estimate()` | `rare.combining()` |
+| `ssp.softmax()` | `softmax.plt.estimate()` | `softmax.subsampling()` | `softmax.subsample.estimate()` | `softmax.combining()` |
+| `ssp.quantreg()` | `plt.estimation.quantreg()` | `ssp.estimation.quantreg()` | `ssp.estimation.quantreg()` | Not used directly |
+| `ssp.glm.rF()` | `rF.pilot.estimate()` | `rF.subsampling()` | `rF.subsample.estimate()` | `rF.combining()` |
+
+## Checking Points
+
+When adapting the package structure for a new method, the following checks are
+useful.
+
+- Check the scale of the probabilities. For with-replacement sampling,
+  $\sum_i \pi_i$ should be 1. For Poisson subsampling, $\sum_i \pi_i$ should be
+  close to the designed expected subsample size, after accounting for any
+  specific constraints.
+
+- For Poisson subsampling, check whether the actual sample size is far from the
+  expected size. Some variation is natural. If the actual size is repeatedly far
+  too small or too large, the probability normalization, truncation, or
+  constraint logic may be wrong.
+
+- In the combination step, sample size matters. A larger second-step subsample
+  usually pulls the combined estimator toward the second-step estimator because
+  the combination is an information-weighted average.
+
+- Check the corrected loss against the sampling design. If the subsample was
+  drawn with unequal probabilities, the fitted loss should use the corresponding
+  weights, offsets, or conditional likelihood correction.
+
+- Check the pilot sample before trusting the second-step probabilities. If the
+  pilot estimator is unstable, the raw importance scores can be unstable even
+  when the probability formulas are coded correctly.

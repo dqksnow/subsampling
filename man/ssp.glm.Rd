@@ -65,7 +65,7 @@ subsample estimator with lower asymptotic variance compared to the
 \code{logOddsCorrection}. A bias-correction likelihood function is required for subsample since unequal subsampling probabilities introduce bias.
 \itemize{
 \item \code{weighted} Applies a weighted likelihood function where each observation is weighted by the inverse of its subsampling probability.
-\item \code{logOddsCorrection} This likelihood is available only for logistic regression model (i.e., when family is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
+\item \code{logOddsCorrection} This likelihood is currently implemented only for logistic regression with \code{sampling.method = "poisson"} (i.e., when \code{family} is binomial or quasibinomial). It uses a conditional likelihood, where each element of the likelihood represents the probability of \eqn{Y=1}, given that this subsample was drawn.
 }}
 
 \item{control}{The argument \code{control} contains two tuning parameters \code{alpha} and \code{b}.
@@ -92,7 +92,7 @@ subsampling probability. The default value is 0.01.
 \item{cov.ssp}{The covariance matrix of \code{coef.ssp}.}
 \item{cov}{The covariance matrix of \code{coef}.}
 \item{index.plt}{Row indices of pilot subsample in the full dataset.}
-\item{index.ssp}{Row indices of of optimal subsample in the full dataset.}
+\item{index}{Row indices of the drawn subsample in the full dataset. For \code{criterion = "uniform"}, this is the single-stage uniform subsample.}
 \item{N}{The number of observations in the full dataset.}
 \item{subsample.size.expect}{The expected subsample size, equals to \code{n.ssp} for \code{ssp.glm.} Note that for other functions, such as \link{ssp.relogit}, this value may differ.}
 \item{comp.time}{The total time of computing subsampling probabilities, drawing subsample and fitting model on the subsample.}
@@ -113,11 +113,13 @@ dataset. The case-control subsample probability is applied, that is, \eqn{\pi_i 
 families, uniform subsampling probabilities are applied. Typically, \code{n.plt} is
 relatively small compared to \code{n.ssp}.
 
-When \code{criterion = 'uniform'}, there is no need to compute the pilot estimator. In this case, a size \code{n.plt + n.ssp} subsample will be drawn with uniform sampling probability and \code{coef} is the corresponding  estimator.
+When \code{criterion = 'uniform'}, there is no need to compute the pilot estimator. In this case, a size \code{n.plt + n.ssp} subsample will be drawn with uniform sampling probability and \code{coef} is the corresponding estimator. Accordingly, the returned \code{subsample.size.expect} is \code{n.plt + n.ssp} rather than \code{n.ssp}.
 
 As suggested by \code{survey::svyglm()}, for binomial and poisson families, use \code{family=quasibinomial()} and \code{family=quasipoisson()} to avoid a warning "In eval(family$initialize) : non-integer #successes in a binomial glm!". The quasi versions of the family objects give the same point estimates and suppress the warning. Since subsampling methods only rely on point estimates from svyglm() for further computation, using the quasi families does not introduce any issues.
 
 For Gamma family, \code{ssp.glm} returns only the estimation of coefficients, as the dispersion parameter is not estimated.
+
+The \code{logOddsCorrection} likelihood is intended only for logistic regression with Poisson subsampling and is not implemented for \code{sampling.method = "withReplacement"} or non-binomial families.
 }
 \examples{
 # logistic regression

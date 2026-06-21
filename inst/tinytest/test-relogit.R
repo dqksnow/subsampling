@@ -23,6 +23,13 @@ expect_true(inherits(subsampling.results, "list"),
             info = "Output should be a list.")
 expect_true(inherits(subsampling.results, "ssp.relogit"),
             info = "Output should be of class 'ssp.relogit'")
+summary_output <- capture.output(summary(subsampling.results))
+expect_true(any(grepl("Sample Composition \\(Logistic Regression\\)", summary_output)),
+            info = "Summary should print logistic outcome composition.")
+expect_true(any(grepl("Y_count", summary_output)) &&
+              any(grepl("Full data", summary_output)) &&
+              any(grepl("Subsample", summary_output)),
+            info = "Summary should include Y information for full data and subsample.")
 
 expect_silent(subsampling.results <- 
                 ssp.relogit(formula = formula,

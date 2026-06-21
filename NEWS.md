@@ -1,3 +1,10 @@
+# subsampling 0.4.0
+
+* Expanded `ssp.glm.rF()` with a more comprehensive rare-feature subsampling implementation, including additional criteria, automatic rare-feature detection, response balancing options, and union-based combination.
+* Improved summaries for rare-feature GLMs and rare-event logistic regression, including clearer sample-composition information.
+* Added broader tests for rare-feature GLM scenarios and updated rare-event logistic regression summary tests.
+* Revised package vignettes, including the rare-feature GLM vignette and wording cleanup across method vignettes.
+
 # subsampling 0.3.0
 
 * Added `ssp.glm.rF()`. It provides balanced subsampling methods to deal with rare features in GLMs.

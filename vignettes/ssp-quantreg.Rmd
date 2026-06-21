@@ -19,8 +19,8 @@ knitr::opts_chunk$set(
 library(subsampling)
 ```
 
-This vignette introduces the usage of `ssp.quantreg`. The statistical theory
-and algorithms behind this implementation can be found in the relevant reference
+This vignette shows how to use `ssp.quantreg`. The statistical theory and
+algorithms behind this implementation can be found in the relevant reference
 papers.
 
 Quantile regression aims to estimate conditional quantiles by minimizing the
@@ -152,7 +152,7 @@ observations in each subsample can be replicated.  For more details, see
 
 ## Outputs
 
-After drawing subsample(s), `ssp.quantreg` utilizes `quantreg::rq` to fit the
+After drawing subsample(s), `ssp.quantreg` uses `quantreg::rq` to fit the
 model on the subsample(s). Arguments accepted by `quantreg::rq` can be passed
 through `...` in `ssp.quantreg`.
 

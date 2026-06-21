@@ -10,4 +10,8 @@ src/*.dll
 *.tar.gz
 *.Rproj
 inst/doc
+doc/
 auto/references.el
+/doc/
+/Meta/
+review-paper/
